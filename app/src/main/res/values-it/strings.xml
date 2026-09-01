@@ -530,6 +530,7 @@
     <string name="storyteller_scene_deck_title">Mazzo Scene</string>
     <string name="storyteller_no_scenes">Nessuna scena in questa sessione</string>
     <string name="storyteller_new_scene">Nuova Scena</string>
+    <string name="storyteller_active_plots">Trame Attive</string>
 
     <!-- Bottom Navigation -->
     <string name="bottom_nav_session">Sessione</string>
@@ -565,4 +566,7 @@
     <string name="document_not_found">Documento non trovato</string>
     <string name="import_document">Importa Documento</string>
     <string name="session_create">Nuova Sessione</string>
+    <string name="search_hint">Cerca nella cronaca…</string>
+    <string name="search_no_results">Nessun risultato trovato</string>
+    <string name="action_clear">Pulisci</string>
 </resources>

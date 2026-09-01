@@ -11,14 +11,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
+import com.v20charactermanager.domain.model.CreatureType
 
 @Composable
 fun QuickActionBar(
     onDiceClick: () -> Unit,
     onNoteClick: () -> Unit,
     onEventClick: () -> Unit,
+    onQuickNpc: (String, CreatureType, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showQuickNpcDialog by remember { mutableStateOf(false) }
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -62,5 +66,111 @@ fun QuickActionBar(
             },
             modifier = Modifier.weight(1f)
         )
+        AssistChip(
+            onClick = { showQuickNpcDialog = true },
+            label = {
+                Text(
+                    text = "PNG Rapido",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            leadingIcon = {
+                Icon(Icons.Filled.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+            },
+            modifier = Modifier.weight(1f)
+        )
     }
+
+    if (showQuickNpcDialog) {
+        QuickNpcDialog(
+            onDismiss = { showQuickNpcDialog = false },
+            onCreate = { name, creatureType, role ->
+                onQuickNpc(name, creatureType, role)
+                showQuickNpcDialog = false
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun QuickNpcDialog(
+    onDismiss: () -> Unit,
+    onCreate: (String, CreatureType, String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var creatureType by remember { mutableStateOf(CreatureType.MORTAL) }
+    var role by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("PNG Rapido") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nombre *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = creatureType.name.replaceFirstChar { it.titlecase() },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Tipo") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        CreatureType.entries.forEach { type ->
+                            DropdownMenuItem(
+                                text = { Text(type.name.replaceFirstChar { it.titlecase() }) },
+                                onClick = {
+                                    creatureType = type
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = role,
+                    onValueChange = { role = it },
+                    label = { Text("Rol (opcional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (name.isNotBlank()) {
+                        onCreate(name.trim(), creatureType, role.trim())
+                    }
+                },
+                enabled = name.isNotBlank()
+            ) {
+                Text("Crear")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }

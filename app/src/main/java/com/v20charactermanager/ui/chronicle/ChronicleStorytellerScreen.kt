@@ -1,6 +1,8 @@
 package com.v20charactermanager.ui.chronicle
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -63,7 +65,8 @@ fun ChronicleStorytellerScreen(
     onAddCharacter: (String, String, ChronicleMemberRole) -> Unit,
     onRemoveCharacter: (String, String) -> Unit,
     onNavigateToDice: () -> Unit,
-    onLinkClick: (String, String) -> Unit
+    onLinkClick: (String, String) -> Unit,
+    onSearchClick: () -> Unit = {}
 ) {
     var selectedNavItem by remember { mutableStateOf(ChronicleBottomNavItem.LIVE) }
     var showSceneDeck by remember { mutableStateOf(false) }
@@ -84,6 +87,9 @@ fun ChronicleStorytellerScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    IconButton(onClick = onSearchClick) {
+                        Icon(Icons.Filled.Search, contentDescription = "Search")
                     }
                 }
             )
@@ -106,6 +112,7 @@ fun ChronicleStorytellerScreen(
                     availableCharacters = uiState.availableCharacters,
                     quickNotes = uiState.quickNotes,
                     sessionEvents = uiState.sessionEvents,
+                    plotArcs = uiState.plotArcs,
                     onStartSession = onStartSession,
                     onEndSession = onEndSession,
                     onCharacterClick = onCharacterClick,
@@ -122,6 +129,11 @@ fun ChronicleStorytellerScreen(
                         }
                     },
                     onMediaClick = onMediaClick,
+                    onQuickNpc = { name, creatureType, role ->
+                        uiState.activeSession?.let { session ->
+                            onCreateNpc(session.chronicleId, name, creatureType, role, null)
+                        }
+                    },
                     modifier = Modifier.padding(padding)
                 )
             }

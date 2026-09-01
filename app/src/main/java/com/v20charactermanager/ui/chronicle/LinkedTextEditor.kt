@@ -67,6 +67,20 @@ fun ChronicleDetailUiState.toLinkableItems(): List<LinkableItem> {
 }
 
 private val LINK_REGEX = Regex("""\[(\w+):([^:]+):([^\]]+)\]""")
+private val TAG_REGEX = Regex("""#(\w+)""")
+private val COMBINED_REGEX = Regex("""#(\w+)|\[(\w+):([^:]+):([^\]]+)\]""")
+
+data class TextSegment(
+    val text: String,
+    val type: SegmentType,
+    val id: String? = null
+)
+
+enum class SegmentType {
+    PLAIN,
+    LINK,
+    TAG
+}
 
 fun parseLinks(text: String): List<Pair<String, String>> {
     val results = mutableListOf<Pair<String, String>>()
@@ -80,6 +94,35 @@ fun parseLinks(text: String): List<Pair<String, String>> {
     }
     if (lastEnd < text.length) {
         results.add(Pair(text.substring(lastEnd), ""))
+    }
+    return results
+}
+
+fun parseTags(text: String): List<String> {
+    return TAG_REGEX.findAll(text).map { it.groupValues[1] }.toList()
+}
+
+fun parseSegments(text: String): List<TextSegment> {
+    val results = mutableListOf<TextSegment>()
+    var lastEnd = 0
+    for (match in COMBINED_REGEX.findAll(text)) {
+        if (match.range.first > lastEnd) {
+            results.add(TextSegment(text.substring(lastEnd, match.range.first), SegmentType.PLAIN))
+        }
+        if (match.groupValues[1].isNotEmpty()) {
+            // Tag match
+            results.add(TextSegment("#${match.groupValues[1]}", SegmentType.TAG))
+        } else {
+            // Link match
+            val typeName = match.groupValues[2]
+            val id = match.groupValues[3]
+            val displayName = match.groupValues[4]
+            results.add(TextSegment(displayName, SegmentType.LINK, id))
+        }
+        lastEnd = match.range.last + 1
+    }
+    if (lastEnd < text.length) {
+        results.add(TextSegment(text.substring(lastEnd), SegmentType.PLAIN))
     }
     return results
 }
@@ -106,6 +149,8 @@ fun LinkedTextEditor(
     var activeCategory by remember { mutableStateOf<LinkCategory?>(null) }
     var query by remember { mutableStateOf("") }
     var cursorPosition by remember { mutableIntStateOf(0) }
+    var isTagMode by remember { mutableStateOf(false) }
+    var tagQuery by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     var debounceJob by remember { mutableStateOf<Job?>(null) }
 
@@ -119,8 +164,26 @@ fun LinkedTextEditor(
     }
 
     Box(modifier) {
-        OutlinedTextField(
-            value = textFieldValue,
+        Column {
+            if (isTagMode && tagQuery.isNotEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "Tag: #$tagQuery",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+            OutlinedTextField(
+                value = textFieldValue,
             onValueChange = { newValue ->
                 val oldText = textFieldValue.text
                 val newText = newValue.text
@@ -129,6 +192,7 @@ fun LinkedTextEditor(
                 if (newCursor > 0 && newCursor <= newText.length) {
                     val textBeforeCursor = newText.substring(0, newCursor)
                     val atMatch = Regex("""@(\w*)$""").find(textBeforeCursor)
+                    val tagMatch = Regex("""#(\w*)$""").find(textBeforeCursor)
 
                     if (atMatch != null) {
                         val typed = atMatch.groupValues[1].uppercase()
@@ -137,6 +201,7 @@ fun LinkedTextEditor(
                             activeCategory = matchedCategory
                             query = ""
                             showPopup = true
+                            isTagMode = false
                             cursorPosition = newCursor
                         } else if (typed.isEmpty()) {
                             showPopup = false
@@ -150,15 +215,23 @@ fun LinkedTextEditor(
                                     activeCategory = cat
                                     query = ""
                                     showPopup = true
+                                    isTagMode = false
                                     cursorPosition = newCursor
                                 } else {
                                     showPopup = false
                                 }
                             }
                         }
+                    } else if (tagMatch != null) {
+                        tagQuery = tagMatch.groupValues[1]
+                        isTagMode = true
+                        showPopup = false
+                        activeCategory = null
+                        cursorPosition = newCursor
                     } else {
                         showPopup = false
                         activeCategory = null
+                        isTagMode = false
                     }
                 }
 
@@ -176,6 +249,7 @@ fun LinkedTextEditor(
             minLines = minLines,
             placeholder = placeholder?.let { { Text(it) } }
         )
+        }
 
         if (showPopup && filteredItems.isNotEmpty()) {
             Card(
@@ -235,44 +309,46 @@ fun LinkedTextDisplay(
     onLinkClick: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val parts = remember(text) { parseLinks(text) }
+    val segments = remember(text) { parseSegments(text) }
 
     Column(modifier) {
-        parts.forEach { (segment, linkName) ->
-            if (linkName.isNotEmpty()) {
-                val item = linkableItems.find { it.name == linkName }
-                val typeName = segment.substringAfter("[").substringBefore(":")
-                AssistChip(
-                    onClick = {
-                        item?.let { onLinkClick(it.type, it.id) }
-                    },
-                    label = { Text(linkName) },
-                    leadingIcon = {
+        segments.forEach { segment ->
+            when (segment.type) {
+                SegmentType.LINK -> {
+                    val item = linkableItems.find { it.name == segment.text }
+                    AssistChip(
+                        onClick = {
+                            item?.let { onLinkClick(it.type, it.id) }
+                        },
+                        label = { Text(segment.text) },
+                        leadingIcon = {
+                            Text(
+                                text = "🔗",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        modifier = Modifier.padding(2.dp)
+                    )
+                }
+                SegmentType.TAG -> {
+                    AssistChip(
+                        onClick = { /* Tags are non-navigable for now */ },
+                        label = { Text(segment.text, color = MaterialTheme.colorScheme.onTertiaryContainer) },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                        ),
+                        modifier = Modifier.padding(2.dp)
+                    )
+                }
+                SegmentType.PLAIN -> {
+                    if (segment.text.isNotBlank()) {
                         Text(
-                            text = when (typeName) {
-                                "PG" -> "👤"
-                                "NPC" -> "🎭"
-                                "LUOGHI" -> "📍"
-                                "SEGRETI" -> "🔒"
-                                "INDIZI" -> "🔍"
-                                "NOTE" -> "📝"
-                                "SESSIONI" -> "📅"
-                                "FAZIONI" -> "⚔️"
-                                "EVENTI" -> "⚡"
-                                "SCENE" -> "🎬"
-                                else -> "📎"
-                            },
-                            style = MaterialTheme.typography.labelSmall
+                            text = segment.text,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(vertical = 2.dp)
                         )
-                    },
-                    modifier = Modifier.padding(2.dp)
-                )
-            } else if (segment.isNotBlank()) {
-                Text(
-                    text = segment,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                )
+                    }
+                }
             }
         }
     }

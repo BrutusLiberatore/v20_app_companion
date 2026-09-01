@@ -43,6 +43,7 @@ import com.v20charactermanager.ui.chronicle.MediaViewModel
 import com.v20charactermanager.ui.chronicle.MediaViewModelFactory
 import com.v20charactermanager.ui.chronicle.VersionHistoryScreen
 import com.v20charactermanager.ui.chronicle.DocumentViewerScreen
+import com.v20charactermanager.ui.chronicle.ChronicleSearchScreen
 import com.v20charactermanager.ui.compendium.CompendiumScreen
 import com.v20charactermanager.ui.compendium.CompendiumViewModel
 import com.v20charactermanager.ui.compendium.CompendiumViewModelFactory
@@ -86,6 +87,7 @@ object Routes {
     const val MEDIA_LIBRARY = "chronicle/{chronicleId}/media"
     const val IMAGE_VIEWER = "chronicle/{chronicleId}/media/{assetId}"
     const val DOCUMENT_VIEWER = "chronicle/{chronicleId}/document/{assetId}"
+    const val CHRONICLE_SEARCH = "chronicle/{chronicleId}/search"
     const val VERSION_HISTORY = "chronicle/{chronicleId}/media/{assetId}/versions"
     const val LOCATION_IMAGE = "chronicle/{chronicleId}/location/{locationId}/image"
 
@@ -100,6 +102,7 @@ object Routes {
     fun mediaLibrary(chronicleId: String) = "chronicle/$chronicleId/media"
     fun imageViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId"
     fun documentViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/document/$assetId"
+    fun chronicleSearch(chronicleId: String) = "chronicle/$chronicleId/search"
     fun versionHistory(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId/versions"
     fun locationImage(chronicleId: String, locationId: String) = "chronicle/$chronicleId/location/$locationId/image"
 }
@@ -698,6 +701,11 @@ fun V20NavGraph(
                         "EVENTI" -> { /* Event detail */ }
                         "SCENE" -> { /* Scene detail */ }
                     }
+                },
+                onSearchClick = {
+                    uiState.chronicle?.let { chronicle ->
+                        navController.navigate(Routes.chronicleSearch(chronicle.id))
+                    }
                 }
             )
         }
@@ -864,6 +872,29 @@ fun V20NavGraph(
 
             DocumentViewerScreen(
                 asset = asset,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.CHRONICLE_SEARCH,
+            arguments = listOf(navArgument("chronicleId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: return@composable
+            val viewModel: ChronicleViewModel = viewModel(
+                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository)
+            )
+            val uiState by viewModel.detailUiState.collectAsState()
+            LaunchedEffect(chronicleId) { viewModel.loadChronicleDetail(chronicleId) }
+
+            ChronicleSearchScreen(
+                uiState = uiState,
+                onEntityClick = { type, id ->
+                    when (type) {
+                        "PG" -> navController.navigate(Routes.sheet(id))
+                        else -> { /* future: open entity detail */ }
+                    }
+                },
                 onBack = { navController.popBackStack() }
             )
         }

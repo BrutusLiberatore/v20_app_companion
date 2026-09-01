@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
+import com.v20charactermanager.domain.model.CreatureType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,6 +27,7 @@ fun StorytellerLiveScreen(
     availableCharacters: List<Character>,
     quickNotes: List<QuickNote>,
     sessionEvents: List<SessionEvent>,
+    plotArcs: List<PlotArc>,
     onStartSession: (Session) -> Unit,
     onEndSession: (Session) -> Unit,
     onCharacterClick: (String) -> Unit,
@@ -38,6 +40,7 @@ fun StorytellerLiveScreen(
     onQuickNote: (String) -> Unit,
     onEventClick: () -> Unit,
     onMediaClick: () -> Unit,
+    onQuickNpc: (String, CreatureType, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showNewNoteDialog by remember { mutableStateOf(false) }
@@ -177,13 +180,47 @@ fun StorytellerLiveScreen(
             }
         }
 
+        // Active Plots
+        val activePlots = plotArcs.filter { it.status == PlotStatus.ACTIVE }
+        if (activePlots.isNotEmpty()) {
+            item {
+                SectionHeader(
+                    title = stringResource(R.string.storyteller_active_plots),
+                    icon = Icons.Filled.AccountTree
+                )
+            }
+
+            items(activePlots) { plot ->
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = plot.title,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (plot.summary.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = plot.summary,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // Quick Actions
         if (session?.status == SessionStatus.ACTIVE) {
             item {
                 QuickActionBar(
                     onDiceClick = onDiceClick,
                     onNoteClick = { showNewNoteDialog = true },
-                    onEventClick = { showNewEventDialog = true }
+                    onEventClick = { showNewEventDialog = true },
+                    onQuickNpc = onQuickNpc
                 )
             }
         }
