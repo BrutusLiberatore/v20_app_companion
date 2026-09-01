@@ -37,7 +37,7 @@ import com.v20charactermanager.data.local.entity.*
         QuickNoteEntity::class,
         SessionEventEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -572,6 +572,12 @@ abstract class V20Database : RoomDatabase() {
             }
         }
 
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_image_annotations_layerId ON image_annotations(layerId)")
+            }
+        }
+
         fun getDatabase(context: Context): V20Database {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -579,9 +585,7 @@ abstract class V20Database : RoomDatabase() {
                     V20Database::class.java,
                     "v20_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
-                // NOTE: fallbackToDestructiveMigration should only be used as a last resort
-                // for unrecoverable errors. Always prefer proper versioned migrations above.
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
