@@ -30,6 +30,7 @@ fun ChroniclePlotsTab(
     modifier: Modifier = Modifier
 ) {
     var showAddPlotDialog by remember { mutableStateOf(false) }
+    var showAddNoteDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -61,15 +62,29 @@ fun ChroniclePlotsTab(
         // Notes section
         item {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.chronicle_tab_notes),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.chronicle_tab_notes),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = { showAddNoteDialog = true }) {
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_add))
+                }
+            }
         }
 
-        items(uiState.notes) { note ->
-            NoteCard(note = note)
+        items(uiState.notes, key = { it.id }) { note ->
+            EditableNoteCard(
+                note = note,
+                linkableItems = uiState.toLinkableItems(),
+                onUpdate = onUpdateNote,
+                onDelete = { onDeleteNote(note.id) }
+            )
         }
 
         // Scenes
@@ -123,6 +138,149 @@ fun ChroniclePlotsTab(
             }
         )
     }
+
+    if (showAddNoteDialog) {
+        var noteText by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showAddNoteDialog = false },
+            title = { Text(stringResource(R.string.chronicle_add_note)) },
+            text = {
+                LinkedTextEditor(
+                    value = noteText,
+                    onValueChange = { noteText = it },
+                    linkableItems = uiState.toLinkableItems(),
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 4,
+                    placeholder = stringResource(R.string.npc_notes_hint)
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (noteText.isNotBlank()) {
+                            uiState.chronicle?.let { chronicle ->
+                                onCreateNote(chronicle.id, noteText)
+                            }
+                            showAddNoteDialog = false
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.action_create))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddNoteDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun EditableNoteCard(
+    note: ChronicleNote,
+    linkableItems: List<LinkableItem>,
+    onUpdate: (ChronicleNote) -> Unit,
+    onDelete: () -> Unit
+) {
+    var isEditing by remember { mutableStateOf(false) }
+    var editText by remember(note.text) { mutableStateOf(note.text) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
+                        .format(java.util.Date(note.updatedAt)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+                Row {
+                    IconButton(onClick = { isEditing = !isEditing }, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            if (isEditing) Icons.Filled.Check else Icons.Filled.Edit,
+                            contentDescription = stringResource(R.string.action_edit),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(onClick = { showDeleteConfirm = true }, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.action_delete),
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+
+            if (isEditing) {
+                Spacer(modifier = Modifier.height(8.dp))
+                LinkedTextEditor(
+                    value = editText,
+                    onValueChange = { editText = it },
+                    linkableItems = linkableItems,
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        onUpdate(note.copy(text = editText, updatedAt = System.currentTimeMillis()))
+                        isEditing = false
+                    }
+                ) {
+                    Text(stringResource(R.string.save))
+                }
+            } else {
+                Spacer(modifier = Modifier.height(4.dp))
+                if (note.text.contains("[")) {
+                    LinkedTextDisplay(
+                        text = note.text,
+                        linkableItems = linkableItems,
+                        onLinkClick = { _, _ -> }
+                    )
+                } else {
+                    Text(
+                        text = note.text,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text(stringResource(R.string.action_delete)) },
+            text = { Text(stringResource(R.string.confirm_delete)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDelete()
+                    showDeleteConfirm = false
+                }) {
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -148,22 +306,6 @@ private fun PlotArcCard(plot: PlotArc) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun NoteCard(note: ChronicleNote) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Text(
-            text = note.text,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(12.dp)
-        )
     }
 }
 

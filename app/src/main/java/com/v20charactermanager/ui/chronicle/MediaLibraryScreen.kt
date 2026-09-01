@@ -36,6 +36,7 @@ fun MediaLibraryScreen(
     chronicleId: String,
     assets: List<MediaAsset>,
     onImportImage: () -> Unit,
+    onImportDocument: () -> Unit,
     onAssetClick: (MediaAsset) -> Unit,
     onAssetDelete: (String) -> Unit,
     onAssetRename: (String, String) -> Unit,
@@ -75,6 +76,9 @@ fun MediaLibraryScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onImportDocument) {
+                        Icon(Icons.Default.InsertDriveFile, contentDescription = stringResource(R.string.import_document), tint = V20Ink)
+                    }
                     V20IvoryButton(text = stringResource(R.string.media_import), onClick = onImportImage)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)

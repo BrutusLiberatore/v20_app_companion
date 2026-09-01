@@ -31,7 +31,7 @@ fun ChronicleStorytellerScreen(
     onCreateSession: (String, String) -> Unit,
     onUpdateSession: (Session) -> Unit,
     onDeleteSession: (String) -> Unit,
-    onCreateNpc: (String, String, CreatureType, String) -> Unit,
+    onCreateNpc: (String, String, CreatureType, String, String?) -> Unit,
     onDeleteNpc: (String) -> Unit,
     onUpdateNpc: (NpcEntry) -> Unit,
     onCreatePlotArc: (String, String, PlotType) -> Unit,

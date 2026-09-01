@@ -42,6 +42,7 @@ import com.v20charactermanager.ui.chronicle.MediaLibraryScreen
 import com.v20charactermanager.ui.chronicle.MediaViewModel
 import com.v20charactermanager.ui.chronicle.MediaViewModelFactory
 import com.v20charactermanager.ui.chronicle.VersionHistoryScreen
+import com.v20charactermanager.ui.chronicle.DocumentViewerScreen
 import com.v20charactermanager.ui.compendium.CompendiumScreen
 import com.v20charactermanager.ui.compendium.CompendiumViewModel
 import com.v20charactermanager.ui.compendium.CompendiumViewModelFactory
@@ -84,6 +85,7 @@ object Routes {
     const val CHRONICLE_DETAIL = "chronicle/{chronicleId}"
     const val MEDIA_LIBRARY = "chronicle/{chronicleId}/media"
     const val IMAGE_VIEWER = "chronicle/{chronicleId}/media/{assetId}"
+    const val DOCUMENT_VIEWER = "chronicle/{chronicleId}/document/{assetId}"
     const val VERSION_HISTORY = "chronicle/{chronicleId}/media/{assetId}/versions"
     const val LOCATION_IMAGE = "chronicle/{chronicleId}/location/{locationId}/image"
 
@@ -97,6 +99,7 @@ object Routes {
     fun chronicleDetail(chronicleId: String) = "chronicle/$chronicleId"
     fun mediaLibrary(chronicleId: String) = "chronicle/$chronicleId/media"
     fun imageViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId"
+    fun documentViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/document/$assetId"
     fun versionHistory(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId/versions"
     fun locationImage(chronicleId: String, locationId: String) = "chronicle/$chronicleId/location/$locationId/image"
 }
@@ -586,8 +589,8 @@ fun V20NavGraph(
                 onDeleteSession = { sessionId ->
                     viewModel.deleteSession(sessionId)
                 },
-                onCreateNpc = { cId, name, creatureType, role ->
-                    viewModel.createNpc(cId, name, creatureType, role)
+                onCreateNpc = { cId, name, creatureType, role, charId ->
+                    viewModel.createNpc(cId, name, creatureType, role, charId)
                 },
                 onDeleteNpc = { npcId ->
                     viewModel.deleteNpc(npcId)
@@ -707,12 +710,26 @@ fun V20NavGraph(
                 }
             }
 
+            val pickDocumentLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri: Uri? ->
+                uri?.let {
+                    val title = uri.lastPathSegment?.substringAfterLast('/') ?: "Document"
+                    mediaViewModel.importDocument(chronicleId, it, title)
+                }
+            }
+
             MediaLibraryScreen(
                 chronicleId = chronicleId,
                 assets = uiState.assets,
                 onImportImage = { pickImageLauncher.launch("image/*") },
+                onImportDocument = { pickDocumentLauncher.launch("application/pdf") },
                 onAssetClick = { asset ->
-                    navController.navigate(Routes.imageViewer(chronicleId, asset.id))
+                    if (asset.type == MediaAssetType.DOCUMENT) {
+                        navController.navigate(Routes.documentViewer(chronicleId, asset.id))
+                    } else {
+                        navController.navigate(Routes.imageViewer(chronicleId, asset.id))
+                    }
                 },
                 onAssetDelete = { mediaViewModel.deleteAsset(it) },
                 onAssetRename = { assetId, newTitle -> mediaViewModel.renameAsset(assetId, newTitle) },
@@ -810,6 +827,29 @@ fun V20NavGraph(
                     mediaViewModel.restoreRevision(revision)
                     navController.popBackStack()
                 },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.DOCUMENT_VIEWER,
+            arguments = listOf(
+                navArgument("chronicleId") { type = NavType.StringType },
+                navArgument("assetId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val assetId = backStackEntry.arguments?.getString("assetId") ?: return@composable
+            val mediaViewModel: MediaViewModel = viewModel(
+                factory = MediaViewModelFactory(
+                    appContainer.mediaRepository,
+                    context.applicationContext
+                )
+            )
+            val uiState by mediaViewModel.libraryUiState.collectAsState()
+            val asset = uiState.assets.find { it.id == assetId }
+
+            DocumentViewerScreen(
+                asset = asset,
                 onBack = { navController.popBackStack() }
             )
         }

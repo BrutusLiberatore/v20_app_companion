@@ -22,7 +22,7 @@ fun ChroniclePeopleTab(
     onCharacterClick: (String) -> Unit,
     onAddCharacter: (String, String, ChronicleMemberRole) -> Unit,
     onRemoveCharacter: (String, String) -> Unit,
-    onCreateNpc: (String, String, CreatureType, String) -> Unit,
+    onCreateNpc: (String, String, CreatureType, String, String?) -> Unit,
     onDeleteNpc: (String) -> Unit,
     onUpdateNpc: (NpcEntry) -> Unit,
     modifier: Modifier = Modifier
@@ -129,23 +129,66 @@ fun ChroniclePeopleTab(
     // Add NPC Dialog
     if (showAddNpcDialog) {
         var npcName by remember { mutableStateOf("") }
+        var selectedPgId by remember { mutableStateOf<String?>(null) }
+        var showPgPicker by remember { mutableStateOf(false) }
+
         AlertDialog(
             onDismissRequest = { showAddNpcDialog = false },
             title = { Text(stringResource(R.string.chronicle_add_npc)) },
             text = {
-                OutlinedTextField(
-                    value = npcName,
-                    onValueChange = { npcName = it },
-                    label = { Text(stringResource(R.string.name_hint)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    OutlinedTextField(
+                        value = npcName,
+                        onValueChange = { npcName = it },
+                        label = { Text(stringResource(R.string.name_hint)) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { showPgPicker = !showPgPicker },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Filled.Person, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            if (selectedPgId != null) {
+                                val pg = uiState.availableCharacters.find { it.id == selectedPgId }
+                                "${pg?.identity?.name ?: ""} (${stringResource(R.string.npc_linked_to_pg)})"
+                            } else {
+                                stringResource(R.string.npc_link_to_pg)
+                            }
+                        )
+                    }
+                    if (showPgPicker) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Card(modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)) {
+                            LazyColumn {
+                                items(uiState.availableCharacters) { character ->
+                                    ListItem(
+                                        headlineContent = { Text(character.identity.name) },
+                                        leadingContent = {
+                                            if (character.id == selectedPgId) {
+                                                Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                            }
+                                        },
+                                        modifier = Modifier.clickable {
+                                            selectedPgId = character.id
+                                            if (npcName.isBlank()) npcName = character.identity.name
+                                            showPgPicker = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         if (npcName.isNotBlank()) {
                             uiState.chronicle?.let { chronicle ->
-                                onCreateNpc(chronicle.id, npcName, CreatureType.MORTAL, "")
+                                onCreateNpc(chronicle.id, npcName, CreatureType.VAMPIRE, selectedPgId ?: "", selectedPgId)
                             }
                             showAddNpcDialog = false
                         }

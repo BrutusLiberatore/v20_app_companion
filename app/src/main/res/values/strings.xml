@@ -360,6 +360,8 @@
     <string name="chronicle_tab_members">Members</string>
     <string name="chronicle_tab_sessions">Sessions</string>
     <string name="chronicle_tab_notes">Notes</string>
+    <string name="chronicle_add_note">Add Note</string>
+    <string name="confirm_delete">Are you sure you want to delete this?</string>
     <string name="chronicle_tab_character_notes">Character Notes</string>
     <string name="chronicle_tab_npcs">NPCs</string>
     <string name="chronicle_tab_locations">Locations</string>
@@ -558,4 +560,8 @@
     <string name="npc_notes">Narrator Notes</string>
     <string name="npc_open_sheet">Open Character Sheet</string>
     <string name="npc_create_sheet">Create Full Character Sheet</string>
+    <string name="npc_link_to_pg">Link to Player Character</string>
+    <string name="npc_linked_to_pg">linked to PG</string>
+    <string name="document_not_found">Document not found</string>
+    <string name="import_document">Import Document</string>
 </resources>

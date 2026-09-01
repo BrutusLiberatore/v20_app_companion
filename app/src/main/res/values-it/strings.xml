@@ -360,6 +360,8 @@
     <string name="chronicle_tab_members">Membri</string>
     <string name="chronicle_tab_sessions">Sessioni</string>
     <string name="chronicle_tab_notes">Note</string>
+    <string name="chronicle_add_note">Aggiungi Nota</string>
+    <string name="confirm_delete">Sei sicuro di voler eliminare questo elemento?</string>
     <string name="chronicle_tab_character_notes">Note Personaggi</string>
     <string name="chronicle_tab_npcs">PNG</string>
     <string name="chronicle_tab_locations">Luoghi</string>
@@ -558,4 +560,8 @@
     <string name="npc_notes">Note del Narratore</string>
     <string name="npc_open_sheet">Apri Scheda Personaggio</string>
     <string name="npc_create_sheet">Crea Scheda Personaggio Completa</string>
+    <string name="npc_link_to_pg">Collega a Personaggio Giocante</string>
+    <string name="npc_linked_to_pg">collegato a PG</string>
+    <string name="document_not_found">Documento non trovato</string>
+    <string name="import_document">Importa Documento</string>
 </resources>

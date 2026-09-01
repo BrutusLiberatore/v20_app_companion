@@ -271,9 +271,9 @@ class ChronicleViewModel(
     }
 
     // NPCs
-    fun createNpc(chronicleId: String, name: String, creatureType: CreatureType = CreatureType.MORTAL, role: String = "") {
+    fun createNpc(chronicleId: String, name: String, creatureType: CreatureType = CreatureType.MORTAL, role: String = "", characterId: String? = null) {
         viewModelScope.launch {
-            val npc = NpcEntry(id = UUID.randomUUID().toString(), chronicleId = chronicleId, name = name, creatureType = creatureType, role = role)
+            val npc = NpcEntry(id = UUID.randomUUID().toString(), chronicleId = chronicleId, name = name, creatureType = creatureType, role = role, characterId = characterId?.ifEmpty { null })
             chronicleRepository.insertNpc(npc)
         }
     }

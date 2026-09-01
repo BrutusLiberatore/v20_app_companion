@@ -92,6 +92,28 @@ class MediaViewModel(
         }
     }
 
+    fun importDocument(chronicleId: String, uri: Uri, title: String) {
+        viewModelScope.launch {
+            val assetId = UUID.randomUUID().toString()
+            val fileName = "doc_${assetId}.pdf"
+            val savedPath = try {
+                val inputStream = context.contentResolver.openInputStream(uri) ?: return@launch
+                val file = java.io.File(context.filesDir, "chronicle_documents/$fileName")
+                file.parentFile?.mkdirs()
+                file.outputStream().use { output -> inputStream.use { input -> input.copyTo(output) } }
+                file.absolutePath
+            } catch (_: Exception) { return@launch }
+
+            val asset = MediaAsset(
+                id = assetId, chronicleId = chronicleId,
+                type = MediaAssetType.DOCUMENT, title = title,
+                originalFilePath = savedPath,
+                visibility = Visibility.GM_ONLY
+            )
+            mediaRepository.insertAsset(asset)
+        }
+    }
+
     fun deleteAsset(assetId: String) {
         viewModelScope.launch {
             val asset = mediaRepository.getAssetById(assetId) ?: return@launch
