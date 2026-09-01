@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "bae36765b768c05ba6e7c531357b21e6",
+    "identityHash": "42d40068c7356248dd82fb4f2c5d0278",
     "entities": [
       {
         "tableName": "characters",
@@ -2340,6 +2340,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_image_annotations_imageDocumentId` ON `${TABLE_NAME}` (`imageDocumentId`)"
+          },
+          {
+            "name": "index_image_annotations_layerId",
+            "unique": false,
+            "columnNames": [
+              "layerId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_image_annotations_layerId` ON `${TABLE_NAME}` (`layerId`)"
           }
         ],
         "foreignKeys": [
@@ -2657,7 +2666,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bae36765b768c05ba6e7c531357b21e6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '42d40068c7356248dd82fb4f2c5d0278')"
     ]
   }
 }

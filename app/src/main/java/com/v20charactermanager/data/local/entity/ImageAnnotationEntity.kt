@@ -15,7 +15,7 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("imageDocumentId")]
+    indices = [Index("imageDocumentId"), Index("layerId")]
 )
 data class ImageAnnotationEntity(
     @PrimaryKey val id: String,
