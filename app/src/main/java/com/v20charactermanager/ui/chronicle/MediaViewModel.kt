@@ -10,6 +10,8 @@ import com.v20charactermanager.domain.model.*
 import com.v20charactermanager.domain.repository.MediaRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.util.UUID
 
 data class MediaLibraryUiState(
@@ -99,6 +101,20 @@ class MediaViewModel(
         }
     }
 
+    fun renameAsset(assetId: String, newTitle: String) {
+        viewModelScope.launch {
+            val asset = mediaRepository.getAssetById(assetId) ?: return@launch
+            mediaRepository.updateAsset(asset.copy(title = newTitle, modifiedAt = System.currentTimeMillis()))
+        }
+    }
+
+    fun updateAssetDescription(assetId: String, description: String) {
+        viewModelScope.launch {
+            val asset = mediaRepository.getAssetById(assetId) ?: return@launch
+            mediaRepository.updateAsset(asset.copy(description = description, modifiedAt = System.currentTimeMillis()))
+        }
+    }
+
     fun loadAssetForViewing(assetId: String) {
         viewModelScope.launch {
             val asset = mediaRepository.getAssetById(assetId) ?: return@launch
@@ -145,7 +161,13 @@ class MediaViewModel(
 
     fun saveAnnotationImmediate(annotation: ImageAnnotation) {
         viewModelScope.launch {
-            mediaRepository.updateAnnotation(annotation.copy(modifiedAt = System.currentTimeMillis()))
+            mediaRepository.insertAnnotation(annotation.copy(modifiedAt = System.currentTimeMillis()))
+            _viewerUiState.update { state ->
+                state.copy(
+                    undoStack = state.undoStack + annotation,
+                    redoStack = emptyList()
+                )
+            }
         }
     }
 
@@ -273,8 +295,7 @@ class MediaViewModel(
     fun saveRevision(imageDocumentId: String, mediaAssetId: String, sessionId: String? = null, description: String? = null) {
         viewModelScope.launch {
             val maxRev = mediaRepository.getMaxRevisionNumber(imageDocumentId)
-            val annotations = _viewerUiState.value.annotations
-            val layers = _viewerUiState.value.layers
+            val state = _viewerUiState.value
             val revision = ImageRevision(
                 id = UUID.randomUUID().toString(),
                 imageDocumentId = imageDocumentId,
@@ -282,8 +303,8 @@ class MediaViewModel(
                 revisionNumber = maxRev + 1,
                 sessionId = sessionId,
                 description = description,
-                annotationSnapshot = "[]",
-                layerSnapshot = "[]"
+                annotationSnapshot = Json.encodeToString(state.annotations),
+                layerSnapshot = Json.encodeToString(state.layers)
             )
             mediaRepository.insertRevision(revision)
         }
@@ -297,8 +318,15 @@ class MediaViewModel(
         val state = _viewerUiState.value
         val docId = state.document?.id ?: return
         viewModelScope.launch {
-            val currentAnnotations = state.annotations
-            currentAnnotations.forEach { mediaRepository.deleteAnnotation(it.id) }
+            state.annotations.forEach { mediaRepository.deleteAnnotation(it.id) }
+            try {
+                val restoredAnnotations = Json.decodeFromString<List<ImageAnnotation>>(revision.annotationSnapshot)
+                restoredAnnotations.forEach { mediaRepository.insertAnnotation(it) }
+            } catch (_: Exception) { }
+            try {
+                val restoredLayers = Json.decodeFromString<List<ImageLayer>>(revision.layerSnapshot)
+                restoredLayers.forEach { mediaRepository.insertLayer(it) }
+            } catch (_: Exception) { }
             _viewerUiState.update {
                 it.copy(
                     undoStack = emptyList(),

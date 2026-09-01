@@ -550,7 +550,11 @@ fun V20NavGraph(
                 onOpenScene = { scene ->
                     // TODO: Open scene detail
                 },
-                onChangeScene = { /* Scene deck handled in screen */ },
+                onChangeScene = { sceneId ->
+                    uiState.activeSession?.let { session ->
+                        viewModel.setActiveScene(session, sceneId)
+                    }
+                },
                 onDiceClick = {
                     navController.navigate(Routes.dice())
                 },
@@ -711,6 +715,7 @@ fun V20NavGraph(
                     navController.navigate(Routes.imageViewer(chronicleId, asset.id))
                 },
                 onAssetDelete = { mediaViewModel.deleteAsset(it) },
+                onAssetRename = { assetId, newTitle -> mediaViewModel.renameAsset(assetId, newTitle) },
                 onBack = { navController.popBackStack() }
             )
         }

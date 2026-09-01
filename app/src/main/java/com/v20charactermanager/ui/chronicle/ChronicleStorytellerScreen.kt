@@ -21,7 +21,7 @@ fun ChronicleStorytellerScreen(
     onCharacterWillpowerChange: (Character, Int) -> Unit,
     onNpcClick: (NpcEntry) -> Unit,
     onOpenScene: (ChronicleScene) -> Unit,
-    onChangeScene: () -> Unit,
+    onChangeScene: (String) -> Unit,
     onDiceClick: () -> Unit,
     onQuickNote: (String) -> Unit,
     onEventClick: (String, String) -> Unit,
@@ -152,7 +152,9 @@ fun ChronicleStorytellerScreen(
                 )
             }
             ChronicleBottomNavItem.MEDIA -> {
-                onOpenMediaLibrary(chronicle?.id ?: "")
+                LaunchedEffect(Unit) {
+                    onOpenMediaLibrary(chronicle?.id ?: "")
+                }
             }
             ChronicleBottomNavItem.MORE -> {
                 ChronicleMoreTab(
@@ -191,8 +193,9 @@ fun ChronicleStorytellerScreen(
             activeSceneId = uiState.activeSession?.activeSceneId,
             onSceneSelect = { scene ->
                 uiState.activeSession?.let { session ->
-                    onChangeScene()
+                    onChangeScene(scene.id)
                 }
+                showSceneDeck = false
             },
             onNewScene = { /* TODO */ },
             onDismiss = { showSceneDeck = false }

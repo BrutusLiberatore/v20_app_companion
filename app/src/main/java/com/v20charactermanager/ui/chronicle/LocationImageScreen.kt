@@ -180,15 +180,32 @@ private fun LocationImageViewer(
         )
 
         if (isDrawingEnabled) {
+            val visibleAnnotations = annotations.filter { ann ->
+                layers.any { it.id == ann.layerId && it.visible }
+            }
             AnnotationCanvas(
-                annotations = annotations.filter {
-                    it.layerId == activeLayerId
-                },
+                annotations = visibleAnnotations,
                 toolState = toolState,
                 activeLayerId = activeLayerId,
                 isDrawingEnabled = isDrawingEnabled,
                 onStrokeComplete = onStrokeComplete,
-                onPinTap = { },
+                onPinTap = { offset ->
+                    val annotation = ImageAnnotation(
+                        id = java.util.UUID.randomUUID().toString(),
+                        layerId = activeLayerId ?: "",
+                        imageDocumentId = document?.id ?: "",
+                        type = AnnotationType.PIN,
+                        geometry = AnnotationGeometry(
+                            position = NormalizedPoint(offset.x / 1000f, offset.y / 1000f)
+                        ),
+                        style = AnnotationStyle(
+                            strokeColor = toolState.color.toLong(),
+                            strokeWidth = toolState.strokeWidth
+                        ),
+                        text = "Pin"
+                    )
+                    onStrokeComplete(annotation)
+                },
                 modifier = Modifier.fillMaxSize()
             )
         }

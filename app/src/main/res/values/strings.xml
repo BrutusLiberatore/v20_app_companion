@@ -549,4 +549,5 @@
     <string name="location_image_subtitle">Map &amp; Annotations</string>
     <string name="location_no_image">No image attached to this location</string>
     <string name="location_import_image">Attach Image</string>
+    <string name="media_rename">Rename Image</string>
 </resources>

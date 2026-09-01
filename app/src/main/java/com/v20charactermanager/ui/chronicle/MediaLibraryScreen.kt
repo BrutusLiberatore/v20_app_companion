@@ -38,10 +38,12 @@ fun MediaLibraryScreen(
     onImportImage: () -> Unit,
     onAssetClick: (MediaAsset) -> Unit,
     onAssetDelete: (String) -> Unit,
+    onAssetRename: (String, String) -> Unit,
     onBack: () -> Unit
 ) {
     var selectedCategory by remember { mutableStateOf(MediaAssetCategory.ALL) }
     var showDeleteDialog by remember { mutableStateOf<MediaAsset?>(null) }
+    var showRenameDialog by remember { mutableStateOf<MediaAsset?>(null) }
 
     val filteredAssets = when (selectedCategory) {
         MediaAssetCategory.ALL -> assets
@@ -150,7 +152,7 @@ fun MediaLibraryScreen(
                                         modifier = Modifier.align(Alignment.Center).size(48.dp)
                                     )
                                 }
-                                // Overlay with title
+                                // Overlay with title + rename button
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -158,20 +160,36 @@ fun MediaLibraryScreen(
                                         .background(Color.Black.copy(alpha = 0.7f))
                                         .padding(8.dp)
                                 ) {
-                                    Column {
-                                        Text(
-                                            text = asset.title,
-                                            color = V20Ink,
-                                            fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = asset.type.name,
-                                            color = V20InkDim,
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = asset.title,
+                                                color = V20Ink,
+                                                fontWeight = FontWeight.Bold,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = asset.type.name,
+                                                color = V20InkDim,
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        }
+                                        IconButton(
+                                            onClick = { showRenameDialog = asset },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Edit,
+                                                contentDescription = stringResource(R.string.action_edit),
+                                                tint = V20Ink,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -197,6 +215,39 @@ fun MediaLibraryScreen(
                 V20IvoryButton(
                     text = stringResource(R.string.action_cancel),
                     onClick = { showDeleteDialog = null }
+                )
+            }
+        )
+    }
+
+    showRenameDialog?.let { asset ->
+        var newName by remember { mutableStateOf(asset.title) }
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = null },
+            title = { Text(stringResource(R.string.media_rename)) },
+            text = {
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    label = { Text(stringResource(R.string.title_hint)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                V20BloodButton(
+                    text = stringResource(R.string.save),
+                    onClick = {
+                        if (newName.isNotBlank()) {
+                            onAssetRename(asset.id, newName)
+                            showRenameDialog = null
+                        }
+                    }
+                )
+            },
+            dismissButton = {
+                V20IvoryButton(
+                    text = stringResource(R.string.action_cancel),
+                    onClick = { showRenameDialog = null }
                 )
             }
         )
