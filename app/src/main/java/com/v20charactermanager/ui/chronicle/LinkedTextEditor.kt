@@ -23,19 +23,28 @@ data class LinkableItem(
     val name: String
 )
 
-enum class LinkCategory(val keyword: String, val label: String) {
-    PG("PG", "Personaggi Giocanti"),
-    NPC("NPC", "Personaggi Non Giocanti"),
-    LUOGHI("LUOGHI", "Luoghi"),
-    MAPPE("MAPPE", "Mappe e Immagini"),
-    SEGRETI("SEGRETI", "Segreti"),
-    INDIZI("INDIZI", "Indizi"),
-    NOTE("NOTE", "Note"),
-    SESSIONI("SESSIONI", "Sessioni"),
-    FAZIONI("FAZIONI", "Fazioni"),
-    EVENTI("EVENTI", "Eventi"),
-    SCENE("SCENE", "Scene"),
-    OGGETTI("OGGETTI", "Oggetti")
+enum class LinkCategory(val keywords: List<String>, val label: String) {
+    PG(listOf("PG", "PC"), "Personaggi Giocanti"),
+    NPC(listOf("NPC"), "Personaggi Non Giocanti"),
+    LUOGHI(listOf("LUOGHI", "LUOGO", "LOC", "LOCATION"), "Luoghi"),
+    MAPPE(listOf("MAPPE", "MAPPA", "MAP", "MAPS"), "Mappe e Immagini"),
+    SEGRETI(listOf("SEGRETI", "SEGRETO", "SECRET"), "Segreti"),
+    INDIZI(listOf("INDIZI", "INDIZIO", "CLUE"), "Indizi"),
+    NOTE(listOf("NOTE", "NOTA", "NOTE"), "Note"),
+    SESSIONI(listOf("SESSIONI", "SESSIONE", "SESSION"), "Sessioni"),
+    FAZIONI(listOf("FAZIONI", "FAZIONE", "FACTION"), "Fazioni"),
+    EVENTI(listOf("EVENTI", "EVENTO", "EVENT"), "Eventi"),
+    SCENE(listOf("SCENE", "SCENA", "SCENE"), "Scene"),
+    OGGETTI(listOf("OGGETTI", "OGGETTO", "ITEM", "OBJECT"), "Oggetti");
+
+    companion object {
+        fun findByKeyword(query: String): LinkCategory? {
+            val upper = query.uppercase()
+            return entries.find { cat ->
+                cat.keywords.any { kw -> kw.startsWith(upper) }
+            }
+        }
+    }
 }
 
 fun ChronicleDetailUiState.toLinkableItems(): List<LinkableItem> {
@@ -49,8 +58,8 @@ fun ChronicleDetailUiState.toLinkableItems(): List<LinkableItem> {
     locations.forEach { items.add(LinkableItem(it.id, "LUOGHI", it.name)) }
     secrets.forEach { items.add(LinkableItem(it.id, "SEGRETI", it.title)) }
     clues.forEach { items.add(LinkableItem(it.id, "INDIZI", it.title)) }
-    notes.forEach { items.add(LinkableItem(it.id, "NOTE", it.text.take(40).ifEmpty { "Nota" })) }
-    sessions.forEach { items.add(LinkableItem(it.id, "SESSIONI", "Sessione #${it.number}")) }
+    notes.forEach { items.add(LinkableItem(it.id, "NOTE", it.text.take(40).ifEmpty { "Note" })) }
+    sessions.forEach { items.add(LinkableItem(it.id, "SESSIONI", "Session #${it.number}")) }
     factions.forEach { items.add(LinkableItem(it.id, "FAZIONI", it.name)) }
     events.forEach { items.add(LinkableItem(it.id, "EVENTI", it.title)) }
     scenes.forEach { items.add(LinkableItem(it.id, "SCENE", it.title)) }
@@ -102,8 +111,9 @@ fun LinkedTextEditor(
 
     val filteredItems = remember(activeCategory, query, linkableItems) {
         if (activeCategory == null) return@remember emptyList()
+        val typeUpper = activeCategory!!.keywords.first().uppercase()
         linkableItems.filter { item ->
-            item.type.equals(activeCategory!!.keyword, ignoreCase = true) &&
+            item.type.uppercase() == typeUpper &&
                     item.name.contains(query, ignoreCase = true)
         }
     }
@@ -122,9 +132,7 @@ fun LinkedTextEditor(
 
                     if (atMatch != null) {
                         val typed = atMatch.groupValues[1].uppercase()
-                        val matchedCategory = LinkCategory.entries.find {
-                            it.keyword.startsWith(typed, ignoreCase = true)
-                        }
+                        val matchedCategory = LinkCategory.findByKeyword(typed)
                         if (matchedCategory != null && typed.isNotEmpty()) {
                             activeCategory = matchedCategory
                             query = ""
@@ -137,9 +145,7 @@ fun LinkedTextEditor(
                             debounceJob?.cancel()
                             debounceJob = scope.launch {
                                 delay(150)
-                                val cat = LinkCategory.entries.find {
-                                    it.keyword.startsWith(typed, ignoreCase = true)
-                                }
+                                val cat = LinkCategory.findByKeyword(typed)
                                 if (cat != null) {
                                     activeCategory = cat
                                     query = ""
