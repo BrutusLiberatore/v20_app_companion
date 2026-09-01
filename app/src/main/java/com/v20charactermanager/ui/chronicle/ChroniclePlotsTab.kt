@@ -27,6 +27,7 @@ fun ChroniclePlotsTab(
     onCreateCharacterNote: (String, String, String) -> Unit,
     onUpdateCharacterNote: (ChronicleCharacterNote) -> Unit,
     onDeleteCharacterNote: (String) -> Unit,
+    onLinkClick: (String, String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     var showAddPlotDialog by remember { mutableStateOf(false) }
@@ -83,7 +84,8 @@ fun ChroniclePlotsTab(
                 note = note,
                 linkableItems = uiState.toLinkableItems(),
                 onUpdate = onUpdateNote,
-                onDelete = { onDeleteNote(note.id) }
+                onDelete = { onDeleteNote(note.id) },
+                onLinkClick = onLinkClick
             )
         }
 
@@ -182,7 +184,8 @@ private fun EditableNoteCard(
     note: ChronicleNote,
     linkableItems: List<LinkableItem>,
     onUpdate: (ChronicleNote) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onLinkClick: (String, String) -> Unit = { _, _ -> }
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var editText by remember(note.text) { mutableStateOf(note.text) }
@@ -249,7 +252,7 @@ private fun EditableNoteCard(
                     LinkedTextDisplay(
                         text = note.text,
                         linkableItems = linkableItems,
-                        onLinkClick = { _, _ -> }
+                        onLinkClick = onLinkClick
                     )
                 } else {
                     Text(

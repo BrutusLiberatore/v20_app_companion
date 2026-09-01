@@ -42,6 +42,8 @@ fun ChronicleMoreTab(
     onDeleteSession: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showAddSessionDialog by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -123,22 +125,93 @@ fun ChronicleMoreTab(
         // Sessions
         item {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.chronicle_tab_sessions),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.chronicle_tab_sessions),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = { showAddSessionDialog = true }) {
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_add))
+                }
+            }
         }
 
-        items(uiState.sessions) { session ->
+        items(uiState.sessions, key = { it.id }) { session ->
+            var showEditDialog by remember { mutableStateOf(false) }
+            var showDeleteConfirm by remember { mutableStateOf(false) }
+
             ListItem(
                 headlineContent = {
                     Text("${stringResource(R.string.session_title)} ${session.number}: ${session.title}")
                 },
-                supportingContent = { Text(session.status.name) },
-                leadingContent = { Icon(Icons.Filled.DateRange, contentDescription = null) }
+                supportingContent = {
+                    Text(
+                        text = session.status.name,
+                        color = when (session.status) {
+                            SessionStatus.ACTIVE -> MaterialTheme.colorScheme.primary
+                            SessionStatus.COMPLETED -> MaterialTheme.colorScheme.outline
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+                },
+                leadingContent = { Icon(Icons.Filled.DateRange, contentDescription = null) },
+                trailingContent = {
+                    Row {
+                        IconButton(onClick = { showEditDialog = true }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.action_edit), modifier = Modifier.size(18.dp))
+                        }
+                        IconButton(onClick = { showDeleteConfirm = true }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.action_delete), modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
             )
+
+            if (showEditDialog) {
+                var editTitle by remember { mutableStateOf(session.title) }
+                AlertDialog(
+                    onDismissRequest = { showEditDialog = false },
+                    title = { Text(stringResource(R.string.session_title) + " #${session.number}") },
+                    text = {
+                        OutlinedTextField(
+                            value = editTitle,
+                            onValueChange = { editTitle = it },
+                            label = { Text(stringResource(R.string.title_hint)) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            onUpdateSession(session.copy(title = editTitle, updatedAt = System.currentTimeMillis()))
+                            showEditDialog = false
+                        }) { Text(stringResource(R.string.save)) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showEditDialog = false }) { Text(stringResource(R.string.action_cancel)) }
+                    }
+                )
+            }
+
+            if (showDeleteConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteConfirm = false },
+                    title = { Text(stringResource(R.string.action_delete)) },
+                    text = { Text(stringResource(R.string.confirm_delete)) },
+                    confirmButton = {
+                        TextButton(onClick = { onDeleteSession(session.id); showDeleteConfirm = false }) {
+                            Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.action_cancel)) }
+                    }
+                )
+            }
         }
 
         // Secrets
@@ -180,5 +253,32 @@ fun ChronicleMoreTab(
                 )
             }
         }
+    }
+
+    if (showAddSessionDialog) {
+        var sessionTitle by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showAddSessionDialog = false },
+            title = { Text(stringResource(R.string.session_create)) },
+            text = {
+                OutlinedTextField(
+                    value = sessionTitle,
+                    onValueChange = { sessionTitle = it },
+                    label = { Text(stringResource(R.string.title_hint)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (sessionTitle.isNotBlank()) {
+                        uiState.chronicle?.let { onCreateSession(it.id, sessionTitle) }
+                        showAddSessionDialog = false
+                    }
+                }) { Text(stringResource(R.string.action_create)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddSessionDialog = false }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
     }
 }

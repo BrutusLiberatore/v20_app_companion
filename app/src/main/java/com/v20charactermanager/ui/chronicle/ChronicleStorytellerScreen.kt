@@ -62,7 +62,8 @@ fun ChronicleStorytellerScreen(
     onUpdateEvent: (ChronicleEvent) -> Unit,
     onAddCharacter: (String, String, ChronicleMemberRole) -> Unit,
     onRemoveCharacter: (String, String) -> Unit,
-    onNavigateToDice: () -> Unit
+    onNavigateToDice: () -> Unit,
+    onLinkClick: (String, String) -> Unit
 ) {
     var selectedNavItem by remember { mutableStateOf(ChronicleBottomNavItem.LIVE) }
     var showSceneDeck by remember { mutableStateOf(false) }
@@ -133,6 +134,7 @@ fun ChronicleStorytellerScreen(
                     onCreateNpc = onCreateNpc,
                     onDeleteNpc = onDeleteNpc,
                     onUpdateNpc = onUpdateNpc,
+                    onLinkClick = onLinkClick,
                     modifier = Modifier.padding(padding)
                 )
             }
@@ -148,6 +150,7 @@ fun ChronicleStorytellerScreen(
                     onCreateCharacterNote = onCreateCharacterNote,
                     onUpdateCharacterNote = onUpdateCharacterNote,
                     onDeleteCharacterNote = onDeleteCharacterNote,
+                    onLinkClick = onLinkClick,
                     modifier = Modifier.padding(padding)
                 )
             }

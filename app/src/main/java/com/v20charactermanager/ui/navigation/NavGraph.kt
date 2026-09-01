@@ -684,6 +684,20 @@ fun V20NavGraph(
                 },
                 onNavigateToDice = {
                     navController.navigate(Routes.dice())
+                },
+                onLinkClick = { type, id ->
+                    when (type) {
+                        "PG" -> navController.navigate(Routes.sheet(id))
+                        "NPC" -> { /* NPC detail handled by sheet */ }
+                        "LUOGHI" -> { /* Location detail */ }
+                        "SEGRETI" -> { /* Secret detail */ }
+                        "INDIZI" -> { /* Clue detail */ }
+                        "NOTE" -> { /* Note stays in place */ }
+                        "SESSIONI" -> { /* Session detail */ }
+                        "FAZIONI" -> { /* Faction detail */ }
+                        "EVENTI" -> { /* Event detail */ }
+                        "SCENE" -> { /* Scene detail */ }
+                    }
                 }
             )
         }

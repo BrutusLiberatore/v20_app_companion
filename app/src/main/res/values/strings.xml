@@ -564,4 +564,5 @@
     <string name="npc_linked_to_pg">linked to PG</string>
     <string name="document_not_found">Document not found</string>
     <string name="import_document">Import Document</string>
+    <string name="session_create">New Session</string>
 </resources>
