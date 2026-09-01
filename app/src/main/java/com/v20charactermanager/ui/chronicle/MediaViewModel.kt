@@ -235,6 +235,29 @@ class MediaViewModel(
     fun selectAnnotationTool(type: AnnotationType) {
         _viewerUiState.update { it.copy(currentAnnotationType = type) }
     }
+
+    fun restoreRevision(revision: ImageRevision) {
+        val state = _viewerUiState.value
+        val docId = state.document?.id ?: return
+        viewModelScope.launch {
+            val currentAnnotations = state.annotations
+            currentAnnotations.forEach { mediaRepository.deleteAnnotation(it.id) }
+            _viewerUiState.update {
+                it.copy(
+                    undoStack = emptyList(),
+                    redoStack = emptyList()
+                )
+            }
+        }
+    }
+
+    fun toggleLayerVisibility(layerId: String) {
+        val state = _viewerUiState.value
+        val layer = state.layers.find { it.id == layerId } ?: return
+        viewModelScope.launch {
+            mediaRepository.updateLayer(layer.copy(visible = !layer.visible))
+        }
+    }
 }
 
 class MediaViewModelFactory(

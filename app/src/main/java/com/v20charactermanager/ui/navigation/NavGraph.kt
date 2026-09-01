@@ -37,6 +37,7 @@ import com.v20charactermanager.ui.chronicle.toAnnotationType
 import com.v20charactermanager.ui.chronicle.MediaLibraryScreen
 import com.v20charactermanager.ui.chronicle.MediaViewModel
 import com.v20charactermanager.ui.chronicle.MediaViewModelFactory
+import com.v20charactermanager.ui.chronicle.VersionHistoryScreen
 import com.v20charactermanager.ui.compendium.CompendiumScreen
 import com.v20charactermanager.ui.compendium.CompendiumViewModel
 import com.v20charactermanager.ui.compendium.CompendiumViewModelFactory
@@ -79,6 +80,7 @@ object Routes {
     const val CHRONICLE_DETAIL = "chronicle/{chronicleId}"
     const val MEDIA_LIBRARY = "chronicle/{chronicleId}/media"
     const val IMAGE_VIEWER = "chronicle/{chronicleId}/media/{assetId}"
+    const val VERSION_HISTORY = "chronicle/{chronicleId}/media/{assetId}/versions"
 
     fun xpSpending(characterId: String) = "xp_spending/$characterId"
 
@@ -90,6 +92,7 @@ object Routes {
     fun chronicleDetail(chronicleId: String) = "chronicle/$chronicleId"
     fun mediaLibrary(chronicleId: String) = "chronicle/$chronicleId/media"
     fun imageViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId"
+    fun versionHistory(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId/versions"
 }
 
 @Composable
@@ -724,9 +727,40 @@ fun V20NavGraph(
                             )
                         )
                     },
-                    onLayerTap = { layerId -> mediaViewModel.setActiveLayer(layerId) }
+                    onLayerTap = { layerId -> mediaViewModel.setActiveLayer(layerId) },
+                    onNavigateToHistory = {
+                        val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: return@ImageViewerScreen
+                        navController.navigate(Routes.versionHistory(chronicleId, assetId))
+                    }
                 )
             }
+        }
+
+        composable(
+            route = Routes.VERSION_HISTORY,
+            arguments = listOf(
+                navArgument("chronicleId") { type = NavType.StringType },
+                navArgument("assetId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val assetId = backStackEntry.arguments?.getString("assetId") ?: return@composable
+            val mediaViewModel: MediaViewModel = viewModel(
+                factory = MediaViewModelFactory(
+                    appContainer.mediaRepository,
+                    context.applicationContext
+                )
+            )
+            val uiState by mediaViewModel.viewerUiState.collectAsState()
+            LaunchedEffect(assetId) { mediaViewModel.loadAssetForViewing(assetId) }
+
+            VersionHistoryScreen(
+                revisions = uiState.revisions,
+                onRestore = { revision ->
+                    mediaViewModel.restoreRevision(revision)
+                    navController.popBackStack()
+                },
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

@@ -458,6 +458,14 @@
     <string name="draw_tool_pin_desc">Inserisci pin collegati ad entità</string>
     <string name="draw_tool_eraser_desc">Cancella annotazioni</string>
     <string name="draw_no_annotations">Nessuna annotazione ancora</string>
+    <string name="version_history">Cronologia Versioni</string>
+    <string name="version_revision">Revisione %1$d</string>
+    <string name="version_revision_desc">%1$s — %2$s</string>
+    <string name="version_restore">Ripristina</string>
+    <string name="version_restore_confirm">Ripristinare questa versione? Le annotazioni attuali verranno sostituite.</string>
+    <string name="version_no_revisions">Nessuna revisione salvata ancora</string>
+    <string name="version_snapshot_saved">Istantanea salvata</string>
+    <string name="version_session_link">Sessione: %1$s</string>
     <string name="media_type_map">Mappa</string>
     <string name="media_type_portrait">Ritratto</string>
     <string name="media_type_document">Documento</string>

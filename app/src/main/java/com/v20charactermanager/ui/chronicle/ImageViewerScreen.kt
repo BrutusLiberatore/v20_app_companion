@@ -49,7 +49,8 @@ fun ImageViewerScreen(
     onSave: () -> Unit,
     onClearLayer: () -> Unit,
     onStrokeComplete: (ImageAnnotation) -> Unit,
-    onLayerTap: (String) -> Unit
+    onLayerTap: (String) -> Unit,
+    onNavigateToHistory: () -> Unit = {}
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offsetX by remember { mutableFloatStateOf(0f) }
@@ -85,6 +86,9 @@ fun ImageViewerScreen(
                                 contentDescription = if (isDrawingEnabled) stringResource(R.string.draw_undo) else stringResource(R.string.draw_tool_pen),
                                 tint = if (isDrawingEnabled) V20GreenBright else V20Ink
                             )
+                        }
+                        IconButton(onClick = onNavigateToHistory) {
+                            Icon(Icons.Default.History, contentDescription = stringResource(R.string.version_history), tint = V20Ink)
                         }
                         IconButton(onClick = onTogglePresentation) {
                             Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.viewer_presentation), tint = V20GreenBright)

@@ -458,6 +458,14 @@
     <string name="draw_tool_pin_desc">Place entity-linked pins</string>
     <string name="draw_tool_eraser_desc">Erase annotations</string>
     <string name="draw_no_annotations">No annotations yet</string>
+    <string name="version_history">Version History</string>
+    <string name="version_revision">Revision %1$d</string>
+    <string name="version_revision_desc">%1$s — %2$s</string>
+    <string name="version_restore">Restore</string>
+    <string name="version_restore_confirm">Restore this version? Current annotations will be replaced.</string>
+    <string name="version_no_revisions">No saved revisions yet</string>
+    <string name="version_snapshot_saved">Snapshot saved</string>
+    <string name="version_session_link">Session: %1$s</string>
     <string name="media_type_map">Map</string>
     <string name="media_type_portrait">Portrait</string>
     <string name="media_type_document">Document</string>
