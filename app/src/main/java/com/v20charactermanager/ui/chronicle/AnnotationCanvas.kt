@@ -28,11 +28,11 @@ data class DrawToolState(
     val opacity: Float = 1f
 )
 
-data class CanvasDrawState(
-    val currentPoints: MutableList<Offset> = mutableListOf(),
-    var startPoint: Offset? = null,
+class CanvasDrawState {
+    val currentPoints: MutableList<Offset> = mutableListOf()
+    var startPoint: Offset? = null
     var currentEnd: Offset? = null
-)
+}
 
 fun AnnotationType.toDrawTool(): DrawTool = when (this) {
     AnnotationType.PEN_STROKE -> DrawTool.PEN

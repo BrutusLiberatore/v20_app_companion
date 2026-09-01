@@ -94,23 +94,29 @@ class MediaViewModel(
         viewModelScope.launch {
             val asset = mediaRepository.getAssetById(assetId) ?: return@launch
             _viewerUiState.update { it.copy(asset = asset, isLoading = true) }
-            mediaRepository.getDocumentByAssetId(assetId).collect { doc ->
+            mediaRepository.getDocumentByAssetId(assetId).flatMapLatest { doc ->
                 if (doc != null) {
-                    _viewerUiState.update { state ->
-                        state.copy(document = doc, activeLayerId = state.activeLayerId ?: state.layers.firstOrNull()?.id)
+                    _viewerUiState.update { it.copy(document = doc) }
+                    combine(
+                        mediaRepository.getLayersByDocument(doc.id),
+                        mediaRepository.getAnnotationsByDocument(doc.id),
+                        mediaRepository.getRevisionsByDocument(doc.id)
+                    ) { layers, annotations, revisions ->
+                        Triple(layers, annotations, revisions)
                     }
-                    mediaRepository.getLayersByDocument(doc.id).collect { layers ->
-                        _viewerUiState.update { state ->
-                            val newActiveLayer = state.activeLayerId ?: layers.firstOrNull()?.id
-                            state.copy(layers = layers, activeLayerId = newActiveLayer)
-                        }
-                    }
-                    mediaRepository.getAnnotationsByDocument(doc.id).collect { annotations ->
-                        _viewerUiState.update { it.copy(annotations = annotations, isLoading = false) }
-                    }
-                    mediaRepository.getRevisionsByDocument(doc.id).collect { revisions ->
-                        _viewerUiState.update { it.copy(revisions = revisions) }
-                    }
+                } else {
+                    flowOf(Triple(emptyList(), emptyList(), emptyList()))
+                }
+            }.collect { (layers, annotations, revisions) ->
+                _viewerUiState.update { state ->
+                    val newActiveLayer = state.activeLayerId ?: layers.firstOrNull()?.id
+                    state.copy(
+                        layers = layers,
+                        annotations = annotations,
+                        revisions = revisions,
+                        activeLayerId = newActiveLayer,
+                        isLoading = false
+                    )
                 }
             }
         }
