@@ -25,6 +25,7 @@ fun ChroniclePeopleTab(
     onCreateNpc: (String, String, CreatureType, String, String?) -> Unit,
     onDeleteNpc: (String) -> Unit,
     onUpdateNpc: (NpcEntry) -> Unit,
+    onOpenSheet: (String) -> Unit = {},
     onLinkClick: (String, String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
@@ -107,7 +108,10 @@ fun ChroniclePeopleTab(
                 selectedNpc = null
             },
             onCreateSheet = { /* TODO: create character from NPC */ },
-            onOpenSheet = { /* TODO: navigate to sheet */ },
+            onOpenSheet = { characterId ->
+                onOpenSheet(characterId)
+                selectedNpc = null
+            },
             onLinkClick = onLinkClick,
             onDismiss = { selectedNpc = null }
         )

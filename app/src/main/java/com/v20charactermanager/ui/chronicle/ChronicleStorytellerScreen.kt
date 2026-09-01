@@ -146,6 +146,7 @@ fun ChronicleStorytellerScreen(
                     onCreateNpc = onCreateNpc,
                     onDeleteNpc = onDeleteNpc,
                     onUpdateNpc = onUpdateNpc,
+                    onOpenSheet = onCharacterClick,
                     onLinkClick = onLinkClick,
                     modifier = Modifier.padding(padding)
                 )
