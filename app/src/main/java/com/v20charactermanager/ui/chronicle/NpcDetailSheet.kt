@@ -18,7 +18,11 @@ import com.v20charactermanager.domain.model.*
 @Composable
 fun NpcDetailSheet(
     npc: NpcEntry,
+    linkableItems: List<LinkableItem>,
     onUpdate: (NpcEntry) -> Unit,
+    onCreateSheet: (NpcEntry) -> Unit,
+    onOpenSheet: (String) -> Unit,
+    onLinkClick: (String, String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(npc.name) }
@@ -102,17 +106,26 @@ fun NpcDetailSheet(
                 color = MaterialTheme.colorScheme.primary
             )
             if (isEditing) {
-                OutlinedTextField(
+                LinkedTextEditor(
                     value = description,
                     onValueChange = { description = it },
+                    linkableItems = linkableItems,
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2
                 )
             } else {
-                Text(
-                    text = description.ifEmpty { "—" },
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                if (description.contains("[")) {
+                    LinkedTextDisplay(
+                        text = description,
+                        linkableItems = linkableItems,
+                        onLinkClick = onLinkClick
+                    )
+                } else {
+                    Text(
+                        text = description.ifEmpty { "—" },
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -124,18 +137,27 @@ fun NpcDetailSheet(
                 color = MaterialTheme.colorScheme.primary
             )
             if (isEditing) {
-                OutlinedTextField(
+                LinkedTextEditor(
                     value = notes,
                     onValueChange = { notes = it },
+                    linkableItems = linkableItems,
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
-                    placeholder = { Text(stringResource(R.string.npc_notes_hint)) }
+                    placeholder = stringResource(R.string.npc_notes_hint)
                 )
             } else {
-                Text(
-                    text = notes.ifEmpty { "—" },
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                if (notes.contains("[")) {
+                    LinkedTextDisplay(
+                        text = notes,
+                        linkableItems = linkableItems,
+                        onLinkClick = onLinkClick
+                    )
+                } else {
+                    Text(
+                        text = notes.ifEmpty { "—" },
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
 
             if (isEditing) {
@@ -158,6 +180,31 @@ fun NpcDetailSheet(
                     Icon(Icons.Filled.Save, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.save))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+
+            if (npc.characterId != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = { onOpenSheet(npc.characterId) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.Description, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.npc_open_sheet))
+                }
+            } else {
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = { onCreateSheet(npc) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.npc_create_sheet))
                 }
             }
         }

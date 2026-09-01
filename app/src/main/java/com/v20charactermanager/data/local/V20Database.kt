@@ -37,7 +37,7 @@ import com.v20charactermanager.data.local.entity.*
         QuickNoteEntity::class,
         SessionEventEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -566,6 +566,12 @@ abstract class V20Database : RoomDatabase() {
             }
         }
 
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE npcs ADD COLUMN characterId TEXT")
+            }
+        }
+
         fun getDatabase(context: Context): V20Database {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -573,7 +579,7 @@ abstract class V20Database : RoomDatabase() {
                     V20Database::class.java,
                     "v20_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                 // NOTE: fallbackToDestructiveMigration should only be used as a last resort
                 // for unrecoverable errors. Always prefer proper versioned migrations above.
                 .fallbackToDestructiveMigration()

@@ -556,4 +556,6 @@
     <string name="npc_role">Role</string>
     <string name="npc_description">Description</string>
     <string name="npc_notes">Narrator Notes</string>
+    <string name="npc_open_sheet">Open Character Sheet</string>
+    <string name="npc_create_sheet">Create Full Character Sheet</string>
 </resources>

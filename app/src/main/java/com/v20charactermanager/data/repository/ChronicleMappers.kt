@@ -75,6 +75,7 @@ fun NpcEntity.toDomain() = NpcEntry(
     personality = personality, motivation = motivation, narratorNotes = narratorNotes,
     imagePath = imagePath,
     status = NpcStatus.valueOf(status), type = NpcType.valueOf(type),
+    characterId = characterId,
     createdAt = createdAt, updatedAt = updatedAt
 )
 
@@ -85,6 +86,7 @@ fun NpcEntry.toEntity() = NpcEntity(
     personality = personality, motivation = motivation, narratorNotes = narratorNotes,
     imagePath = imagePath,
     status = status.name, type = type.name,
+    characterId = characterId,
     createdAt = createdAt, updatedAt = updatedAt
 )
 

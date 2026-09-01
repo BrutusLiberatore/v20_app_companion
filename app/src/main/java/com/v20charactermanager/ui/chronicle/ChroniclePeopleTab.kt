@@ -97,12 +97,17 @@ fun ChroniclePeopleTab(
 
     // NPC Detail Sheet
     selectedNpc?.let { npc ->
+        val linkableItems = remember(uiState) { uiState.toLinkableItems() }
         NpcDetailSheet(
             npc = npc,
+            linkableItems = linkableItems,
             onUpdate = { updatedNpc ->
                 onUpdateNpc(updatedNpc)
                 selectedNpc = null
             },
+            onCreateSheet = { /* TODO: create character from NPC */ },
+            onOpenSheet = { /* TODO: navigate to sheet */ },
+            onLinkClick = { _, _ -> /* TODO: navigate to linked item */ },
             onDismiss = { selectedNpc = null }
         )
     }

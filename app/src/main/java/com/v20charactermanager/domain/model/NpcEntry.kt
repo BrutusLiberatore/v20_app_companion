@@ -31,6 +31,7 @@ data class NpcEntry(
     val imagePath: String? = null,
     val status: NpcStatus = NpcStatus.ACTIVE,
     val type: NpcType = NpcType.QUICK,
+    val characterId: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

@@ -33,6 +33,7 @@ data class NpcEntity(
     val imagePath: String? = null,
     val status: String = "ACTIVE",
     val type: String = "QUICK",
+    val characterId: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
