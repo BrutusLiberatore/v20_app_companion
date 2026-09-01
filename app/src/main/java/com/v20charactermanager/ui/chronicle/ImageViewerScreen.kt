@@ -57,6 +57,7 @@ fun ImageViewerScreen(
     var offsetY by remember { mutableFloatStateOf(0f) }
     var showToolbar by remember { mutableStateOf(true) }
     var showLayersPanel by remember { mutableStateOf(false) }
+    var isPresentationMode by remember { mutableStateOf(false) }
 
     val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
         if (!isDrawingEnabled) {
@@ -66,9 +67,19 @@ fun ImageViewerScreen(
         }
     }
 
+    val visibleAnnotations = remember(annotations, layers, isPresentationMode) {
+        if (isPresentationMode) {
+            annotations.filter { ann -> layers.any { it.id == ann.layerId && it.visible && it.visibility == Visibility.PUBLIC } }
+        } else {
+            annotations.filter { ann -> layers.any { it.id == ann.layerId && it.visible } }
+        }
+    }
+
+    val showAnyUi = showToolbar && !isPresentationMode
+
     Scaffold(
         topBar = {
-            if (showToolbar) {
+            if (showAnyUi) {
                 TopAppBar(
                     title = { Text(text = mediaAsset.title, color = V20Ink, fontWeight = FontWeight.Bold) },
                     navigationIcon = {
@@ -90,8 +101,11 @@ fun ImageViewerScreen(
                         IconButton(onClick = onNavigateToHistory) {
                             Icon(Icons.Default.History, contentDescription = stringResource(R.string.version_history), tint = V20Ink)
                         }
-                        IconButton(onClick = onTogglePresentation) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.viewer_presentation), tint = V20GreenBright)
+                        IconButton(onClick = {
+                            isPresentationMode = true
+                            onTogglePresentation()
+                        }) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.presentation_mode), tint = V20GreenBright)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)
@@ -99,7 +113,7 @@ fun ImageViewerScreen(
             }
         },
         bottomBar = {
-            if (showToolbar && isDrawingEnabled) {
+            if (showAnyUi && isDrawingEnabled) {
                 AnnotationToolbar(
                     toolState = toolState,
                     canUndo = canUndo,
@@ -113,7 +127,7 @@ fun ImageViewerScreen(
                     onSave = onSave,
                     onClearLayer = onClearLayer
                 )
-            } else if (showToolbar) {
+            } else if (showAnyUi) {
                 Surface(color = V20Surface2, modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.padding(12.dp).fillMaxWidth(),
@@ -142,9 +156,16 @@ fun ImageViewerScreen(
                 .padding(padding)
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onTap = { if (!isDrawingEnabled) showToolbar = !showToolbar },
+                        onTap = {
+                            if (isPresentationMode) {
+                                isPresentationMode = false
+                                onTogglePresentation()
+                            } else if (!isDrawingEnabled) {
+                                showToolbar = !showToolbar
+                            }
+                        },
                         onDoubleTap = {
-                            if (!isDrawingEnabled) {
+                            if (!isDrawingEnabled && !isPresentationMode) {
                                 if (scale > 1.5f) {
                                     scale = 1f; offsetX = 0f; offsetY = 0f
                                 } else {
@@ -177,10 +198,10 @@ fun ImageViewerScreen(
             )
 
             AnnotationCanvas(
-                annotations = annotations.filter { layer -> layers.any { it.id == layer.layerId && it.visible } },
+                annotations = visibleAnnotations,
                 toolState = toolState,
                 activeLayerId = activeLayerId,
-                isDrawingEnabled = isDrawingEnabled,
+                isDrawingEnabled = isDrawingEnabled && !isPresentationMode,
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer(
@@ -193,7 +214,7 @@ fun ImageViewerScreen(
                 onPinTap = { }
             )
 
-            if (showLayersPanel) {
+            if (showLayersPanel && !isPresentationMode) {
                 Surface(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -256,6 +277,23 @@ fun ImageViewerScreen(
                             )
                         }
                     }
+                }
+            }
+
+            if (isPresentationMode) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(8.dp)
+                        .background(V20Surface.copy(alpha = 0.7f), shape = MaterialTheme.shapes.small)
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.presentation_active),
+                        color = V20GoldBright,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

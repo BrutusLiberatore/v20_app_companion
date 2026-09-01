@@ -466,6 +466,9 @@
     <string name="version_no_revisions">Nessuna revisione salvata ancora</string>
     <string name="version_snapshot_saved">Istantanea salvata</string>
     <string name="version_session_link">Sessione: %1$s</string>
+    <string name="presentation_mode">Modalità Presentazione</string>
+    <string name="presentation_exit">Tocca per uscire dalla presentazione</string>
+    <string name="presentation_active">PRESENTAZIONE</string>
     <string name="media_type_map">Mappa</string>
     <string name="media_type_portrait">Ritratto</string>
     <string name="media_type_document">Documento</string>
