@@ -98,7 +98,7 @@ fun CharacterLiveCard(
                 // Willpower
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(R.string.sheet_willpower),
+                        text = stringResource(R.string.sheet_willpower_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )

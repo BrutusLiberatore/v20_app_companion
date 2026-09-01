@@ -550,4 +550,10 @@
     <string name="location_no_image">No image attached to this location</string>
     <string name="location_import_image">Attach Image</string>
     <string name="media_rename">Rename Image</string>
+    <string name="sheet_willpower_label">Willpower</string>
+    <string name="npc_detail_title">NPC Detail</string>
+    <string name="npc_notes_hint">Notes about this NPC…</string>
+    <string name="npc_role">Role</string>
+    <string name="npc_description">Description</string>
+    <string name="npc_notes">Narrator Notes</string>
 </resources>

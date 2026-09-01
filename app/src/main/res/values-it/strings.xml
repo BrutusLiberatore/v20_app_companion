@@ -550,4 +550,10 @@
     <string name="location_no_image">Nessuna immagine associata a questo luogo</string>
     <string name="location_import_image">Allega Immagine</string>
     <string name="media_rename">Rinomina Immagine</string>
+    <string name="sheet_willpower_label">Volontà</string>
+    <string name="npc_detail_title">Dettaglio PNG</string>
+    <string name="npc_notes_hint">Note su questo PNG…</string>
+    <string name="npc_role">Ruolo</string>
+    <string name="npc_description">Descrizione</string>
+    <string name="npc_notes">Note del Narratore</string>
 </resources>

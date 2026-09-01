@@ -29,6 +29,7 @@ fun ChroniclePeopleTab(
 ) {
     var showAddCharacterDialog by remember { mutableStateOf(false) }
     var showAddNpcDialog by remember { mutableStateOf(false) }
+    var selectedNpc by remember { mutableStateOf<NpcEntry?>(null) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -89,9 +90,21 @@ fun ChroniclePeopleTab(
         items(uiState.npcs) { npc ->
             NpcLiveCard(
                 npc = npc,
-                onClick = { /* TODO: Open NPC detail */ }
+                onClick = { selectedNpc = npc }
             )
         }
+    }
+
+    // NPC Detail Sheet
+    selectedNpc?.let { npc ->
+        NpcDetailSheet(
+            npc = npc,
+            onUpdate = { updatedNpc ->
+                onUpdateNpc(updatedNpc)
+                selectedNpc = null
+            },
+            onDismiss = { selectedNpc = null }
+        )
     }
 
     // Add Character Dialog
