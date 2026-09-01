@@ -546,4 +546,7 @@
     <string name="chronicle_add_plot">Aggiungi Trama</string>
     <string name="chronicle_no_characters_available">Nessun personaggio disponibile da aggiungere</string>
     <string name="name_hint">Nome</string>
+    <string name="location_image_subtitle">Mappa &amp; Annotazioni</string>
+    <string name="location_no_image">Nessuna immagine associata a questo luogo</string>
+    <string name="location_import_image">Allega Immagine</string>
 </resources>

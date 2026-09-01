@@ -24,6 +24,7 @@ fun ChronicleMoreTab(
     onCreateLocation: (String, String) -> Unit,
     onDeleteLocation: (String) -> Unit,
     onUpdateLocation: (ChronicleLocation) -> Unit,
+    onLocationImageClick: (String, String) -> Unit,
     onCreateFaction: (String, String) -> Unit,
     onDeleteFaction: (String) -> Unit,
     onUpdateFaction: (Faction) -> Unit,
@@ -80,8 +81,17 @@ fun ChronicleMoreTab(
                 headlineContent = { Text(location.name) },
                 leadingContent = { Icon(Icons.Filled.LocationOn, contentDescription = null) },
                 trailingContent = {
-                    IconButton(onClick = { onDeleteLocation(location.id) }) {
-                        Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.action_delete))
+                    Row {
+                        IconButton(onClick = {
+                            uiState.chronicle?.let { chronicle ->
+                                onLocationImageClick(chronicle.id, location.id)
+                            }
+                        }) {
+                            Icon(Icons.Filled.Image, contentDescription = stringResource(R.string.location_import_image))
+                        }
+                        IconButton(onClick = { onDeleteLocation(location.id) }) {
+                            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.action_delete))
+                        }
                     }
                 }
             )

@@ -546,4 +546,7 @@
     <string name="chronicle_add_plot">Add Plot</string>
     <string name="chronicle_no_characters_available">No characters available to add</string>
     <string name="name_hint">Name</string>
+    <string name="location_image_subtitle">Map &amp; Annotations</string>
+    <string name="location_no_image">No image attached to this location</string>
+    <string name="location_import_image">Attach Image</string>
 </resources>

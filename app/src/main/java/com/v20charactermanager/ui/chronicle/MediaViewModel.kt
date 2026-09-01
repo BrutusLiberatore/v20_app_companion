@@ -51,6 +51,15 @@ class MediaViewModel(
         }
     }
 
+    fun findAssetForLocation(chronicleId: String, locationId: String, onResult: (MediaAsset?) -> Unit) {
+        viewModelScope.launch {
+            mediaRepository.getAssetsByChronicle(chronicleId).first { true }
+                .find { asset ->
+                    asset.linkedEntityIds.contains(locationId)
+                }?.let { onResult(it) } ?: onResult(null)
+        }
+    }
+
     fun filterByCategory(category: MediaAssetCategory) {
         _libraryUiState.update { it.copy(selectedCategory = category) }
     }
@@ -131,6 +140,48 @@ class MediaViewModel(
                     redoStack = emptyList()
                 )
             }
+        }
+    }
+
+    fun saveAnnotationImmediate(annotation: ImageAnnotation) {
+        viewModelScope.launch {
+            mediaRepository.updateAnnotation(annotation.copy(modifiedAt = System.currentTimeMillis()))
+        }
+    }
+
+    fun importImageForLocation(chronicleId: String, locationId: String, uri: Uri, title: String) {
+        viewModelScope.launch {
+            val assetId = UUID.randomUUID().toString()
+            val savedPath = ChronicleImageManager.saveImage(context, assetId, uri) ?: return@launch
+            val asset = MediaAsset(
+                id = assetId, chronicleId = chronicleId,
+                type = MediaAssetType.OTHER, title = title,
+                originalFilePath = savedPath,
+                linkedEntityIds = listOf(locationId),
+                visibility = Visibility.GM_ONLY
+            )
+            mediaRepository.insertAsset(asset)
+            val doc = ImageDocument(
+                id = UUID.randomUUID().toString(),
+                mediaAssetId = assetId
+            )
+            mediaRepository.insertDocument(doc)
+            val baseLayer = ImageLayer(
+                id = UUID.randomUUID().toString(),
+                imageDocumentId = doc.id,
+                name = "Mappa",
+                visibility = Visibility.GM_ONLY,
+                order = 0
+            )
+            mediaRepository.insertLayer(baseLayer)
+            val annotationLayer = ImageLayer(
+                id = UUID.randomUUID().toString(),
+                imageDocumentId = doc.id,
+                name = "Annotazioni",
+                visibility = Visibility.PUBLIC,
+                order = 1
+            )
+            mediaRepository.insertLayer(annotationLayer)
         }
     }
 

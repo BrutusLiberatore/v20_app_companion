@@ -21,13 +21,16 @@ import androidx.navigation.navArgument
 import com.v20charactermanager.data.di.AppContainer
 import com.v20charactermanager.util.LocaleHelper
 import com.v20charactermanager.domain.model.CharacterRandomizer
+import com.v20charactermanager.domain.model.ChronicleLocation
 import com.v20charactermanager.domain.model.CreatureType
+import com.v20charactermanager.domain.model.MediaAsset
 import com.v20charactermanager.domain.model.MediaAssetType
 import com.v20charactermanager.domain.model.PlotType
 import com.v20charactermanager.domain.model.Visibility
 import com.v20charactermanager.ui.compendium.CompendiumDetailScreen
 import com.v20charactermanager.ui.chronicle.ChronicleDetailScreen
 import com.v20charactermanager.ui.chronicle.ChronicleStorytellerScreen
+import com.v20charactermanager.ui.chronicle.LocationImageScreen
 import com.v20charactermanager.ui.chronicle.ChronicleListScreen
 import com.v20charactermanager.ui.chronicle.ChronicleViewModel
 import com.v20charactermanager.ui.chronicle.ChronicleViewModelFactory
@@ -82,6 +85,7 @@ object Routes {
     const val MEDIA_LIBRARY = "chronicle/{chronicleId}/media"
     const val IMAGE_VIEWER = "chronicle/{chronicleId}/media/{assetId}"
     const val VERSION_HISTORY = "chronicle/{chronicleId}/media/{assetId}/versions"
+    const val LOCATION_IMAGE = "chronicle/{chronicleId}/location/{locationId}/image"
 
     fun xpSpending(characterId: String) = "xp_spending/$characterId"
 
@@ -94,6 +98,7 @@ object Routes {
     fun mediaLibrary(chronicleId: String) = "chronicle/$chronicleId/media"
     fun imageViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId"
     fun versionHistory(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId/versions"
+    fun locationImage(chronicleId: String, locationId: String) = "chronicle/$chronicleId/location/$locationId/image"
 }
 
 @Composable
@@ -625,6 +630,9 @@ fun V20NavGraph(
                 onUpdateLocation = { location ->
                     viewModel.updateLocation(location)
                 },
+                onLocationImageClick = { chronicleId, locationId ->
+                    navController.navigate(Routes.locationImage(chronicleId, locationId))
+                },
                 onCreateFaction = { cId, name ->
                     viewModel.createFaction(cId, name)
                 },
@@ -799,6 +807,100 @@ fun V20NavGraph(
                 },
                 onBack = { navController.popBackStack() }
             )
+        }
+
+        composable(
+            route = Routes.LOCATION_IMAGE,
+            arguments = listOf(
+                navArgument("chronicleId") { type = NavType.StringType },
+                navArgument("locationId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: return@composable
+            val locationId = backStackEntry.arguments?.getString("locationId") ?: return@composable
+
+            val mediaViewModel: MediaViewModel = viewModel(
+                factory = MediaViewModelFactory(
+                    appContainer.mediaRepository,
+                    context.applicationContext
+                )
+            )
+            val viewerState by mediaViewModel.viewerUiState.collectAsState()
+
+            var location by remember { mutableStateOf<ChronicleLocation?>(null) }
+            var linkedAsset by remember { mutableStateOf<MediaAsset?>(null) }
+
+            val chronicleViewModel: ChronicleViewModel = viewModel(
+                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository)
+            )
+            val chronicleUiState by chronicleViewModel.detailUiState.collectAsState()
+
+            LaunchedEffect(chronicleId) {
+                chronicleViewModel.loadChronicleDetail(chronicleId)
+            }
+
+            LaunchedEffect(chronicleId, locationId) {
+                location = chronicleUiState.locations.find { it.id == locationId }
+                mediaViewModel.findAssetForLocation(chronicleId, locationId) { asset ->
+                    linkedAsset = asset
+                    asset?.let { mediaViewModel.loadAssetForViewing(it.id) }
+                }
+            }
+
+            var drawToolState by remember { mutableStateOf(DrawToolState()) }
+
+            location?.let { loc ->
+                LocationImageScreen(
+                    location = loc,
+                    linkedAsset = linkedAsset,
+                    document = viewerState.document,
+                    layers = viewerState.layers,
+                    annotations = viewerState.annotations,
+                    toolState = drawToolState,
+                    canUndo = viewerState.undoStack.isNotEmpty(),
+                    canRedo = viewerState.redoStack.isNotEmpty(),
+                    isDrawingEnabled = viewerState.isDrawingEnabled,
+                    activeLayerId = viewerState.activeLayerId,
+                    onBack = { navController.popBackStack() },
+                    onImportImage = { uri ->
+                        mediaViewModel.importImageForLocation(chronicleId, locationId, uri, loc.name)
+                    },
+                    onToggleDrawing = { mediaViewModel.toggleDrawingMode() },
+                    onToolChange = { tool ->
+                        drawToolState = drawToolState.copy(tool = tool)
+                        mediaViewModel.selectAnnotationTool(tool.toAnnotationType())
+                    },
+                    onColorChange = { color -> drawToolState = drawToolState.copy(color = color) },
+                    onStrokeWidthChange = { w -> drawToolState = drawToolState.copy(strokeWidth = w) },
+                    onUndo = { mediaViewModel.undo() },
+                    onRedo = { mediaViewModel.redo() },
+                    onSave = {
+                        val docId = viewerState.document?.id ?: return@LocationImageScreen
+                        val assetId = linkedAsset?.id ?: return@LocationImageScreen
+                        mediaViewModel.saveRevision(
+                            imageDocumentId = docId,
+                            mediaAssetId = assetId
+                        )
+                    },
+                    onClearLayer = { mediaViewModel.clearActiveLayerAnnotations() },
+                    onStrokeComplete = { annotation ->
+                        val docId = viewerState.document?.id ?: return@LocationImageScreen
+                        mediaViewModel.saveAnnotationImmediate(
+                            annotation.copy(
+                                imageDocumentId = docId,
+                                layerId = viewerState.activeLayerId ?: annotation.layerId
+                            )
+                        )
+                    },
+                    onLayerTap = { layerId -> mediaViewModel.setActiveLayer(layerId) },
+                    onDeleteImage = {
+                        linkedAsset?.let { asset ->
+                            mediaViewModel.deleteAsset(asset.id)
+                            linkedAsset = null
+                        }
+                    }
+                )
+            }
         }
     }
 }
