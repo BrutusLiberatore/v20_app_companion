@@ -757,6 +757,9 @@ fun V20NavGraph(
                 onAssetRename = { assetId, newTitle -> mediaViewModel.renameAsset(assetId, newTitle) },
                 message = uiState.message,
                 onClearMessage = { mediaViewModel.clearMessage() },
+                errorType = uiState.errorType,
+                errorDetails = uiState.errorDetails,
+                onClearError = { mediaViewModel.clearError() },
                 onBack = { navController.popBackStack() }
             )
         }

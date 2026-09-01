@@ -20,6 +20,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.MediaAsset
+import com.v20charactermanager.ui.components.V20ErrorScreen
+import com.v20charactermanager.ui.components.V20ErrorType
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,12 +45,11 @@ fun DocumentViewerScreen(
         }
     ) { padding ->
         if (asset == null) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(stringResource(R.string.document_not_found))
-            }
+            V20ErrorScreen(
+                errorType = V20ErrorType.FILE_NOT_FOUND,
+                onGoBack = onBack,
+                modifier = Modifier.padding(padding)
+            )
         } else {
             val file = remember(asset.originalFilePath) {
                 File(asset.originalFilePath)
@@ -57,33 +58,16 @@ fun DocumentViewerScreen(
             if (file.exists() && file.extension.equals("pdf", ignoreCase = true)) {
                 PdfRendererContent(
                     file = file,
-                    modifier = Modifier.fillMaxSize().padding(padding)
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    onBack = onBack
                 )
             } else {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Filled.InsertDriveFile,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = asset.title,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = file.absolutePath,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                    }
-                }
+                V20ErrorScreen(
+                    errorType = V20ErrorType.FILE_NOT_FOUND,
+                    customMessage = "File non trovato o formato non supportato:\n${file.name}",
+                    onGoBack = onBack,
+                    modifier = Modifier.padding(padding)
+                )
             }
         }
     }
@@ -92,7 +76,8 @@ fun DocumentViewerScreen(
 @Composable
 private fun PdfRendererContent(
     file: File,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onBack: () -> Unit = {}
 ) {
     var pages by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
     var currentPage by remember { mutableIntStateOf(0) }
@@ -118,15 +103,27 @@ private fun PdfRendererContent(
             renderer.close()
             pfd.close()
             pages = bitmaps
+        } catch (e: OutOfMemoryError) {
+            error = "MEMORY:${e.message}"
         } catch (e: Exception) {
-            error = e.message
+            error = "RENDER:${e.message}"
         }
     }
 
     if (error != null) {
-        Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            Text(text = "Error: $error", color = MaterialTheme.colorScheme.error)
+        val (errorType, details) = when {
+            error?.startsWith("MEMORY:") == true ->
+                V20ErrorType.MEMORY_ERROR to error!!.removePrefix("MEMORY:")
+            else ->
+                V20ErrorType.DOCUMENT_RENDER_FAILED to error?.removePrefix("RENDER:")
         }
+        V20ErrorScreen(
+            errorType = errorType,
+            errorDetails = details,
+            onRetry = { error = null; pages = emptyList() },
+            onGoBack = onBack,
+            modifier = modifier
+        )
     } else if (pages.isEmpty()) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
             CircularProgressIndicator()

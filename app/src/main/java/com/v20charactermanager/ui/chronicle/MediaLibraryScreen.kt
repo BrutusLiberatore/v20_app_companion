@@ -27,6 +27,8 @@ import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
 import com.v20charactermanager.ui.theme.*
 import com.v20charactermanager.ui.components.V20BloodButton
+import com.v20charactermanager.ui.components.V20ErrorDialog
+import com.v20charactermanager.ui.components.V20ErrorType
 import com.v20charactermanager.ui.components.V20IvoryButton
 import java.io.File
 
@@ -42,6 +44,9 @@ fun MediaLibraryScreen(
     onAssetRename: (String, String) -> Unit,
     message: String? = null,
     onClearMessage: () -> Unit = {},
+    errorType: V20ErrorType? = null,
+    errorDetails: String? = null,
+    onClearError: () -> Unit = {},
     onBack: () -> Unit
 ) {
     var selectedCategory by remember { mutableStateOf(MediaAssetCategory.ALL) }
@@ -54,6 +59,15 @@ fun MediaLibraryScreen(
             snackbarHostState.showSnackbar(it)
             onClearMessage()
         }
+    }
+
+    if (errorType != null) {
+        V20ErrorDialog(
+            errorType = errorType,
+            errorDetails = errorDetails,
+            onDismiss = onClearError,
+            onRetry = onClearError
+        )
     }
 
     val filteredAssets = when (selectedCategory) {

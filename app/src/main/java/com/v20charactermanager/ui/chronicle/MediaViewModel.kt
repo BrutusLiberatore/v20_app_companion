@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.v20charactermanager.data.local.ChronicleImageManager
 import com.v20charactermanager.domain.model.*
 import com.v20charactermanager.domain.repository.MediaRepository
+import com.v20charactermanager.ui.components.V20ErrorType
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -18,7 +19,9 @@ data class MediaLibraryUiState(
     val assets: List<MediaAsset> = emptyList(),
     val selectedCategory: MediaAssetCategory = MediaAssetCategory.ALL,
     val isLoading: Boolean = true,
-    val message: String? = null
+    val message: String? = null,
+    val errorType: V20ErrorType? = null,
+    val errorDetails: String? = null
 )
 
 data class ImageViewerUiState(
@@ -70,11 +73,17 @@ class MediaViewModel(
     fun importImage(chronicleId: String, uri: Uri, title: String, type: MediaAssetType, visibility: Visibility) {
         viewModelScope.launch {
             try {
-                _libraryUiState.update { it.copy(isLoading = true) }
+                _libraryUiState.update { it.copy(isLoading = true, errorType = null) }
                 val assetId = UUID.randomUUID().toString()
                 val savedPath = ChronicleImageManager.saveImage(context, assetId, uri)
                 if (savedPath == null) {
-                    _libraryUiState.update { it.copy(isLoading = false, message = "Failed to save image") }
+                    _libraryUiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorType = V20ErrorType.IMAGE_SAVE_FAILED,
+                            errorDetails = "URI: $uri\nMIME: ${context.contentResolver.getType(uri)}"
+                        )
+                    }
                     return@launch
                 }
                 val asset = MediaAsset(
@@ -98,8 +107,30 @@ class MediaViewModel(
                 mediaRepository.insertLayer(layer)
                 loadAssets(chronicleId)
                 _libraryUiState.update { it.copy(isLoading = false, message = "Image imported") }
+            } catch (e: OutOfMemoryError) {
+                _libraryUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorType = V20ErrorType.MEMORY_ERROR,
+                        errorDetails = e.message
+                    )
+                }
+            } catch (e: SecurityException) {
+                _libraryUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorType = V20ErrorType.PERMISSION_DENIED,
+                        errorDetails = e.message
+                    )
+                }
             } catch (e: Exception) {
-                _libraryUiState.update { it.copy(isLoading = false, message = "Import error: ${e.message}") }
+                _libraryUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorType = V20ErrorType.IMAGE_IMPORT_FAILED,
+                        errorDetails = e.message
+                    )
+                }
             }
         }
     }
@@ -107,13 +138,19 @@ class MediaViewModel(
     fun importDocument(chronicleId: String, uri: Uri, title: String) {
         viewModelScope.launch {
             try {
-                _libraryUiState.update { it.copy(isLoading = true) }
+                _libraryUiState.update { it.copy(isLoading = true, errorType = null) }
                 val assetId = UUID.randomUUID().toString()
                 val fileName = "doc_${assetId}.pdf"
                 val savedPath = try {
                     val inputStream = context.contentResolver.openInputStream(uri)
                     if (inputStream == null) {
-                        _libraryUiState.update { it.copy(isLoading = false, message = "Cannot read file") }
+                        _libraryUiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorType = V20ErrorType.DOCUMENT_IMPORT_FAILED,
+                                errorDetails = "ContentResolver returned null stream for URI: $uri"
+                            )
+                        }
                         return@launch
                     }
                     val dir = java.io.File(context.filesDir, "chronicle_documents")
@@ -121,8 +158,23 @@ class MediaViewModel(
                     val file = java.io.File(dir, fileName)
                     file.outputStream().use { output -> inputStream.use { input -> input.copyTo(output) } }
                     file.absolutePath
+                } catch (e: SecurityException) {
+                    _libraryUiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorType = V20ErrorType.PERMISSION_DENIED,
+                            errorDetails = e.message
+                        )
+                    }
+                    return@launch
                 } catch (e: Exception) {
-                    _libraryUiState.update { it.copy(isLoading = false, message = "File copy error: ${e.message}") }
+                    _libraryUiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorType = V20ErrorType.DOCUMENT_IMPORT_FAILED,
+                            errorDetails = e.message
+                        )
+                    }
                     return@launch
                 }
 
@@ -136,13 +188,23 @@ class MediaViewModel(
                 loadAssets(chronicleId)
                 _libraryUiState.update { it.copy(isLoading = false, message = "Document imported") }
             } catch (e: Exception) {
-                _libraryUiState.update { it.copy(isLoading = false, message = "Import error: ${e.message}") }
+                _libraryUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorType = V20ErrorType.DOCUMENT_IMPORT_FAILED,
+                        errorDetails = e.message
+                    )
+                }
             }
         }
     }
 
     fun clearMessage() {
         _libraryUiState.update { it.copy(message = null) }
+    }
+
+    fun clearError() {
+        _libraryUiState.update { it.copy(errorType = null, errorDetails = null) }
     }
 
     fun deleteAsset(assetId: String) {

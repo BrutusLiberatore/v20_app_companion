@@ -569,4 +569,42 @@
     <string name="search_hint">Cerca nella cronaca…</string>
     <string name="search_no_results">Nessun risultato trovato</string>
     <string name="action_clear">Pulisci</string>
+    <!-- Schermate di Errore -->
+    <string name="error_image_import">Immagine non leggibile</string>
+    <string name="error_image_import_desc">Il file selezionato non è un\'immagine valida o è corrotto.\n\nPossibili cause:\n• Formato non supportato\n• File danneggiato\n• File non è un\'immagine</string>
+    <string name="error_image_save">Salvataggio immagine fallito</string>
+    <string name="error_image_save_desc">Impossibile salvare l\'immagine sul dispositivo.\n\nPossibili cause:\n• Spazio su disco esaurito\n• Permessi di scrittura negati\n• File di destinazione protetto</string>
+    <string name="error_document_import">Documento non leggibile</string>
+    <string name="error_document_import_desc">Impossibile leggere il file selezionato.\n\nPossibili cause:\n• Formato non supportato\n• File corrotto o danneggiato\n• Permessi di lettura negati</string>
+    <string name="error_document_render">Errore visualizzazione documento</string>
+    <string name="error_document_render_desc">Impossibile visualizzare il documento.\n\nPossibili cause:\n• PDF corrotto o danneggiato\n• Documento troppo grande per la memoria\n• Formato non completamente supportato</string>
+    <string name="error_import_format">Formato file non valido</string>
+    <string name="error_import_format_desc">Il file non è nel formato corretto per l\'importazione.\n\nPossibili cause:\n• File non esportato da questa app\n• Versione del formato incompatibile\n• File corrotto o modificato manualmente</string>
+    <string name="error_export">Esportazione fallita</string>
+    <string name="error_export_desc">Impossibile esportare i dati.\n\nPossibili cause:\n• Spazio su disco esaurito\n• Permessi di scrittura negati\n• Errore interno durante la creazione del file</string>
+    <string name="error_database">Errore del database</string>
+    <string name="error_database_desc">Si è verificato un errore con il database dell\'app.\n\nPossibili cause:\n• Database corrotto\n• Aggiornamento non riuscito\n• Spazio su disco esaurito</string>
+    <string name="error_memory">Memoria esaurita</string>
+    <string name="error_memory_desc">L\'operazione ha esaurito la memoria disponibile.\n\nPossibili cause:\n• Immagine o documento troppo grande\n• Troppi elementi aperti contemporaneamente\n• Memoria del dispositivo insufficiente</string>
+    <string name="error_permission">Permesso negato</string>
+    <string name="error_permission_desc">L\'app non ha i permessi necessari per completare l\'operazione.\n\nSoluzione:\n• Concedi i permessi di accesso ai file nelle Impostazioni del dispositivo\n• Riavvia l\'app dopo aver concesso i permessi</string>
+    <string name="error_file_not_found">File non trovato</string>
+    <string name="error_file_not_found_desc">Il file richiesto non esiste o è stato spostato.\n\nPossibili cause:\n• File eliminato dal dispositivo\n• File spostato in un\'altra cartella\n• File su un\'unità esterna non montata</string>
+    <string name="error_character_not_found">Personaggio non trovato</string>
+    <string name="error_character_not_found_desc">Il personaggio richiesto non è stato trovato nel database.\n\nPossibili cause:\n• Personaggio eliminato\n• ID non valido\n• Database corrotto</string>
+    <string name="error_validation">Dati non validi</string>
+    <string name="error_validation_desc">I dati inseriti non sono validi.\n\nPossibili cause:\n• Valori fuori range consentito\n• Campi obbligatori vuoti\n• Formato dati errato</string>
+    <string name="error_network">Connessione non disponibile</string>
+    <string name="error_network_desc">Impossibile connettersi a Internet.\n\nPossibili cause:\n• Dispositivo non connesso\n• Problemi con il server\n• Firewall o restrizioni di rete</string>
+    <string name="error_unknown">Errore imprevisto</string>
+    <string name="error_unknown_desc">Si è verificato un errore imprevisto.\n\nSe il problema persiste, prova a:\n• Riavviare l\'app\n• Aggiornare l\'app\n• Contattare lo sviluppatore</string>
+    <string name="error_retry">Riprova</string>
+    <string name="error_back">Indietro</string>
+    <string name="error_close">Chiudi</string>
+    <string name="error_details">Dettagli</string>
+    <string name="error_xp_insufficient">Punti esperienza insufficienti</string>
+    <string name="error_xp_insufficient_desc">Non hai abbastanza punti esperienza per questo acquisto.</string>
+    <string name="error_save_failed">Salvataggio fallito</string>
+    <string name="error_save_failed_desc">Impossibile salvare le modifiche. Controlla lo spazio disponibile e riprova.</string>
+
 </resources>

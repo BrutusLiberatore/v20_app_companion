@@ -569,4 +569,42 @@
     <string name="search_hint">Search chronicle…</string>
     <string name="search_no_results">No results found</string>
     <string name="action_clear">Clear</string>
+    <!-- Error Screens -->
+    <string name="error_image_import">Image not readable</string>
+    <string name="error_image_import_desc">The selected file is not a valid image or is corrupted.\n\nPossible causes:\n• Unsupported format\n• Damaged file\n• File is not an image</string>
+    <string name="error_image_save">Image save failed</string>
+    <string name="error_image_save_desc">Unable to save the image on the device.\n\nPossible causes:\n• Disk space full\n• Write permissions denied\n• Destination file is protected</string>
+    <string name="error_document_import">Document not readable</string>
+    <string name="error_document_import_desc">Unable to read the selected file.\n\nPossible causes:\n• Unsupported format\n• Corrupted or damaged file\n• Read permissions denied</string>
+    <string name="error_document_render">Document rendering error</string>
+    <string name="error_document_render_desc">Unable to display the document.\n\nPossible causes:\n• Corrupted PDF\n• Document too large for memory\n• Format not fully supported</string>
+    <string name="error_import_format">Invalid file format</string>
+    <string name="error_import_format_desc">The file is not in the correct format for import.\n\nPossible causes:\n• File not exported from this app\n• Incompatible schema version\n• File corrupted or manually edited</string>
+    <string name="error_export">Export failed</string>
+    <string name="error_export_desc">Unable to export data.\n\nPossible causes:\n• Disk space full\n• Write permissions denied\n• Internal error during file creation</string>
+    <string name="error_database">Database error</string>
+    <string name="error_database_desc">A database error occurred.\n\nPossible causes:\n• Corrupted database\n• Update failed\n• Disk space full</string>
+    <string name="error_memory">Out of memory</string>
+    <string name="error_memory_desc">The operation ran out of available memory.\n\nPossible causes:\n• Image or document too large\n• Too many items open at once\n• Insufficient device memory</string>
+    <string name="error_permission">Permission denied</string>
+    <string name="error_permission_desc">The app does not have the required permissions.\n\nSolution:\n• Grant file access permissions in device Settings\n• Restart the app after granting permissions</string>
+    <string name="error_file_not_found">File not found</string>
+    <string name="error_file_not_found_desc">The requested file does not exist or has been moved.\n\nPossible causes:\n• File deleted from device\n• File moved to another folder\n• External drive not mounted</string>
+    <string name="error_character_not_found">Character not found</string>
+    <string name="error_character_not_found_desc">The requested character was not found in the database.\n\nPossible causes:\n• Character deleted\n• Invalid ID\n• Corrupted database</string>
+    <string name="error_validation">Invalid data</string>
+    <string name="error_validation_desc">The entered data is not valid.\n\nPossible causes:\n• Values out of allowed range\n• Required fields empty\n• Invalid data format</string>
+    <string name="error_network">No connection available</string>
+    <string name="error_network_desc">Unable to connect to the Internet.\n\nPossible causes:\n• Device not connected\n• Server issues\n• Firewall or network restrictions</string>
+    <string name="error_unknown">Unexpected error</string>
+    <string name="error_unknown_desc">An unexpected error occurred.\n\nIf the problem persists, try:\n• Restarting the app\n• Updating the app\n• Contacting the developer</string>
+    <string name="error_retry">Retry</string>
+    <string name="error_back">Go back</string>
+    <string name="error_close">Close</string>
+    <string name="error_details">Details</string>
+    <string name="error_xp_insufficient">Not enough experience points</string>
+    <string name="error_xp_insufficient_desc">You do not have enough experience points for this purchase.</string>
+    <string name="error_save_failed">Save failed</string>
+    <string name="error_save_failed_desc">Unable to save changes. Check available disk space and try again.</string>
+
 </resources>

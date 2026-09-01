@@ -5,12 +5,14 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
+import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
 import java.io.FileOutputStream
 
 object ChronicleImageManager {
 
+    private const val TAG = "ChronicleImageManager"
     private const val IMAGES_DIR = "chronicle_images"
     private const val THUMBNAILS_DIR = "chronicle_thumbnails"
     private const val FULL_MAX_SIZE = 1920
@@ -31,9 +33,18 @@ object ChronicleImageManager {
 
     fun saveImage(context: Context, entityId: String, sourceUri: Uri): String? {
         return try {
-            val inputStream = context.contentResolver.openInputStream(sourceUri) ?: return null
+            val inputStream = context.contentResolver.openInputStream(sourceUri)
+            if (inputStream == null) {
+                Log.e(TAG, "Failed to open input stream for URI: $sourceUri")
+                return null
+            }
             val original = BitmapFactory.decodeStream(inputStream)
             inputStream.close()
+
+            if (original == null) {
+                Log.e(TAG, "BitmapFactory returned null for URI: $sourceUri (mimeType=${context.contentResolver.getType(sourceUri)})")
+                return null
+            }
 
             val rotation = getRotation(context, sourceUri)
             val rotated = if (rotation != 0) {
@@ -47,24 +58,33 @@ object ChronicleImageManager {
             val full = scaleBitmap(rotated, FULL_MAX_SIZE)
             rotated.recycle()
 
-            val fullFile = File(getImagesDir(context), "$entityId.jpg")
+            val imagesDir = getImagesDir(context)
+            if (!imagesDir.exists()) imagesDir.mkdirs()
+
+            val fullFile = File(imagesDir, "$entityId.jpg")
             FileOutputStream(fullFile).use { out ->
                 full.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)
             }
             full.recycle()
 
-            val thumb = scaleBitmap(
-                BitmapFactory.decodeStream(fullFile.inputStream()),
-                THUMB_MAX_SIZE
-            )
-            val thumbFile = File(getThumbnailsDir(context), "$entityId.jpg")
-            FileOutputStream(thumbFile).use { out ->
-                thumb.compress(Bitmap.CompressFormat.JPEG, 80, out)
-            }
-            thumb.recycle()
+            val thumbDir = getThumbnailsDir(context)
+            if (!thumbDir.exists()) thumbDir.mkdirs()
 
+            val thumbFile = File(thumbDir, "$entityId.jpg")
+            val thumbBmp = BitmapFactory.decodeStream(fullFile.inputStream())
+            if (thumbBmp != null) {
+                val thumb = scaleBitmap(thumbBmp, THUMB_MAX_SIZE)
+                thumbBmp.recycle()
+                FileOutputStream(thumbFile).use { out ->
+                    thumb.compress(Bitmap.CompressFormat.JPEG, 80, out)
+                }
+                thumb.recycle()
+            }
+
+            Log.d(TAG, "Image saved: ${fullFile.absolutePath} (rotation=$rotation)")
             fullFile.absolutePath
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to save image for entityId=$entityId", e)
             null
         }
     }

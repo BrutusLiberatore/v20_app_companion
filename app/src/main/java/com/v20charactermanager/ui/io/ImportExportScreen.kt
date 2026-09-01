@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.Character
+import com.v20charactermanager.ui.components.V20ErrorDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -269,15 +270,12 @@ fun ImportExportScreen(
             )
         }
         is IoOperationState.Error -> {
-            AlertDialog(
-                onDismissRequest = onResetState,
-                title = { Text(stringResource(R.string.equipment_library_error)) },
-                text = { Text(state.message) },
-                confirmButton = {
-                    TextButton(onClick = onResetState) {
-                        Text(stringResource(R.string.action_close))
-                    }
-                }
+            V20ErrorDialog(
+                errorType = state.errorType,
+                customMessage = state.message,
+                errorDetails = state.details,
+                onDismiss = onResetState,
+                onRetry = onResetState
             )
         }
         is IoOperationState.DuplicateDetected -> {
