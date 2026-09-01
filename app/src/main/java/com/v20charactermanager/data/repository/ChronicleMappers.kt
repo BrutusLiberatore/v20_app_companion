@@ -22,12 +22,28 @@ fun ChronicleMemberEntity.toDomain() = ChronicleMember(
 
 fun SessionEntity.toDomain() = Session(
     id = id, chronicleId = chronicleId, number = number, title = title,
-    date = date, notes = notes, createdAt = createdAt, updatedAt = updatedAt
+    date = date, status = SessionStatus.valueOf(status),
+    realStartDateTime = realStartDateTime, realEndDateTime = realEndDateTime,
+    inGameDate = inGameDate, activeSceneId = activeSceneId,
+    plannedSceneIds = plannedSceneIds.split(",").filter { it.isNotEmpty() },
+    participantCharacterIds = participantCharacterIds.split(",").filter { it.isNotEmpty() },
+    preparationNotes = preparationNotes, liveNotes = liveNotes, recap = recap,
+    xpAwarded = xpAwarded,
+    unresolvedThreadIds = unresolvedThreadIds.split(",").filter { it.isNotEmpty() },
+    notes = notes, createdAt = createdAt, updatedAt = updatedAt
 )
 
 fun Session.toEntity() = SessionEntity(
     id = id, chronicleId = chronicleId, number = number, title = title,
-    date = date, notes = notes, createdAt = createdAt, updatedAt = updatedAt
+    date = date, status = status.name,
+    realStartDateTime = realStartDateTime, realEndDateTime = realEndDateTime,
+    inGameDate = inGameDate, activeSceneId = activeSceneId,
+    plannedSceneIds = plannedSceneIds.joinToString(","),
+    participantCharacterIds = participantCharacterIds.joinToString(","),
+    preparationNotes = preparationNotes, liveNotes = liveNotes, recap = recap,
+    xpAwarded = xpAwarded,
+    unresolvedThreadIds = unresolvedThreadIds.joinToString(","),
+    notes = notes, createdAt = createdAt, updatedAt = updatedAt
 )
 
 fun ChronicleNoteEntity.toDomain() = ChronicleNote(
@@ -165,28 +181,30 @@ fun PlotArc.toEntity() = PlotArcEntity(
 
 fun SceneEntity.toDomain() = ChronicleScene(
     id = id, chronicleId = chronicleId, storyId = storyId, sessionId = sessionId,
-    title = title, locationId = locationId,
+    title = title, order = order, locationId = locationId,
     participantIds = participantIds.split(",").filter { it.isNotEmpty() },
+    npcIds = npcIds.split(",").filter { it.isNotEmpty() },
     hook = hook, objective = objective, conflict = conflict, mood = mood,
     description = description,
     clueIds = clueIds.split(",").filter { it.isNotEmpty() },
     secretIds = secretIds.split(",").filter { it.isNotEmpty() },
     possibleComplications = possibleComplications.split("||").filter { it.isNotEmpty() },
     mediaAssetIds = mediaAssetIds.split(",").filter { it.isNotEmpty() },
-    outcome = outcome, status = SceneStatus.valueOf(status),
+    notes = notes, outcome = outcome, status = SceneStatus.valueOf(status),
     createdAt = createdAt, updatedAt = updatedAt
 )
 
 fun ChronicleScene.toEntity() = SceneEntity(
     id = id, chronicleId = chronicleId, storyId = storyId, sessionId = sessionId,
-    title = title, locationId = locationId,
+    title = title, order = order, locationId = locationId,
     participantIds = participantIds.joinToString(","),
+    npcIds = npcIds.joinToString(","),
     hook = hook, objective = objective, conflict = conflict, mood = mood,
     description = description,
     clueIds = clueIds.joinToString(","), secretIds = secretIds.joinToString(","),
     possibleComplications = possibleComplications.joinToString("||"),
     mediaAssetIds = mediaAssetIds.joinToString(","),
-    outcome = outcome, status = status.name,
+    notes = notes, outcome = outcome, status = status.name,
     createdAt = createdAt, updatedAt = updatedAt
 )
 
@@ -260,4 +278,36 @@ fun BoonRecord.toEntity() = BoonEntity(
     witnessedBy = witnessedBy.joinToString(","),
     visibility = visibility.name, narratorNotes = narratorNotes,
     createdAt = createdAt, updatedAt = updatedAt
+)
+
+fun QuickNoteEntity.toDomain() = QuickNote(
+    id = id, chronicleId = chronicleId,
+    scopeType = NoteScope.valueOf(scopeType), scopeId = scopeId,
+    text = text, visibility = Visibility.valueOf(visibility),
+    createdAt = createdAt, modifiedAt = modifiedAt
+)
+
+fun QuickNote.toEntity() = QuickNoteEntity(
+    id = id, chronicleId = chronicleId,
+    scopeType = scopeType.name, scopeId = scopeId,
+    text = text, visibility = visibility.name,
+    createdAt = createdAt, modifiedAt = modifiedAt
+)
+
+fun SessionEventEntity.toDomain() = SessionEvent(
+    id = id, chronicleId = chronicleId, sessionId = sessionId, sceneId = sceneId,
+    timestamp = timestamp, type = SessionEventType.valueOf(type),
+    title = title, description = description,
+    entityRefs = entityRefs.split(",").filter { it.isNotEmpty() },
+    visibility = Visibility.valueOf(visibility),
+    metadata = metadata, origin = origin, createdAt = createdAt
+)
+
+fun SessionEvent.toEntity() = SessionEventEntity(
+    id = id, chronicleId = chronicleId, sessionId = sessionId, sceneId = sceneId,
+    timestamp = timestamp, type = type.name,
+    title = title, description = description,
+    entityRefs = entityRefs.joinToString(","),
+    visibility = visibility.name,
+    metadata = metadata, origin = origin, createdAt = createdAt
 )

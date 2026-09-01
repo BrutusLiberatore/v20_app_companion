@@ -101,4 +101,17 @@ interface ChronicleRepository {
     suspend fun insertBoon(boon: BoonRecord)
     suspend fun updateBoon(boon: BoonRecord)
     suspend fun deleteBoon(id: String)
+
+    // Quick Notes
+    fun getQuickNotes(chronicleId: String): Flow<List<QuickNote>>
+    fun getQuickNotesByScope(chronicleId: String, scopeType: String): Flow<List<QuickNote>>
+    suspend fun insertQuickNote(note: QuickNote)
+    suspend fun updateQuickNote(note: QuickNote)
+    suspend fun deleteQuickNote(id: String)
+
+    // Session Events
+    fun getSessionEvents(chronicleId: String): Flow<List<SessionEvent>>
+    fun getSessionEventsBySession(sessionId: String): Flow<List<SessionEvent>>
+    suspend fun insertSessionEvent(event: SessionEvent)
+    suspend fun deleteSessionEvent(id: String)
 }

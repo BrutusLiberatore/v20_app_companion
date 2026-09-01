@@ -33,9 +33,11 @@ import com.v20charactermanager.data.local.entity.*
         ImageDocumentEntity::class,
         ImageLayerEntity::class,
         ImageAnnotationEntity::class,
-        ImageRevisionEntity::class
+        ImageRevisionEntity::class,
+        QuickNoteEntity::class,
+        SessionEventEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -61,6 +63,8 @@ abstract class V20Database : RoomDatabase() {
     abstract fun imageLayerDao(): ImageLayerDao
     abstract fun imageAnnotationDao(): ImageAnnotationDao
     abstract fun imageRevisionDao(): ImageRevisionDao
+    abstract fun quickNoteDao(): QuickNoteDao
+    abstract fun sessionEventDao(): SessionEventDao
 
     companion object {
         @Volatile
@@ -503,6 +507,65 @@ abstract class V20Database : RoomDatabase() {
             }
         }
 
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE sessions ADD COLUMN status TEXT NOT NULL DEFAULT 'PLANNED'")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN realStartDateTime INTEGER")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN realEndDateTime INTEGER")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN inGameDate TEXT")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN activeSceneId TEXT")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN plannedSceneIds TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN participantCharacterIds TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN preparationNotes TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN liveNotes TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN recap TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN xpAwarded INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE sessions ADD COLUMN unresolvedThreadIds TEXT NOT NULL DEFAULT ''")
+
+                db.execSQL("ALTER TABLE scenes ADD COLUMN `order` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE scenes ADD COLUMN npcIds TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE scenes ADD COLUMN notes TEXT NOT NULL DEFAULT ''")
+
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS quick_notes (
+                        id TEXT NOT NULL,
+                        chronicleId TEXT NOT NULL,
+                        scopeType TEXT NOT NULL DEFAULT 'QUICK',
+                        scopeId TEXT,
+                        text TEXT NOT NULL,
+                        visibility TEXT NOT NULL DEFAULT 'GM_ONLY',
+                        createdAt INTEGER NOT NULL,
+                        modifiedAt INTEGER NOT NULL,
+                        PRIMARY KEY(id),
+                        FOREIGN KEY(chronicleId) REFERENCES chronicles(id) ON DELETE CASCADE
+                    )
+                """)
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_quick_notes_chronicleId ON quick_notes(chronicleId)")
+
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS session_events (
+                        id TEXT NOT NULL,
+                        chronicleId TEXT NOT NULL,
+                        sessionId TEXT,
+                        sceneId TEXT,
+                        timestamp INTEGER NOT NULL,
+                        type TEXT NOT NULL,
+                        title TEXT NOT NULL,
+                        description TEXT,
+                        entityRefs TEXT NOT NULL DEFAULT '',
+                        visibility TEXT NOT NULL DEFAULT 'GM_ONLY',
+                        metadata TEXT,
+                        origin TEXT NOT NULL DEFAULT 'MANUAL',
+                        createdAt INTEGER NOT NULL,
+                        PRIMARY KEY(id),
+                        FOREIGN KEY(chronicleId) REFERENCES chronicles(id) ON DELETE CASCADE
+                    )
+                """)
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_session_events_chronicleId ON session_events(chronicleId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_session_events_sessionId ON session_events(sessionId)")
+            }
+        }
+
         fun getDatabase(context: Context): V20Database {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -510,7 +573,7 @@ abstract class V20Database : RoomDatabase() {
                     V20Database::class.java,
                     "v20_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 // NOTE: fallbackToDestructiveMigration should only be used as a last resort
                 // for unrecoverable errors. Always prefer proper versioned migrations above.
                 .fallbackToDestructiveMigration()

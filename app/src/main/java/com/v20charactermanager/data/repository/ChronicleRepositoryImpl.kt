@@ -22,7 +22,9 @@ class ChronicleRepositoryImpl(
     private val secretDao: SecretDao,
     private val clueDao: ClueDao,
     private val eventDao: EventDao,
-    private val boonDao: BoonDao
+    private val boonDao: BoonDao,
+    private val quickNoteDao: QuickNoteDao,
+    private val sessionEventDao: SessionEventDao
 ) : ChronicleRepository {
 
     // Chronicle
@@ -355,5 +357,51 @@ class ChronicleRepositoryImpl(
 
     override suspend fun deleteBoon(id: String) {
         boonDao.deleteBoon(id)
+    }
+
+    // Quick Notes
+    override fun getQuickNotes(chronicleId: String): Flow<List<QuickNote>> {
+        return quickNoteDao.getNotesByChronicle(chronicleId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override fun getQuickNotesByScope(chronicleId: String, scopeType: String): Flow<List<QuickNote>> {
+        return quickNoteDao.getNotesByScope(chronicleId, scopeType).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun insertQuickNote(note: QuickNote) {
+        quickNoteDao.insertNote(note.toEntity())
+    }
+
+    override suspend fun updateQuickNote(note: QuickNote) {
+        quickNoteDao.updateNote(note.copy(modifiedAt = System.currentTimeMillis()).toEntity())
+    }
+
+    override suspend fun deleteQuickNote(id: String) {
+        quickNoteDao.deleteNote(id)
+    }
+
+    // Session Events
+    override fun getSessionEvents(chronicleId: String): Flow<List<SessionEvent>> {
+        return sessionEventDao.getEventsByChronicle(chronicleId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override fun getSessionEventsBySession(sessionId: String): Flow<List<SessionEvent>> {
+        return sessionEventDao.getEventsBySession(sessionId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun insertSessionEvent(event: SessionEvent) {
+        sessionEventDao.insertEvent(event.toEntity())
+    }
+
+    override suspend fun deleteSessionEvent(id: String) {
+        sessionEventDao.deleteEvent(id)
     }
 }

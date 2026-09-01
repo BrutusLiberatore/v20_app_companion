@@ -12,6 +12,12 @@ interface SessionDao {
     @Query("SELECT * FROM sessions WHERE id = :id")
     fun getSessionById(id: String): Flow<SessionEntity?>
 
+    @Query("SELECT * FROM sessions WHERE chronicleId = :chronicleId AND status = :status ORDER BY number DESC")
+    fun getSessionsByStatus(chronicleId: String, status: String): Flow<List<SessionEntity>>
+
+    @Query("SELECT * FROM sessions WHERE chronicleId = :chronicleId AND status = 'ACTIVE' LIMIT 1")
+    fun getActiveSession(chronicleId: String): Flow<SessionEntity?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(session: SessionEntity)
 

@@ -104,6 +104,14 @@ class AppContainer(private val context: Context) {
         database.imageRevisionDao()
     }
 
+    private val quickNoteDao by lazy {
+        database.quickNoteDao()
+    }
+
+    private val sessionEventDao by lazy {
+        database.sessionEventDao()
+    }
+
     private val settingsDataStore by lazy {
         SettingsDataStore(context)
     }
@@ -117,7 +125,8 @@ class AppContainer(private val context: Context) {
             chronicleDao, chronicleMemberDao, sessionDao,
             chronicleNoteDao, chronicleCharacterNoteDao,
             npcDao, locationDao, factionDao, relationshipDao,
-            plotArcDao, sceneDao, secretDao, clueDao, eventDao, boonDao
+            plotArcDao, sceneDao, secretDao, clueDao, eventDao, boonDao,
+            quickNoteDao, sessionEventDao
         )
     }
 
