@@ -19,6 +19,7 @@ data class ChronicleDetailUiState(
     val chronicle: Chronicle? = null,
     val members: List<ChronicleMember> = emptyList(),
     val sessions: List<Session> = emptyList(),
+    val activeSession: Session? = null,
     val notes: List<ChronicleNote> = emptyList(),
     val characterNotes: List<ChronicleCharacterNote> = emptyList(),
     val npcs: List<NpcEntry> = emptyList(),
@@ -27,10 +28,13 @@ data class ChronicleDetailUiState(
     val relationships: List<Relationship> = emptyList(),
     val plotArcs: List<PlotArc> = emptyList(),
     val scenes: List<ChronicleScene> = emptyList(),
+    val activeScenes: List<ChronicleScene> = emptyList(),
     val secrets: List<Secret> = emptyList(),
     val clues: List<Clue> = emptyList(),
     val events: List<ChronicleEvent> = emptyList(),
     val boons: List<BoonRecord> = emptyList(),
+    val quickNotes: List<QuickNote> = emptyList(),
+    val sessionEvents: List<SessionEvent> = emptyList(),
     val availableCharacters: List<Character> = emptyList(),
     val selectedTab: Int = 0,
     val isLoading: Boolean = true
@@ -153,6 +157,21 @@ class ChronicleViewModel(
         viewModelScope.launch {
             chronicleRepository.getBoons(chronicleId).collect { boons ->
                 _detailUiState.update { it.copy(boons = boons) }
+            }
+        }
+        viewModelScope.launch {
+            chronicleRepository.getQuickNotes(chronicleId).collect { notes ->
+                _detailUiState.update { it.copy(quickNotes = notes) }
+            }
+        }
+        viewModelScope.launch {
+            chronicleRepository.getSessionEvents(chronicleId).collect { events ->
+                _detailUiState.update { it.copy(sessionEvents = events) }
+            }
+        }
+        viewModelScope.launch {
+            chronicleRepository.getActiveSession(chronicleId).collect { session ->
+                _detailUiState.update { it.copy(activeSession = session) }
             }
         }
     }
@@ -349,6 +368,133 @@ class ChronicleViewModel(
     }
     fun updateBoon(boon: BoonRecord) { viewModelScope.launch { chronicleRepository.updateBoon(boon) } }
     fun deleteBoon(id: String) { viewModelScope.launch { chronicleRepository.deleteBoon(id) } }
+
+    // Session Lifecycle
+    fun startSession(session: Session) {
+        viewModelScope.launch {
+            chronicleRepository.updateSession(
+                session.copy(
+                    status = SessionStatus.ACTIVE,
+                    realStartDateTime = System.currentTimeMillis()
+                )
+            )
+            chronicleRepository.insertSessionEvent(
+                SessionEvent(
+                    id = UUID.randomUUID().toString(),
+                    chronicleId = session.chronicleId,
+                    sessionId = session.id,
+                    timestamp = System.currentTimeMillis(),
+                    type = SessionEventType.SESSION_STARTED,
+                    title = "Sessione ${session.number} iniziata",
+                    description = session.title,
+                    origin = "AUTO"
+                )
+            )
+        }
+    }
+
+    fun endSession(session: Session, recap: String = "") {
+        viewModelScope.launch {
+            chronicleRepository.updateSession(
+                session.copy(
+                    status = SessionStatus.COMPLETED,
+                    realEndDateTime = System.currentTimeMillis(),
+                    recap = recap
+                )
+            )
+            chronicleRepository.insertSessionEvent(
+                SessionEvent(
+                    id = UUID.randomUUID().toString(),
+                    chronicleId = session.chronicleId,
+                    sessionId = session.id,
+                    timestamp = System.currentTimeMillis(),
+                    type = SessionEventType.SESSION_ENDED,
+                    title = "Sessione ${session.number} terminata",
+                    description = recap.ifEmpty { session.title },
+                    origin = "AUTO"
+                )
+            )
+        }
+    }
+
+    fun setActiveScene(session: Session, sceneId: String?) {
+        viewModelScope.launch {
+            chronicleRepository.updateSession(
+                session.copy(activeSceneId = sceneId)
+            )
+            if (sceneId != null) {
+                chronicleRepository.insertSessionEvent(
+                    SessionEvent(
+                        id = UUID.randomUUID().toString(),
+                        chronicleId = session.chronicleId,
+                        sessionId = session.id,
+                        sceneId = sceneId,
+                        timestamp = System.currentTimeMillis(),
+                        type = SessionEventType.SCENE_CHANGED,
+                        title = "Cambio scena",
+                        origin = "MANUAL"
+                    )
+                )
+            }
+        }
+    }
+
+    fun updateSessionLiveNotes(session: Session, liveNotes: String) {
+        viewModelScope.launch {
+            chronicleRepository.updateSession(session.copy(liveNotes = liveNotes))
+        }
+    }
+
+    fun updateSessionPrepNotes(session: Session, preparationNotes: String) {
+        viewModelScope.launch {
+            chronicleRepository.updateSession(session.copy(preparationNotes = preparationNotes))
+        }
+    }
+
+    // Quick Notes
+    fun createQuickNote(chronicleId: String, text: String, scopeType: NoteScope = NoteScope.QUICK, scopeId: String? = null) {
+        viewModelScope.launch {
+            val note = QuickNote(
+                id = UUID.randomUUID().toString(),
+                chronicleId = chronicleId,
+                scopeType = scopeType,
+                scopeId = scopeId,
+                text = text,
+                createdAt = System.currentTimeMillis(),
+                modifiedAt = System.currentTimeMillis()
+            )
+            chronicleRepository.insertQuickNote(note)
+        }
+    }
+
+    fun updateQuickNote(note: QuickNote) {
+        viewModelScope.launch {
+            chronicleRepository.updateQuickNote(note)
+        }
+    }
+
+    fun deleteQuickNote(id: String) {
+        viewModelScope.launch {
+            chronicleRepository.deleteQuickNote(id)
+        }
+    }
+
+    // Session Events (manual)
+    fun createSessionEvent(chronicleId: String, sessionId: String?, title: String, description: String = "", type: SessionEventType = SessionEventType.MANUAL_EVENT) {
+        viewModelScope.launch {
+            val event = SessionEvent(
+                id = UUID.randomUUID().toString(),
+                chronicleId = chronicleId,
+                sessionId = sessionId,
+                timestamp = System.currentTimeMillis(),
+                type = type,
+                title = title,
+                description = description,
+                origin = "MANUAL"
+            )
+            chronicleRepository.insertSessionEvent(event)
+        }
+    }
 }
 
 class ChronicleViewModelFactory(

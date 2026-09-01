@@ -22,6 +22,7 @@ interface ChronicleRepository {
     // Sessions
     fun getSessions(chronicleId: String): Flow<List<Session>>
     fun getSessionById(id: String): Flow<Session?>
+    fun getActiveSession(chronicleId: String): Flow<Session?>
     suspend fun insertSession(session: Session)
     suspend fun updateSession(session: Session)
     suspend fun deleteSession(id: String)

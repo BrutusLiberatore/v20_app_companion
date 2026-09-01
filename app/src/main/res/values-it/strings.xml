@@ -509,4 +509,36 @@
 
     <!-- XP Spending -->
     <string name="xp_success_format">%1$s aumentato a %2$d (-%3$d XP)</string>
+
+    <!-- Storyteller Live Dashboard -->
+    <string name="storyteller_active_scene">Scena Attiva</string>
+    <string name="storyteller_no_active_scene">Nessuna scena attiva</string>
+    <string name="storyteller_open">Apri</string>
+    <string name="storyteller_change">Cambia</string>
+    <string name="storyteller_start_session">Inizia</string>
+    <string name="storyteller_end_session">Termina</string>
+    <string name="storyteller_no_active_session">Nessuna sessione attiva. Iniziane una dalla scheda Sessioni.</string>
+    <string name="storyteller_pg">PG</string>
+    <string name="storyteller_png">PNG</string>
+    <string name="storyteller_quick_note">Nota Veloce</string>
+    <string name="storyteller_event">Evento</string>
+    <string name="storyteller_note_hint">Scrivi una nota veloce…</string>
+    <string name="storyteller_description">Descrizione</string>
+    <string name="storyteller_scene_deck_title">Mazzo Scene</string>
+    <string name="storyteller_no_scenes">Nessuna scena in questa sessione</string>
+    <string name="storyteller_new_scene">Nuova Scena</string>
+
+    <!-- Bottom Navigation -->
+    <string name="bottom_nav_session">Sessione</string>
+    <string name="bottom_nav_people">Persone</string>
+    <string name="bottom_nav_plots">Trame</string>
+    <string name="bottom_nav_media">Visual</string>
+    <string name="bottom_nav_more">Altro</string>
+
+    <!-- Generic -->
+    <string name="save">Salva</string>
+    <string name="cancel">Annulla</string>
+    <string name="title_hint">Titolo</string>
+    <string name="generation_suffix">a Gen</string>
+    <string name="session_blood">Sangue</string>
 </resources>

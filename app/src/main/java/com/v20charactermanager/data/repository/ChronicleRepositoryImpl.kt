@@ -101,6 +101,10 @@ class ChronicleRepositoryImpl(
         return sessionDao.getSessionById(id).map { it?.toDomain() }
     }
 
+    override fun getActiveSession(chronicleId: String): Flow<Session?> {
+        return sessionDao.getActiveSession(chronicleId).map { it?.toDomain() }
+    }
+
     override suspend fun insertSession(session: Session) {
         sessionDao.insertSession(session.toEntity())
     }
