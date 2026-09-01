@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">V20 Companion</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_create">Create</string>
+    <string name="nav_compendium">Compendium</string>
+    <string name="nav_dice">Dice Roller</string>
+    <string name="nav_chronicles">Chronicles</string>
+
+    <!-- Home -->
+    <string name="home_title">V20 Companion</string>
+    <string name="home_empty">No characters yet</string>
+    <string name="home_create_first">Create your first character</string>
+    <string name="home_create_character">Create Character</string>
+    <string name="home_quick_random">Quick Random</string>
+    <string name="home_roll_dice">Roll Dice</string>
+    <string name="home_compendium">Compendium</string>
+    <string name="home_settings">Settings</string>
+    <string name="home_dice">Dice Roller</string>
+    <string name="home_tools">Tools</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_quick_actions">Quick Actions</string>
+    <string name="dashboard_roll_dice">Roll Dice</string>
+    <string name="dashboard_session_mode">Session Mode</string>
+    <string name="dashboard_edit_character">Edit Character</string>
+    <string name="dashboard_health">Health</string>
+    <string name="dashboard_healthy">Healthy</string>
+
+    <!-- Attribute Actions -->
+    <string name="attribute_roll_x_dice">Roll (%d dice)</string>
+    <string name="attribute_build_dice_pool">Build Dice Pool</string>
+    <string name="attribute_view_details">View Details</string>
+    <string name="attribute_select_ability">Select Ability</string>
+    <string name="attribute_dice_pool_label">%1$s + %2$s (%3$d dice)</string>
+
+    <!-- General -->
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_create">Create</string>
+    <string name="action_next">Next</string>
+    <string name="action_previous">Previous</string>
+    <string name="action_finish">Finish</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_back">Back</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_roll">Roll</string>
+    <string name="action_session">Session</string>
+    <string name="action_close">Close</string>
+
+    <!-- Character Common -->
+    <string name="character_unnamed">Unnamed</string>
+    <string name="character_generation_format"> · Generation %d</string>
+    <string name="character_delete_title">Delete Character</string>
+    <string name="character_delete_message">Are you sure you want to delete %s?</string>
+
+    <!-- Character Creation -->
+    <string name="creation_title">Character Creation</string>
+    <string name="creation_title_step">Character Creation - Step %d/5</string>
+    <string name="creation_saving">Saving…</string>
+    <string name="creation_save">Save Character</string>
+    <string name="creation_validation_errors">Validation Errors:</string>
+    <string name="creation_step_identity">Identity</string>
+    <string name="creation_step_attributes">Attributes</string>
+    <string name="creation_step_abilities">Abilities</string>
+    <string name="creation_step_advantages">Advantages</string>
+    <string name="creation_step_finalize">Finalize</string>
+
+    <!-- Identity Fields -->
+    <string name="field_name">Name</string>
+    <string name="field_player">Player</string>
+    <string name="field_chronicle">Chronicle</string>
+    <string name="field_profile">Profile</string>
+    <string name="field_clan">Clan</string>
+    <string name="field_sect">Sect</string>
+    <string name="field_generation">Generation</string>
+    <string name="field_generation_range">Generation (3-13)</string>
+    <string name="field_nature">Nature</string>
+    <string name="field_demeanor">Demeanor</string>
+    <string name="field_sire">Sire</string>
+    <string name="field_haven">Haven</string>
+    <string name="field_concept">Concept</string>
+    <string name="portrait_pick">Choose Portrait</string>
+    <string name="portrait_remove">Remove Portrait</string>
+    <string name="portrait_camera">Take Photo</string>
+    <string name="portrait_gallery">From Gallery</string>
+    <string name="sect_camarilla">Camarilla</string>
+    <string name="sect_sabbat">Sabbat</string>
+    <string name="sect_anarch">Anarch</string>
+    <string name="sect_independent">Independent</string>
+    <string name="clan_no_clan">No Clan (Pander)</string>
+
+    <!-- Attributes -->
+    <string name="attributes_title">Attributes</string>
+    <string name="attributes_physical">Physical</string>
+    <string name="attributes_social">Social</string>
+    <string name="attributes_mental">Mental</string>
+    <string name="attribute_strength">Strength</string>
+    <string name="attribute_dexterity">Dexterity</string>
+    <string name="attribute_stamina">Stamina</string>
+    <string name="attribute_charisma">Charisma</string>
+    <string name="attribute_manipulation">Manipulation</string>
+    <string name="attribute_appearance">Appearance</string>
+    <string name="attribute_perception">Perception</string>
+    <string name="attribute_intelligence">Intelligence</string>
+    <string name="attribute_wits">Wits</string>
+
+    <!-- Abilities -->
+    <string name="abilities_title">Abilities</string>
+    <string name="abilities_talents">Talents</string>
+    <string name="abilities_skills">Skills</string>
+    <string name="abilities_knowledges">Knowledges</string>
+
+    <!-- Advantages -->
+    <string name="advantages_title">Advantages</string>
+    <string name="disciplines_title">Disciplines</string>
+    <string name="backgrounds_title">Backgrounds</string>
+    <string name="virtues_title">Virtues</string>
+    <string name="action_add">Add</string>
+    <string name="add_discipline">Add Discipline</string>
+    <string name="add_background">Add Background</string>
+    <string name="select_discipline">Select discipline…</string>
+    <string name="select_background">Select background…</string>
+    <string name="discipline_points_remaining">Discipline dots: %1$d/%2$d</string>
+    <string name="background_points_remaining">Background dots: %1$d/%2$d</string>
+    <string name="virtue_points_remaining">Virtue dots: %1$d/%2$d</string>
+
+    <!-- Finalization -->
+    <string name="finalization_title">Finalization</string>
+    <string name="freebie_points">Freebie Points</string>
+    <string name="freebie_initial">Initial: %d</string>
+    <string name="freebie_used">Used: %d</string>
+    <string name="freebie_remaining">Remaining: %d</string>
+    <string name="derived_values">Derived Values</string>
+    <string name="derived_humanity">Humanity: %d</string>
+    <string name="derived_willpower">Willpower: %d</string>
+    <string name="derived_blood_pool">Blood Pool: %d</string>
+
+    <!-- Character Sheet -->
+    <string name="sheet_title">Character Sheet</string>
+    <string name="sheet_tab_overview">Overview</string>
+    <string name="sheet_tab_attributes">Attributes</string>
+    <string name="sheet_tab_abilities">Abilities</string>
+    <string name="sheet_tab_advantages">Advantages</string>
+    <string name="sheet_tab_details">Details</string>
+    <string name="sheet_identity">Identity</string>
+    <string name="sheet_quick_stats">Quick Stats</string>
+    <string name="sheet_name">Name: %s</string>
+    <string name="sheet_clan">Clan: %s</string>
+    <string name="sheet_generation">Generation: %d</string>
+    <string name="sheet_nature">Nature: %s</string>
+    <string name="sheet_demeanor">Demeanor: %s</string>
+    <string name="sheet_sire">Sire: %s</string>
+    <string name="sheet_chronicle">Chronicle: %s</string>
+    <string name="sheet_concept">Concept: %s</string>
+    <string name="sheet_humanity">Humanity: %d</string>
+    <string name="sheet_willpower">Willpower: %1$d/%2$d</string>
+    <string name="sheet_blood_pool">Blood Pool: %1$d/%2$d</string>
+    <string name="sheet_disciplines">Disciplines</string>
+    <string name="sheet_backgrounds">Backgrounds</string>
+    <string name="sheet_virtues">Virtues</string>
+    <string name="sheet_merits_flaws">Merits &amp; Flaws</string>
+    <string name="sheet_merits">Merits</string>
+    <string name="sheet_flaws">Flaws</string>
+    <string name="sheet_add_merit">Add Merit</string>
+    <string name="sheet_add_flaw">Add Flaw</string>
+    <string name="sheet_no_merits">No merits</string>
+    <string name="sheet_no_flaws">No flaws</string>
+    <string name="sheet_equipment">Equipment</string>
+    <string name="sheet_notes">Notes</string>
+    <string name="sheet_health">Health</string>
+    <string name="sheet_experience">Experience</string>
+    <string name="sheet_xp_earned">Earned: %d</string>
+    <string name="sheet_xp_spent">Spent: %d</string>
+    <string name="sheet_xp_available">Available: %d</string>
+    <string name="sheet_spend_xp">Spend XP</string>
+    <string name="sheet_health_none">0</string>
+    <string name="sheet_damage_bashing">/</string>
+    <string name="sheet_damage_lethal">X</string>
+    <string name="sheet_damage_aggravated">*</string>
+
+    <!-- Session Mode -->
+    <string name="session_title">%s - Session</string>
+    <string name="session_blood_pool">Blood Pool</string>
+    <string name="session_willpower">Willpower</string>
+    <string name="session_health">Health</string>
+    <string name="session_experience">Experience</string>
+    <string name="session_notes">Session Notes</string>
+    <string name="session_spend">Spend</string>
+    <string name="session_refill">Refill</string>
+    <string name="session_recover">Recover</string>
+    <string name="session_earn">Earn</string>
+    <string name="session_available">Available: %d</string>
+    <string name="session_earned">Earned: %d</string>
+    <string name="session_spent">Spent: %d</string>
+
+    <!-- Dice Engine -->
+    <string name="dice_title">Dice Roller</string>
+    <string name="dice_roll_settings">Roll Settings</string>
+    <string name="dice_pool">Dice Pool</string>
+    <string name="dice_difficulty">Difficulty</string>
+    <string name="dice_extra">Extra Dice</string>
+    <string name="dice_willpower">Willpower</string>
+    <string name="dice_roll_button">ROLL</string>
+    <string name="dice_results">Results</string>
+    <string name="dice_successes">%d Success(es)</string>
+    <string name="dice_success_one">es</string>
+    <string name="dice_success_plural">es</string>
+    <string name="dice_botch">BOTCH!</string>
+    <string name="dice_failure">Failure</string>
+    <string name="dice_summary">Successes: %1$d | Ones: %2$d</string>
+    <string name="dice_modifier">Dice Modifier</string>
+    <string name="dice_difficulty_modifier">Difficulty Modifier</string>
+    <string name="dice_exploding_tens">Exploding Tens</string>
+    <string name="dice_modifier_reason">Modifier Reason</string>
+    <string name="dice_final_pool">Final Pool: %d</string>
+    <string name="dice_final_difficulty">Final Difficulty: %d</string>
+    <string name="dice_bonus_dice">Bonus Dice: %d</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_import_export">Import/Export</string>
+    <string name="settings_select_language">Select Language</string>
+    <string name="settings_english">English</string>
+    <string name="settings_italian">Italiano</string>
+    <string name="settings_import_description">Import or export your V20 characters as JSON files. Share your creations with other players or keep backups of your favorites.</string>
+
+    <!-- Compendium -->
+    <string name="compendium_title">Compendium</string>
+    <string name="compendium_search">Search…</string>
+    <string name="compendium_clear">Clear</string>
+    <string name="compendium_no_results">No results found</string>
+    <string name="compendium_cost">Cost</string>
+    <string name="compendium_points">point(s)</string>
+    <string name="compendium_category">Category</string>
+    <string name="compendium_description">Description</string>
+    <string name="compendium_additional_info">Additional Information</string>
+
+    <!-- Import/Export -->
+    <string name="import_title">Import Character</string>
+    <string name="export_title">Export Character</string>
+    <string name="share_title">Share Character</string>
+    <string name="import_valid">Valid</string>
+    <string name="import_corrupted">Corrupted File</string>
+    <string name="import_unsupported">Unsupported Version</string>
+    <string name="import_duplicate">Duplicate Character</string>
+    <string name="import_missing_data">Missing Data</string>
+    <string name="import_create_copy">Create Copy</string>
+    <string name="import_replace">Replace</string>
+
+    <!-- Sheet Extra -->
+    <string name="sheet_no_abilities">No abilities learned</string>
+    <string name="sheet_save_success">Character saved successfully</string>
+    <string name="sheet_error_save">Error saving character</string>
+
+    <!-- XP Spending -->
+    <string name="xp_spend_title">Spend Experience</string>
+    <string name="xp_available">Available: %1$d XP</string>
+    <string name="xp_all">All</string>
+    <string name="xp_physical">Physical</string>
+    <string name="xp_social">Social</string>
+    <string name="xp_mental">Mental</string>
+    <string name="xp_talents">Talents</string>
+    <string name="xp_skills">Skills</string>
+    <string name="xp_knowledges">Knowledges</string>
+    <string name="xp_disciplines">Disciplines</string>
+    <string name="xp_backgrounds">Backgrounds</string>
+    <string name="xp_virtues">Virtues</string>
+    <string name="xp_buy">Buy</string>
+    <string name="xp_arrow"> → </string>
+    <string name="xp_suffix"> XP</string>
+
+    <!-- Equipment -->
+    <string name="equipment_no_equipment">No equipment</string>
+    <string name="equipment_edit">Edit Equipment</string>
+    <string name="equipment_add">Add Equipment</string>
+    <string name="equipment_name_label">Name*</string>
+    <string name="equipment_description_label">Description</string>
+    <string name="equipment_quantity_label">Quantity</string>
+    <string name="equipment_category_label">Category</string>
+    <string name="equipment_damage_label">Damage/Effect</string>
+    <string name="equipment_size_label">Size</string>
+    <string name="equipment_weight_label">Weight</string>
+    <string name="equipment_cost_label">Cost</string>
+    <string name="equipment_notes_label">Notes</string>
+    <string name="equipment_dmg_prefix">DMG: %s</string>
+    <string name="equipment_size_prefix">Size: %s</string>
+    <string name="equipment_wt_prefix">Wt: %s</string>
+    <string name="equipment_cost_prefix">Cost: %s</string>
+    <string name="equipment_quantity_format">x%d</string>
+    <string name="equipment_clone">Clone Equipment</string>
+    <string name="equipment_export">Export Equipment</string>
+
+    <!-- Notes -->
+    <string name="notes_character_notes">Character Notes</string>
+    <string name="notes_placeholder">Enter notes about your character…</string>
+    <string name="notes_unsaved">Unsaved changes</string>
+
+    <!-- Advantages Tab -->
+    <string name="advantages_select_ability">Select ability…</string>
+    <string name="advantages_select">Select</string>
+    <string name="advantages_clone_discipline">Clone Discipline</string>
+    <string name="advantages_clone_background">Clone Background</string>
+    <string name="advantages_edit_discipline">Edit Discipline</string>
+    <string name="advantages_edit_background">Edit Background</string>
+    <string name="advantages_remove_confirm">Are you sure you want to remove %s?</string>
+
+    <!-- Overview Tab -->
+    <string name="overview_generation_dash"> \u2014 Generation %d</string>
+    <string name="overview_dice_count">%d dice</string>
+    <string name="overview_select_ability">Select ability…</string>
+
+    <!-- Import/Export -->
+    <string name="import_v20_description">Import a V20 character from a .v20 JSON file</string>
+    <string name="export_select_character">Select a character to export</string>
+    <string name="export_no_characters">No characters available to export</string>
+    <string name="export_file_format">%s.v20</string>
+    <string name="equipment_library_title">Equipment Library</string>
+    <string name="equipment_library_description">Import or export custom equipment as .v20eq files</string>
+    <string name="equipment_library_import">Import Equipment Library</string>
+    <string name="equipment_library_processing">Processing…</string>
+    <string name="equipment_library_please_wait">Please wait</string>
+    <string name="equipment_library_success">Success</string>
+    <string name="equipment_library_error">Error</string>
+    <string name="equipment_library_loaded">Equipment Library Loaded</string>
+    <string name="equipment_library_found_items">Found %1$d items in \"%2$s\"</string>
+    <string name="equipment_library_select_character">Select a character to add equipment to:</string>
+    <string name="equipment_library_import_to">Import to %s</string>
+    <string name="equipment_library_import_none">None</string>
+    <string name="import_duplicate_message">A character named \"%s\" already exists. Would you like to replace it or create a copy?</string>
+    <string name="import_clan_gen_format">%1$s · Gen %2$d</string>
+
+    <!-- Clone / Copy -->
+    <string name="clone_success">Copied successfully</string>
+    <string name="clone_error">Error copying</string>
+    <string name="export_success">Exported successfully</string>
+    <string name="export_error">Error exporting</string>
+    <string name="export_json">Export JSON</string>
+    <string name="export_share">Share</string>
+
+    <!-- Chronicle -->
+    <string name="chronicle_title">Chronicles</string>
+    <string name="chronicle_create">Create Chronicle</string>
+    <string name="chronicle_create_first">Create Your First Chronicle</string>
+    <string name="chronicle_empty">No chronicles yet</string>
+    <string name="chronicle_name">Chronicle Name</string>
+    <string name="chronicle_description">Description</string>
+    <string name="chronicle_storyteller">Storyteller</string>
+    <string name="chronicle_storyteller_role">I am the Storyteller</string>
+    <string name="chronicle_delete_title">Delete Chronicle</string>
+    <string name="chronicle_delete_message">Delete \"%1$s\"? This cannot be undone.</string>
+    <string name="chronicle_tab_members">Members</string>
+    <string name="chronicle_tab_sessions">Sessions</string>
+    <string name="chronicle_tab_notes">Notes</string>
+    <string name="chronicle_tab_character_notes">Character Notes</string>
+    <string name="chronicle_tab_npcs">NPCs</string>
+    <string name="chronicle_tab_locations">Locations</string>
+    <string name="chronicle_tab_factions">Factions</string>
+    <string name="chronicle_tab_plots">Plots</string>
+    <string name="chronicle_tab_secrets">Secrets</string>
+    <string name="chronicle_tab_events">Events</string>
+    <string name="chronicle_npcs_count">%1$d NPCs</string>
+    <string name="chronicle_new_npc">New NPC</string>
+    <string name="chronicle_no_npcs">No NPCs yet</string>
+    <string name="chronicle_npc_name">NPC name</string>
+    <string name="chronicle_npc_role">Role</string>
+    <string name="chronicle_locations_count">%1$d locations</string>
+    <string name="chronicle_new_location">New Location</string>
+    <string name="chronicle_no_locations">No locations yet</string>
+    <string name="chronicle_location_name">Location name</string>
+    <string name="chronicle_factions_count">%1$d factions</string>
+    <string name="chronicle_new_faction">New Faction</string>
+    <string name="chronicle_no_factions">No factions yet</string>
+    <string name="chronicle_faction_name">Faction name</string>
+    <string name="chronicle_plots_count">%1$d plots</string>
+    <string name="chronicle_new_plot">New Plot</string>
+    <string name="chronicle_no_plots">No plots yet</string>
+    <string name="chronicle_plot_title">Plot title</string>
+    <string name="chronicle_secrets_count">%1$d secrets</string>
+    <string name="chronicle_clues_count">%1$d clues</string>
+    <string name="chronicle_new_secret">New Secret</string>
+    <string name="chronicle_no_secrets">No secrets or clues yet</string>
+    <string name="chronicle_secret">Secret</string>
+    <string name="chronicle_clue">Clue</string>
+    <string name="chronicle_secret_title">Title</string>
+    <string name="chronicle_secret_content">Details</string>
+    <string name="chronicle_events_count">%1$d events</string>
+    <string name="chronicle_new_event">New Event</string>
+    <string name="chronicle_no_events">No events yet</string>
+    <string name="chronicle_event_title">Event title</string>
+    <string name="chronicle_npc_edit">Edit NPC</string>
+    <string name="chronicle_npc_personality">Personality</string>
+    <string name="chronicle_npc_motivation">Motivation</string>
+    <string name="chronicle_npc_notes">Narrator notes</string>
+    <string name="chronicle_location_edit">Edit Location</string>
+    <string name="chronicle_location_type">Location type</string>
+    <string name="chronicle_faction_edit">Edit Faction</string>
+    <string name="chronicle_plot_summary">Summary</string>
+    <string name="chronicle_plot_edit">Edit Plot</string>
+    <string name="chronicle_plot_starting">Starting situation</string>
+    <string name="chronicle_plot_resolution">Resolution notes</string>
+    <string name="chronicle_secret_edit">Edit Secret</string>
+    <string name="chronicle_clue_edit">Edit Clue</string>
+    <string name="chronicle_event_edit">Edit Event</string>
+    <string name="chronicle_event_ingame">In-game time</string>
+    <string name="chronicle_npc_image">NPC Image</string>
+    <string name="chronicle_location_image">Location Image</string>
+    <string name="chronicle_faction_image">Faction Image</string>
+    <string name="chronicle_pick_image">Pick Image</string>
+    <string name="chronicle_remove_image">Remove Image</string>
+    <string name="media_library">Media Library</string>
+    <string name="media_import">Import</string>
+    <string name="media_all">All</string>
+    <string name="media_maps">Maps</string>
+    <string name="media_npc">NPC</string>
+    <string name="media_locations">Locations</string>
+    <string name="media_clues">Clues</string>
+    <string name="media_documents">Documents</string>
+    <string name="media_other">Other</string>
+    <string name="media_empty">No media yet</string>
+    <string name="media_import_prompt">Import images for your chronicle</string>
+    <string name="media_title_hint">Image title</string>
+    <string name="media_delete_confirm">Delete this image?</string>
+    <string name="viewer_layers">Layers</string>
+    <string name="viewer_presentation">Present</string>
+    <string name="viewer_dimensions">%1$d × %2$d</string>
+    <string name="media_type_map">Map</string>
+    <string name="media_type_portrait">Portrait</string>
+    <string name="media_type_document">Document</string>
+    <string name="media_type_photo">Photo</string>
+    <string name="media_type_other">Other</string>
+    <string name="chronicle_members_count">%1$d members</string>
+    <string name="chronicle_add_member">Add Member</string>
+    <string name="chronicle_no_members">No members yet</string>
+    <string name="chronicle_role_player">Player</string>
+    <string name="chronicle_role_npc">NPC</string>
+    <string name="chronicle_no_available_characters">No characters available to add</string>
+    <string name="chronicle_sessions_count">%1$d sessions</string>
+    <string name="chronicle_new_session">New Session</string>
+    <string name="chronicle_no_sessions">No sessions yet</string>
+    <string name="chronicle_session">Session</string>
+    <string name="chronicle_session_title">Session title</string>
+    <string name="chronicle_session_notes">Session notes</string>
+    <string name="chronicle_notes_count">%1$d notes</string>
+    <string name="chronicle_new_note">New Note</string>
+    <string name="chronicle_no_notes">No notes yet</string>
+    <string name="chronicle_note_text">Note text</string>
+    <string name="chronicle_character_notes_count">%1$d character notes</string>
+    <string name="chronicle_no_character_notes">No character notes yet</string>
+    <string name="chronicle_new_character_note">New Character Note</string>
+    <string name="chronicle_select_character">Select a character</string>
+    <string name="chronicle_private_storyteller">Storyteller only</string>
+    <string name="home_chronicles">Chronicles</string>
+
+    <!-- Creation Steps -->
+    <string name="creation_random_name">Random Name</string>
+    <string name="creation_preset_attributes">Quick Presets (7/5/3)</string>
+    <string name="creation_preset_abilities">Quick Presets (13/9/5)</string>
+    <string name="creation_category_physical">Physical</string>
+    <string name="creation_category_social">Social</string>
+    <string name="creation_category_mental">Mental</string>
+    <string name="creation_preset_combat">Combat</string>
+    <string name="creation_preset_stealth">Stealth</string>
+
+    <!-- XP Spending -->
+    <string name="xp_success_format">%1$s increased to %2$d (-%3$d XP)</string>
+</resources>

@@ -1,0 +1,208 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "07f84616b8eb6cbe2f65cb2ef9668b8c",
+    "entities": [
+      {
+        "tableName": "characters",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `player` TEXT NOT NULL, `chronicle` TEXT NOT NULL, `profile` TEXT NOT NULL, `clanId` TEXT NOT NULL, `generation` INTEGER NOT NULL, `natureId` TEXT NOT NULL, `demeanorId` TEXT NOT NULL, `sire` TEXT NOT NULL, `haven` TEXT NOT NULL, `concept` TEXT NOT NULL, `attributesJson` TEXT NOT NULL, `abilitiesJson` TEXT NOT NULL, `disciplinesJson` TEXT NOT NULL, `backgroundsJson` TEXT NOT NULL, `virtuesJson` TEXT NOT NULL, `moralPathJson` TEXT NOT NULL, `meritsJson` TEXT NOT NULL, `flawsJson` TEXT NOT NULL, `healthJson` TEXT NOT NULL, `bloodPoolJson` TEXT NOT NULL, `willpowerJson` TEXT NOT NULL, `experienceJson` TEXT NOT NULL, `equipmentJson` TEXT NOT NULL, `notes` TEXT NOT NULL, `creationStep` INTEGER NOT NULL, `isComplete` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "player",
+            "columnName": "player",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chronicle",
+            "columnName": "chronicle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profile",
+            "columnName": "profile",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clanId",
+            "columnName": "clanId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "generation",
+            "columnName": "generation",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "natureId",
+            "columnName": "natureId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "demeanorId",
+            "columnName": "demeanorId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sire",
+            "columnName": "sire",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "haven",
+            "columnName": "haven",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "concept",
+            "columnName": "concept",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attributesJson",
+            "columnName": "attributesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "abilitiesJson",
+            "columnName": "abilitiesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "disciplinesJson",
+            "columnName": "disciplinesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "backgroundsJson",
+            "columnName": "backgroundsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "virtuesJson",
+            "columnName": "virtuesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "moralPathJson",
+            "columnName": "moralPathJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "meritsJson",
+            "columnName": "meritsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "flawsJson",
+            "columnName": "flawsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "healthJson",
+            "columnName": "healthJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bloodPoolJson",
+            "columnName": "bloodPoolJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "willpowerJson",
+            "columnName": "willpowerJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "experienceJson",
+            "columnName": "experienceJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "equipmentJson",
+            "columnName": "equipmentJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creationStep",
+            "columnName": "creationStep",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isComplete",
+            "columnName": "isComplete",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '07f84616b8eb6cbe2f65cb2ef9668b8c')"
+    ]
+  }
+}

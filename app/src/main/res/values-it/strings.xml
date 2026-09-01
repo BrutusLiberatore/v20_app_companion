@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">V20 Companion</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_settings">Impostazioni</string>
+    <string name="nav_create">Crea</string>
+    <string name="nav_compendium">Compendio</string>
+    <string name="nav_dice">Tira Dadi</string>
+    <string name="nav_chronicles">Cronache</string>
+
+    <!-- Home -->
+    <string name="home_title">V20 Companion</string>
+    <string name="home_empty">Nessun personaggio ancora</string>
+    <string name="home_create_first">Crea il tuo primo personaggio</string>
+    <string name="home_create_character">Crea Personaggio</string>
+    <string name="home_quick_random">Casuale Rapido</string>
+    <string name="home_roll_dice">Tira Dadi</string>
+    <string name="home_compendium">Compendio</string>
+    <string name="home_settings">Impostazioni</string>
+    <string name="home_dice">Tira Dadi</string>
+    <string name="home_tools">Strumenti</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_quick_actions">Azioni Rapide</string>
+    <string name="dashboard_roll_dice">Tira Dadi</string>
+    <string name="dashboard_session_mode">Modalità Sessione</string>
+    <string name="dashboard_edit_character">Modifica Personaggio</string>
+    <string name="dashboard_health">Salute</string>
+    <string name="dashboard_healthy">Sano</string>
+
+    <!-- Attribute Actions -->
+    <string name="attribute_roll_x_dice">Tira (%d dadi)</string>
+    <string name="attribute_build_dice_pool">Costruisci Pool</string>
+    <string name="attribute_view_details">Vedi Dettagli</string>
+    <string name="attribute_select_ability">Seleziona Abilità</string>
+    <string name="attribute_dice_pool_label">%1$s + %2$s (%3$d dadi)</string>
+
+    <!-- General -->
+    <string name="action_save">Salva</string>
+    <string name="action_cancel">Annulla</string>
+    <string name="action_delete">Elimina</string>
+    <string name="action_edit">Modifica</string>
+    <string name="action_create">Crea</string>
+    <string name="action_next">Avanti</string>
+    <string name="action_previous">Indietro</string>
+    <string name="action_finish">Fine</string>
+    <string name="action_confirm">Conferma</string>
+    <string name="action_back">Indietro</string>
+    <string name="action_remove">Rimuovi</string>
+    <string name="action_duplicate">Duplica</string>
+    <string name="action_roll">Tira</string>
+    <string name="action_session">Sessione</string>
+    <string name="action_close">Chiudi</string>
+
+    <!-- Character Common -->
+    <string name="character_unnamed">Senza Nome</string>
+    <string name="character_generation_format"> · Generazione %d</string>
+    <string name="character_delete_title">Elimina Personaggio</string>
+    <string name="character_delete_message">Sei sicuro di voler eliminare %s?</string>
+
+    <!-- Character Creation -->
+    <string name="creation_title">Creazione Personaggio</string>
+    <string name="creation_title_step">Creazione Personaggio - Passo %d/5</string>
+    <string name="creation_saving">Salvataggio…</string>
+    <string name="creation_save">Salva Personaggio</string>
+    <string name="creation_validation_errors">Errori di Validazione:</string>
+    <string name="creation_step_identity">Identità</string>
+    <string name="creation_step_attributes">Attributi</string>
+    <string name="creation_step_abilities">Abilità</string>
+    <string name="creation_step_advantages">Vantaggi</string>
+    <string name="creation_step_finalize">Finalizza</string>
+
+    <!-- Identity Fields -->
+    <string name="field_name">Nome</string>
+    <string name="field_player">Giocatore</string>
+    <string name="field_chronicle">Cronaca</string>
+    <string name="field_profile">Profilo</string>
+    <string name="field_clan">Clan</string>
+    <string name="field_sect">Setta</string>
+    <string name="field_generation">Generazione</string>
+    <string name="field_generation_range">Generazione (3-13)</string>
+    <string name="field_nature">Natura</string>
+    <string name="field_demeanor">Carattere</string>
+    <string name="field_sire">Sire</string>
+    <string name="field_haven">Rifugio</string>
+    <string name="field_concept">Concetto</string>
+    <string name="portrait_pick">Scegli Ritratto</string>
+    <string name="portrait_remove">Rimuovi Ritratto</string>
+    <string name="portrait_camera">Scatta Foto</string>
+    <string name="portrait_gallery">Dalla Galleria</string>
+    <string name="sect_camarilla">Camarilla</string>
+    <string name="sect_sabbat">Sabbat</string>
+    <string name="sect_anarch">Anarchici</string>
+    <string name="sect_independent">Indipendenti</string>
+    <string name="clan_no_clan">Senza Clan (Pander)</string>
+
+    <!-- Attributes -->
+    <string name="attributes_title">Attributi</string>
+    <string name="attributes_physical">Fisici</string>
+    <string name="attributes_social">Sociali</string>
+    <string name="attributes_mental">Mentali</string>
+    <string name="attribute_strength">Forza</string>
+    <string name="attribute_dexterity">Destrezza</string>
+    <string name="attribute_stamina">Costituzione</string>
+    <string name="attribute_charisma">Carisma</string>
+    <string name="attribute_manipulation">Persuasione</string>
+    <string name="attribute_appearance">Aspetto</string>
+    <string name="attribute_perception">Percezione</string>
+    <string name="attribute_intelligence">Intelligenza</string>
+    <string name="attribute_wits">Prontezza</string>
+
+    <!-- Abilities -->
+    <string name="abilities_title">Abilità</string>
+    <string name="abilities_talents">Attitudini</string>
+    <string name="abilities_skills">Capacità</string>
+    <string name="abilities_knowledges">Conoscenze</string>
+
+    <!-- Advantages -->
+    <string name="advantages_title">Vantaggi</string>
+    <string name="disciplines_title">Discipline</string>
+    <string name="backgrounds_title">Background</string>
+    <string name="virtues_title">Virtù</string>
+    <string name="action_add">Aggiungi</string>
+    <string name="add_discipline">Aggiungi Disciplina</string>
+    <string name="add_background">Aggiungi Background</string>
+    <string name="select_discipline">Seleziona disciplina…</string>
+    <string name="select_background">Seleziona background…</string>
+    <string name="discipline_points_remaining">Punti disciplina: %1$d/%2$d</string>
+    <string name="background_points_remaining">Punti background: %1$d/%2$d</string>
+    <string name="virtue_points_remaining">Punti virtù: %1$d/%2$d</string>
+
+    <!-- Finalization -->
+    <string name="finalization_title">Finalizzazione</string>
+    <string name="freebie_points">Punti Liberi</string>
+    <string name="freebie_initial">Iniziali: %d</string>
+    <string name="freebie_used">Usati: %d</string>
+    <string name="freebie_remaining">Rimanenti: %d</string>
+    <string name="derived_values">Valori Derivati</string>
+    <string name="derived_humanity">Umanità: %d</string>
+    <string name="derived_willpower">Forza di Volontà: %d</string>
+    <string name="derived_blood_pool">Punti Sangue: %d</string>
+
+    <!-- Character Sheet -->
+    <string name="sheet_title">Scheda Personaggio</string>
+    <string name="sheet_tab_overview">Panoramica</string>
+    <string name="sheet_tab_attributes">Attributi</string>
+    <string name="sheet_tab_abilities">Abilità</string>
+    <string name="sheet_tab_advantages">Vantaggi</string>
+    <string name="sheet_tab_details">Dettagli</string>
+    <string name="sheet_identity">Identità</string>
+    <string name="sheet_quick_stats">Statistiche Rapide</string>
+    <string name="sheet_name">Nome: %s</string>
+    <string name="sheet_clan">Clan: %s</string>
+    <string name="sheet_generation">Generazione: %d</string>
+    <string name="sheet_nature">Natura: %s</string>
+    <string name="sheet_demeanor">Carattere: %s</string>
+    <string name="sheet_sire">Sire: %s</string>
+    <string name="sheet_chronicle">Cronaca: %s</string>
+    <string name="sheet_concept">Concetto: %s</string>
+    <string name="sheet_humanity">Umanità: %d</string>
+    <string name="sheet_willpower">Forza di Volontà: %1$d/%2$d</string>
+    <string name="sheet_blood_pool">Punti Sangue: %1$d/%2$d</string>
+    <string name="sheet_disciplines">Discipline</string>
+    <string name="sheet_backgrounds">Background</string>
+    <string name="sheet_virtues">Virtù</string>
+    <string name="sheet_merits_flaws">Pregi &amp; Difetti</string>
+    <string name="sheet_merits">Pregi</string>
+    <string name="sheet_flaws">Difetti</string>
+    <string name="sheet_add_merit">Aggiungi Pregio</string>
+    <string name="sheet_add_flaw">Aggiungi Difetto</string>
+    <string name="sheet_no_merits">Nessun pregio</string>
+    <string name="sheet_no_flaws">Nessun difetto</string>
+    <string name="sheet_equipment">Equipaggiamento</string>
+    <string name="sheet_notes">Note</string>
+    <string name="sheet_health">Salute</string>
+    <string name="sheet_experience">Esperienza</string>
+    <string name="sheet_xp_earned">Guadagnati: %d</string>
+    <string name="sheet_xp_spent">Spesi: %d</string>
+    <string name="sheet_xp_available">Disponibili: %d</string>
+    <string name="sheet_spend_xp">Spedi XP</string>
+    <string name="sheet_health_none">0</string>
+    <string name="sheet_damage_bashing">/</string>
+    <string name="sheet_damage_lethal">X</string>
+    <string name="sheet_damage_aggravated">*</string>
+
+    <!-- Session Mode -->
+    <string name="session_title">%s - Sessione</string>
+    <string name="session_blood_pool">Punti Sangue</string>
+    <string name="session_willpower">Forza di Volontà</string>
+    <string name="session_health">Salute</string>
+    <string name="session_experience">Esperienza</string>
+    <string name="session_notes">Note di Sessione</string>
+    <string name="session_spend">Spendi</string>
+    <string name="session_refill">Riempi</string>
+    <string name="session_recover">Recupera</string>
+    <string name="session_earn">Guadagna</string>
+    <string name="session_available">Disponibili: %d</string>
+    <string name="session_earned">Guadagnati: %d</string>
+    <string name="session_spent">Spesi: %d</string>
+
+    <!-- Dice Engine -->
+    <string name="dice_title">Tira Dadi</string>
+    <string name="dice_roll_settings">Impostazioni Tiro</string>
+    <string name="dice_pool">Pool di Dadi</string>
+    <string name="dice_difficulty">Difficoltà</string>
+    <string name="dice_extra">Dadi Extra</string>
+    <string name="dice_willpower">Volontà</string>
+    <string name="dice_roll_button">TIRA</string>
+    <string name="dice_results">Risultati</string>
+    <string name="dice_successes">%d Successo(i)</string>
+    <string name="dice_success_one">i</string>
+    <string name="dice_success_plural">i</string>
+    <string name="dice_botch">FALLIMENTO CRITICO!</string>
+    <string name="dice_failure">Fallimento</string>
+    <string name="dice_summary">Successi: %1$d | Uno: %2$d</string>
+    <string name="dice_modifier">Modificatore Dadi</string>
+    <string name="dice_difficulty_modifier">Modificatore Difficoltà</string>
+    <string name="dice_exploding_tens">Dieci Esplosivi</string>
+    <string name="dice_modifier_reason">Motivo Modificatore</string>
+    <string name="dice_final_pool">Pool Finale: %d</string>
+    <string name="dice_final_difficulty">Difficoltà Finale: %d</string>
+    <string name="dice_bonus_dice">Dadi Bonus: %d</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Impostazioni</string>
+    <string name="settings_language">Lingua</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_import_export">Importa/Esporta</string>
+    <string name="settings_select_language">Seleziona Lingua</string>
+    <string name="settings_english">English</string>
+    <string name="settings_italian">Italiano</string>
+    <string name="settings_import_description">Importa o esporta i tuoi personaggi V20 come file JSON. Condividi le tue creazioni con altri giocatori o mantieni backup dei tuoi preferiti.</string>
+
+    <!-- Compendium -->
+    <string name="compendium_title">Compendio</string>
+    <string name="compendium_search">Cerca…</string>
+    <string name="compendium_clear">Pulisci</string>
+    <string name="compendium_no_results">Nessun risultato trovato</string>
+    <string name="compendium_cost">Costo</string>
+    <string name="compendium_points">punto/i</string>
+    <string name="compendium_category">Categoria</string>
+    <string name="compendium_description">Descrizione</string>
+    <string name="compendium_additional_info">Informazioni aggiuntive</string>
+
+    <!-- Import/Export -->
+    <string name="import_title">Importa Personaggio</string>
+    <string name="export_title">Esporta Personaggio</string>
+    <string name="share_title">Condividi Personaggio</string>
+    <string name="import_valid">Valido</string>
+    <string name="import_corrupted">File Corrotto</string>
+    <string name="import_unsupported">Versione Non Supportata</string>
+    <string name="import_duplicate">Personaggio Duplicato</string>
+    <string name="import_missing_data">Dati Mancanti</string>
+    <string name="import_create_copy">Crea Copia</string>
+    <string name="import_replace">Sostituisci</string>
+
+    <!-- Sheet Extra -->
+    <string name="sheet_no_abilities">Nessuna abilità appresa</string>
+    <string name="sheet_save_success">Personaggio salvato con successo</string>
+    <string name="sheet_error_save">Errore nel salvataggio del personaggio</string>
+
+    <!-- XP Spending -->
+    <string name="xp_spend_title">Spendi Esperienza</string>
+    <string name="xp_available">Disponibili: %1$d XP</string>
+    <string name="xp_all">Tutti</string>
+    <string name="xp_physical">Fisico</string>
+    <string name="xp_social">Sociale</string>
+    <string name="xp_mental">Mentale</string>
+    <string name="xp_talents">Talenti</string>
+    <string name="xp_skills">Capacità</string>
+    <string name="xp_knowledges">Conoscenze</string>
+    <string name="xp_disciplines">Discipline</string>
+    <string name="xp_backgrounds">Background</string>
+    <string name="xp_virtues">Virtù</string>
+    <string name="xp_buy">Compra</string>
+    <string name="xp_arrow"> → </string>
+    <string name="xp_suffix"> XP</string>
+
+    <!-- Equipment -->
+    <string name="equipment_no_equipment">Nessun equipaggiamento</string>
+    <string name="equipment_edit">Modifica Equipaggiamento</string>
+    <string name="equipment_add">Aggiungi Equipaggiamento</string>
+    <string name="equipment_name_label">Nome*</string>
+    <string name="equipment_description_label">Descrizione</string>
+    <string name="equipment_quantity_label">Quantità</string>
+    <string name="equipment_category_label">Categoria</string>
+    <string name="equipment_damage_label">Danno/Effetto</string>
+    <string name="equipment_size_label">Dimensione</string>
+    <string name="equipment_weight_label">Peso</string>
+    <string name="equipment_cost_label">Costo</string>
+    <string name="equipment_notes_label">Note</string>
+    <string name="equipment_dmg_prefix">DANNO: %s</string>
+    <string name="equipment_size_prefix">Dim: %s</string>
+    <string name="equipment_wt_prefix">Peso: %s</string>
+    <string name="equipment_cost_prefix">Costo: %s</string>
+    <string name="equipment_quantity_format">x%d</string>
+    <string name="equipment_clone">Clona Equipaggiamento</string>
+    <string name="equipment_export">Esporta Equipaggiamento</string>
+
+    <!-- Notes -->
+    <string name="notes_character_notes">Note del Personaggio</string>
+    <string name="notes_placeholder">Inserisci note sul tuo personaggio…</string>
+    <string name="notes_unsaved">Modifiche non salvate</string>
+
+    <!-- Advantages Tab -->
+    <string name="advantages_select_ability">Seleziona abilità…</string>
+    <string name="advantages_select">Seleziona</string>
+    <string name="advantages_clone_discipline">Clona Disciplina</string>
+    <string name="advantages_clone_background">Clona Background</string>
+    <string name="advantages_edit_discipline">Modifica Disciplina</string>
+    <string name="advantages_edit_background">Modifica Background</string>
+    <string name="advantages_remove_confirm">Sei sicuro di voler rimuovere %s?</string>
+
+    <!-- Overview Tab -->
+    <string name="overview_generation_dash"> \u2014 Generazione %d</string>
+    <string name="overview_dice_count">%d dadi</string>
+    <string name="overview_select_ability">Seleziona abilità…</string>
+
+    <!-- Import/Export -->
+    <string name="import_v20_description">Importa un personaggio V20 da un file JSON .v20</string>
+    <string name="export_select_character">Seleziona un personaggio da esportare</string>
+    <string name="export_no_characters">Nessun personaggio disponibile per l\'esportazione</string>
+    <string name="export_file_format">%s.v20</string>
+    <string name="equipment_library_title">Libreria Equipaggiamento</string>
+    <string name="equipment_library_description">Importa o esporta equipaggiamento personalizzato come file .v20eq</string>
+    <string name="equipment_library_import">Importa Libreria Equipaggiamento</string>
+    <string name="equipment_library_processing">Elaborazione…</string>
+    <string name="equipment_library_please_wait">Attendi prego</string>
+    <string name="equipment_library_success">Successo</string>
+    <string name="equipment_library_error">Errore</string>
+    <string name="equipment_library_loaded">Libreria Equipaggiamento Caricata</string>
+    <string name="equipment_library_found_items">Trovati %1$d oggetti in \"%2$s\"</string>
+    <string name="equipment_library_select_character">Seleziona un personaggio a cui aggiungere equipaggiamento:</string>
+    <string name="equipment_library_import_to">Importa in %s</string>
+    <string name="equipment_library_import_none">Nessuno</string>
+    <string name="import_duplicate_message">Un personaggio chiamato \"%s\" esiste già. Vuoi sostituirlo o creare una copia?</string>
+    <string name="import_clan_gen_format">%1$s · Gen %2$d</string>
+
+    <!-- Clone / Copy -->
+    <string name="clone_success">Copiato con successo</string>
+    <string name="clone_error">Errore durante la copia</string>
+    <string name="export_success">Esportato con successo</string>
+    <string name="export_error">Errore durante l\'esportazione</string>
+    <string name="export_json">Esporta JSON</string>
+    <string name="export_share">Condividi</string>
+
+    <!-- Cronaca -->
+    <string name="chronicle_title">Cronache</string>
+    <string name="chronicle_create">Crea Cronaca</string>
+    <string name="chronicle_create_first">Crea la tua prima Cronaca</string>
+    <string name="chronicle_empty">Nessuna cronaca ancora</string>
+    <string name="chronicle_name">Nome della Cronaca</string>
+    <string name="chronicle_description">Descrizione</string>
+    <string name="chronicle_storyteller">Narratore</string>
+    <string name="chronicle_storyteller_role">Sono il Narratore</string>
+    <string name="chronicle_delete_title">Elimina Cronaca</string>
+    <string name="chronicle_delete_message">Eliminare \"%1$s\"? Non annullabile.</string>
+    <string name="chronicle_tab_members">Membri</string>
+    <string name="chronicle_tab_sessions">Sessioni</string>
+    <string name="chronicle_tab_notes">Note</string>
+    <string name="chronicle_tab_character_notes">Note Personaggi</string>
+    <string name="chronicle_tab_npcs">PNG</string>
+    <string name="chronicle_tab_locations">Luoghi</string>
+    <string name="chronicle_tab_factions">Fazioni</string>
+    <string name="chronicle_tab_plots">Trame</string>
+    <string name="chronicle_tab_secrets">Segreti</string>
+    <string name="chronicle_tab_events">Eventi</string>
+    <string name="chronicle_npcs_count">%1$d PNG</string>
+    <string name="chronicle_new_npc">Nuovo PNG</string>
+    <string name="chronicle_no_npcs">Nessun PNG ancora</string>
+    <string name="chronicle_npc_name">Nome PNG</string>
+    <string name="chronicle_npc_role">Ruolo</string>
+    <string name="chronicle_locations_count">%1$d luoghi</string>
+    <string name="chronicle_new_location">Nuovo Luogo</string>
+    <string name="chronicle_no_locations">Nessun luogo ancora</string>
+    <string name="chronicle_location_name">Nome luogo</string>
+    <string name="chronicle_factions_count">%1$d fazioni</string>
+    <string name="chronicle_new_faction">Nuova Fazione</string>
+    <string name="chronicle_no_factions">Nessuna fazione ancora</string>
+    <string name="chronicle_faction_name">Nome fazione</string>
+    <string name="chronicle_plots_count">%1$d trame</string>
+    <string name="chronicle_new_plot">Nuova Trama</string>
+    <string name="chronicle_no_plots">Nessuna trama ancora</string>
+    <string name="chronicle_plot_title">Titolo trama</string>
+    <string name="chronicle_secrets_count">%1$d segreti</string>
+    <string name="chronicle_clues_count">%1$d indizi</string>
+    <string name="chronicle_new_secret">Nuovo Segreto</string>
+    <string name="chronicle_no_secrets">Nessun segreto o indizio ancora</string>
+    <string name="chronicle_secret">Segreto</string>
+    <string name="chronicle_clue">Indizio</string>
+    <string name="chronicle_secret_title">Titolo</string>
+    <string name="chronicle_secret_content">Dettagli</string>
+    <string name="chronicle_events_count">%1$d eventi</string>
+    <string name="chronicle_new_event">Nuovo Evento</string>
+    <string name="chronicle_no_events">Nessun evento ancora</string>
+    <string name="chronicle_event_title">Titolo evento</string>
+    <string name="chronicle_npc_edit">Modifica PNG</string>
+    <string name="chronicle_npc_personality">Personalità</string>
+    <string name="chronicle_npc_motivation">Motivazione</string>
+    <string name="chronicle_npc_notes">Note narratore</string>
+    <string name="chronicle_location_edit">Modifica Luogo</string>
+    <string name="chronicle_location_type">Tipo luogo</string>
+    <string name="chronicle_faction_edit">Modifica Fazione</string>
+    <string name="chronicle_plot_summary">Riassunto</string>
+    <string name="chronicle_plot_edit">Modifica Trama</string>
+    <string name="chronicle_plot_starting">Situazione iniziale</string>
+    <string name="chronicle_plot_resolution">Note risoluzione</string>
+    <string name="chronicle_secret_edit">Modifica Segreto</string>
+    <string name="chronicle_clue_edit">Modifica Indizio</string>
+    <string name="chronicle_event_edit">Modifica Evento</string>
+    <string name="chronicle_event_ingame">Tempo in gioco</string>
+    <string name="chronicle_npc_image">Immagine PNG</string>
+    <string name="chronicle_location_image">Immagine Luogo</string>
+    <string name="chronicle_faction_image">Immagine Fazione</string>
+    <string name="chronicle_pick_image">Scegli Immagine</string>
+    <string name="chronicle_remove_image">Rimuovi Immagine</string>
+    <string name="media_library">Libreria Media</string>
+    <string name="media_import">Importa</string>
+    <string name="media_all">Tutti</string>
+    <string name="media_maps">Mappe</string>
+    <string name="media_npc">PNG</string>
+    <string name="media_locations">Luoghi</string>
+    <string name="media_clues">Indizi</string>
+    <string name="media_documents">Documenti</string>
+    <string name="media_other">Altro</string>
+    <string name="media_empty">Nessun media ancora</string>
+    <string name="media_import_prompt">Importa immagini per la tua cronaca</string>
+    <string name="media_title_hint">Titolo immagine</string>
+    <string name="media_delete_confirm">Eliminare questa immagine?</string>
+    <string name="viewer_layers">Layer</string>
+    <string name="viewer_presentation">Presenta</string>
+    <string name="viewer_dimensions">%1$d × %2$d</string>
+    <string name="media_type_map">Mappa</string>
+    <string name="media_type_portrait">Ritratto</string>
+    <string name="media_type_document">Documento</string>
+    <string name="media_type_photo">Foto</string>
+    <string name="media_type_other">Altro</string>
+    <string name="chronicle_members_count">%1$d membri</string>
+    <string name="chronicle_add_member">Aggiungi Membro</string>
+    <string name="chronicle_no_members">Nessun membro ancora</string>
+    <string name="chronicle_role_player">Giocatore</string>
+    <string name="chronicle_role_npc">PNG</string>
+    <string name="chronicle_no_available_characters">Nessun personaggio disponibile da aggiungere</string>
+    <string name="chronicle_sessions_count">%1$d sessioni</string>
+    <string name="chronicle_new_session">Nuova Sessione</string>
+    <string name="chronicle_no_sessions">Nessuna sessione ancora</string>
+    <string name="chronicle_session">Sessione</string>
+    <string name="chronicle_session_title">Titolo sessione</string>
+    <string name="chronicle_session_notes">Note sessione</string>
+    <string name="chronicle_notes_count">%1$d note</string>
+    <string name="chronicle_new_note">Nuova Nota</string>
+    <string name="chronicle_no_notes">Nessuna nota ancora</string>
+    <string name="chronicle_note_text">Testo della nota</string>
+    <string name="chronicle_character_notes_count">%1$d note personaggio</string>
+    <string name="chronicle_no_character_notes">Nessuna nota personaggio ancora</string>
+    <string name="chronicle_new_character_note">Nuova Nota Personaggio</string>
+    <string name="chronicle_select_character">Seleziona un personaggio</string>
+    <string name="chronicle_private_storyteller">Solo Narratore</string>
+    <string name="home_chronicles">Cronache</string>
+
+    <!-- Creation Steps -->
+    <string name="creation_random_name">Nome Casuale</string>
+    <string name="creation_preset_attributes">Preset Rapidi (7/5/3)</string>
+    <string name="creation_preset_abilities">Preset Rapidi (13/9/5)</string>
+    <string name="creation_category_physical">Fisici</string>
+    <string name="creation_category_social">Sociali</string>
+    <string name="creation_category_mental">Mentali</string>
+    <string name="creation_preset_combat">Combattimento</string>
+    <string name="creation_preset_stealth">Stealth</string>
+
+    <!-- XP Spending -->
+    <string name="xp_success_format">%1$s aumentato a %2$d (-%3$d XP)</string>
+</resources>
