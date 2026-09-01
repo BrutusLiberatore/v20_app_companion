@@ -367,6 +367,7 @@
     <string name="chronicle_tab_plots">Plots</string>
     <string name="chronicle_tab_secrets">Secrets</string>
     <string name="chronicle_tab_events">Events</string>
+    <string name="chronicle_tab_clues">Clues</string>
     <string name="chronicle_npcs_count">%1$d NPCs</string>
     <string name="chronicle_new_npc">New NPC</string>
     <string name="chronicle_no_npcs">No NPCs yet</string>
@@ -541,4 +542,8 @@
     <string name="title_hint">Title</string>
     <string name="generation_suffix">th Gen</string>
     <string name="session_blood">Blood</string>
+    <string name="chronicle_add_npc">Add NPC</string>
+    <string name="chronicle_add_plot">Add Plot</string>
+    <string name="chronicle_no_characters_available">No characters available to add</string>
+    <string name="name_hint">Name</string>
 </resources>

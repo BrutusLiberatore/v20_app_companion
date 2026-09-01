@@ -27,6 +27,7 @@ import com.v20charactermanager.domain.model.PlotType
 import com.v20charactermanager.domain.model.Visibility
 import com.v20charactermanager.ui.compendium.CompendiumDetailScreen
 import com.v20charactermanager.ui.chronicle.ChronicleDetailScreen
+import com.v20charactermanager.ui.chronicle.ChronicleStorytellerScreen
 import com.v20charactermanager.ui.chronicle.ChronicleListScreen
 import com.v20charactermanager.ui.chronicle.ChronicleViewModel
 import com.v20charactermanager.ui.chronicle.ChronicleViewModelFactory
@@ -520,16 +521,53 @@ fun V20NavGraph(
                 viewModel.loadChronicleDetail(chronicleId)
             }
 
-            ChronicleDetailScreen(
+            ChronicleStorytellerScreen(
                 uiState = uiState,
                 onBack = { navController.popBackStack() },
+                onStartSession = { session ->
+                    viewModel.startSession(session)
+                },
+                onEndSession = { session ->
+                    viewModel.endSession(session)
+                },
+                onCharacterClick = { characterId ->
+                    navController.navigate(Routes.sheet(characterId))
+                },
+                onCharacterBloodChange = { character, delta ->
+                    // TODO: Update character blood pool
+                },
+                onCharacterWillpowerChange = { character, delta ->
+                    // TODO: Update character willpower
+                },
+                onNpcClick = { npc ->
+                    // TODO: Open NPC detail
+                },
+                onOpenScene = { scene ->
+                    // TODO: Open scene detail
+                },
+                onChangeScene = { /* Scene deck handled in screen */ },
+                onDiceClick = {
+                    navController.navigate(Routes.dice())
+                },
+                onQuickNote = { text ->
+                    uiState.chronicle?.let { chronicle ->
+                        chronicle.id.let { cId ->
+                            viewModel.createQuickNote(cId, text)
+                        }
+                    }
+                },
+                onEventClick = { chronicleId, sessionId ->
+                    viewModel.createSessionEvent(chronicleId, sessionId, "Evento Manuale")
+                },
+                onMediaClick = {
+                    uiState.chronicle?.let { chronicle ->
+                        navController.navigate(Routes.mediaLibrary(chronicle.id))
+                    }
+                },
+                onOpenMediaLibrary = { chronicleId ->
+                    navController.navigate(Routes.mediaLibrary(chronicleId))
+                },
                 onTabSelected = { viewModel.selectTab(it) },
-                onAddCharacter = { cId, charId, role ->
-                    viewModel.addCharacterToChronicle(cId, charId, role)
-                },
-                onRemoveCharacter = { cId, charId ->
-                    viewModel.removeCharacterFromChronicle(cId, charId)
-                },
                 onCreateSession = { cId, title ->
                     viewModel.createSession(cId, title)
                 },
@@ -538,6 +576,24 @@ fun V20NavGraph(
                 },
                 onDeleteSession = { sessionId ->
                     viewModel.deleteSession(sessionId)
+                },
+                onCreateNpc = { cId, name, creatureType, role ->
+                    viewModel.createNpc(cId, name, creatureType, role)
+                },
+                onDeleteNpc = { npcId ->
+                    viewModel.deleteNpc(npcId)
+                },
+                onUpdateNpc = { npc ->
+                    viewModel.updateNpc(npc)
+                },
+                onCreatePlotArc = { cId, title, type ->
+                    viewModel.createPlotArc(cId, title, type)
+                },
+                onDeletePlotArc = { plotId ->
+                    viewModel.deletePlotArc(plotId)
+                },
+                onUpdatePlotArc = { plotArc ->
+                    viewModel.updatePlotArc(plotArc)
                 },
                 onCreateNote = { cId, text ->
                     viewModel.createChronicleNote(cId, text)
@@ -560,21 +616,6 @@ fun V20NavGraph(
                 onUpdateChronicle = { chronicle ->
                     viewModel.updateChronicle(chronicle)
                 },
-                onNavigateToCharacter = { characterId ->
-                    navController.navigate(Routes.sheet(characterId))
-                },
-                onNavigateToDice = {
-                    navController.navigate(Routes.dice())
-                },
-                onCreateNpc = { cId, name, creatureType, role ->
-                    viewModel.createNpc(cId, name, creatureType, role)
-                },
-                onDeleteNpc = { npcId ->
-                    viewModel.deleteNpc(npcId)
-                },
-                onUpdateNpc = { npc ->
-                    viewModel.updateNpc(npc)
-                },
                 onCreateLocation = { cId, name ->
                     viewModel.createLocation(cId, name)
                 },
@@ -592,15 +633,6 @@ fun V20NavGraph(
                 },
                 onUpdateFaction = { faction ->
                     viewModel.updateFaction(faction)
-                },
-                onCreatePlotArc = { cId, title, type ->
-                    viewModel.createPlotArc(cId, title, type)
-                },
-                onDeletePlotArc = { plotId ->
-                    viewModel.deletePlotArc(plotId)
-                },
-                onUpdatePlotArc = { plotArc ->
-                    viewModel.updatePlotArc(plotArc)
                 },
                 onCreateSecret = { cId, title, content ->
                     viewModel.createSecret(cId, title, content)
@@ -629,8 +661,14 @@ fun V20NavGraph(
                 onUpdateEvent = { event ->
                     viewModel.updateEvent(event)
                 },
-                onOpenMediaLibrary = { chronicleId ->
-                    navController.navigate(Routes.mediaLibrary(chronicleId))
+                onAddCharacter = { cId, charId, role ->
+                    viewModel.addCharacterToChronicle(cId, charId, role)
+                },
+                onRemoveCharacter = { cId, charId ->
+                    viewModel.removeCharacterFromChronicle(cId, charId)
+                },
+                onNavigateToDice = {
+                    navController.navigate(Routes.dice())
                 }
             )
         }

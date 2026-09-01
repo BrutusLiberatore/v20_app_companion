@@ -367,6 +367,7 @@
     <string name="chronicle_tab_plots">Trame</string>
     <string name="chronicle_tab_secrets">Segreti</string>
     <string name="chronicle_tab_events">Eventi</string>
+    <string name="chronicle_tab_clues">Indizi</string>
     <string name="chronicle_npcs_count">%1$d PNG</string>
     <string name="chronicle_new_npc">Nuovo PNG</string>
     <string name="chronicle_no_npcs">Nessun PNG ancora</string>
@@ -541,4 +542,8 @@
     <string name="title_hint">Titolo</string>
     <string name="generation_suffix">a Gen</string>
     <string name="session_blood">Sangue</string>
+    <string name="chronicle_add_npc">Aggiungi PNG</string>
+    <string name="chronicle_add_plot">Aggiungi Trama</string>
+    <string name="chronicle_no_characters_available">Nessun personaggio disponibile da aggiungere</string>
+    <string name="name_hint">Nome</string>
 </resources>
