@@ -40,11 +40,21 @@ fun MediaLibraryScreen(
     onAssetClick: (MediaAsset) -> Unit,
     onAssetDelete: (String) -> Unit,
     onAssetRename: (String, String) -> Unit,
+    message: String? = null,
+    onClearMessage: () -> Unit = {},
     onBack: () -> Unit
 ) {
     var selectedCategory by remember { mutableStateOf(MediaAssetCategory.ALL) }
     var showDeleteDialog by remember { mutableStateOf<MediaAsset?>(null) }
     var showRenameDialog by remember { mutableStateOf<MediaAsset?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(message) {
+        message?.let {
+            snackbarHostState.showSnackbar(it)
+            onClearMessage()
+        }
+    }
 
     val filteredAssets = when (selectedCategory) {
         MediaAssetCategory.ALL -> assets
@@ -67,6 +77,7 @@ fun MediaLibraryScreen(
     )
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.media_library), color = V20GoldBright, fontWeight = FontWeight.Bold) },

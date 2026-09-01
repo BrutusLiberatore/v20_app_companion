@@ -17,7 +17,8 @@ import java.util.UUID
 data class MediaLibraryUiState(
     val assets: List<MediaAsset> = emptyList(),
     val selectedCategory: MediaAssetCategory = MediaAssetCategory.ALL,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val message: String? = null
 )
 
 data class ImageViewerUiState(
@@ -68,50 +69,80 @@ class MediaViewModel(
 
     fun importImage(chronicleId: String, uri: Uri, title: String, type: MediaAssetType, visibility: Visibility) {
         viewModelScope.launch {
-            val assetId = UUID.randomUUID().toString()
-            val savedPath = ChronicleImageManager.saveImage(context, assetId, uri) ?: return@launch
-            val asset = MediaAsset(
-                id = assetId, chronicleId = chronicleId,
-                type = type, title = title,
-                originalFilePath = savedPath,
-                visibility = visibility
-            )
-            mediaRepository.insertAsset(asset)
-            val doc = ImageDocument(
-                id = UUID.randomUUID().toString(),
-                mediaAssetId = assetId
-            )
-            mediaRepository.insertDocument(doc)
-            val layer = ImageLayer(
-                id = UUID.randomUUID().toString(),
-                imageDocumentId = doc.id,
-                name = "Annotations",
-                visibility = Visibility.PUBLIC
-            )
-            mediaRepository.insertLayer(layer)
+            try {
+                _libraryUiState.update { it.copy(isLoading = true) }
+                val assetId = UUID.randomUUID().toString()
+                val savedPath = ChronicleImageManager.saveImage(context, assetId, uri)
+                if (savedPath == null) {
+                    _libraryUiState.update { it.copy(isLoading = false, message = "Failed to save image") }
+                    return@launch
+                }
+                val asset = MediaAsset(
+                    id = assetId, chronicleId = chronicleId,
+                    type = type, title = title,
+                    originalFilePath = savedPath,
+                    visibility = visibility
+                )
+                mediaRepository.insertAsset(asset)
+                val doc = ImageDocument(
+                    id = UUID.randomUUID().toString(),
+                    mediaAssetId = assetId
+                )
+                mediaRepository.insertDocument(doc)
+                val layer = ImageLayer(
+                    id = UUID.randomUUID().toString(),
+                    imageDocumentId = doc.id,
+                    name = "Annotations",
+                    visibility = Visibility.PUBLIC
+                )
+                mediaRepository.insertLayer(layer)
+                loadAssets(chronicleId)
+                _libraryUiState.update { it.copy(isLoading = false, message = "Image imported") }
+            } catch (e: Exception) {
+                _libraryUiState.update { it.copy(isLoading = false, message = "Import error: ${e.message}") }
+            }
         }
     }
 
     fun importDocument(chronicleId: String, uri: Uri, title: String) {
         viewModelScope.launch {
-            val assetId = UUID.randomUUID().toString()
-            val fileName = "doc_${assetId}.pdf"
-            val savedPath = try {
-                val inputStream = context.contentResolver.openInputStream(uri) ?: return@launch
-                val file = java.io.File(context.filesDir, "chronicle_documents/$fileName")
-                file.parentFile?.mkdirs()
-                file.outputStream().use { output -> inputStream.use { input -> input.copyTo(output) } }
-                file.absolutePath
-            } catch (_: Exception) { return@launch }
+            try {
+                _libraryUiState.update { it.copy(isLoading = true) }
+                val assetId = UUID.randomUUID().toString()
+                val fileName = "doc_${assetId}.pdf"
+                val savedPath = try {
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                    if (inputStream == null) {
+                        _libraryUiState.update { it.copy(isLoading = false, message = "Cannot read file") }
+                        return@launch
+                    }
+                    val dir = java.io.File(context.filesDir, "chronicle_documents")
+                    dir.mkdirs()
+                    val file = java.io.File(dir, fileName)
+                    file.outputStream().use { output -> inputStream.use { input -> input.copyTo(output) } }
+                    file.absolutePath
+                } catch (e: Exception) {
+                    _libraryUiState.update { it.copy(isLoading = false, message = "File copy error: ${e.message}") }
+                    return@launch
+                }
 
-            val asset = MediaAsset(
-                id = assetId, chronicleId = chronicleId,
-                type = MediaAssetType.DOCUMENT, title = title,
-                originalFilePath = savedPath,
-                visibility = Visibility.GM_ONLY
-            )
-            mediaRepository.insertAsset(asset)
+                val asset = MediaAsset(
+                    id = assetId, chronicleId = chronicleId,
+                    type = MediaAssetType.DOCUMENT, title = title,
+                    originalFilePath = savedPath,
+                    visibility = Visibility.GM_ONLY
+                )
+                mediaRepository.insertAsset(asset)
+                loadAssets(chronicleId)
+                _libraryUiState.update { it.copy(isLoading = false, message = "Document imported") }
+            } catch (e: Exception) {
+                _libraryUiState.update { it.copy(isLoading = false, message = "Import error: ${e.message}") }
+            }
         }
+    }
+
+    fun clearMessage() {
+        _libraryUiState.update { it.copy(message = null) }
     }
 
     fun deleteAsset(assetId: String) {
