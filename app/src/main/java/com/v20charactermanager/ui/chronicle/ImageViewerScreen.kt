@@ -3,6 +3,7 @@ package com.v20charactermanager.ui.chronicle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -31,9 +32,24 @@ fun ImageViewerScreen(
     mediaAsset: MediaAsset,
     annotations: List<ImageAnnotation>,
     layers: List<ImageLayer>,
+    toolState: DrawToolState,
+    canUndo: Boolean,
+    canRedo: Boolean,
+    isDrawingEnabled: Boolean,
+    activeLayerId: String?,
     onBack: () -> Unit,
     onToggleLayers: () -> Unit,
-    onTogglePresentation: () -> Unit
+    onToggleDrawing: () -> Unit,
+    onTogglePresentation: () -> Unit,
+    onToolChange: (DrawTool) -> Unit,
+    onColorChange: (Long) -> Unit,
+    onStrokeWidthChange: (Float) -> Unit,
+    onUndo: () -> Unit,
+    onRedo: () -> Unit,
+    onSave: () -> Unit,
+    onClearLayer: () -> Unit,
+    onStrokeComplete: (ImageAnnotation) -> Unit,
+    onLayerTap: (String) -> Unit
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offsetX by remember { mutableFloatStateOf(0f) }
@@ -42,9 +58,11 @@ fun ImageViewerScreen(
     var showLayersPanel by remember { mutableStateOf(false) }
 
     val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
-        scale = (scale * zoomChange).coerceIn(0.5f, 5f)
-        offsetX += panChange.x
-        offsetY += panChange.y
+        if (!isDrawingEnabled) {
+            scale = (scale * zoomChange).coerceIn(0.5f, 5f)
+            offsetX += panChange.x
+            offsetY += panChange.y
+        }
     }
 
     Scaffold(
@@ -61,6 +79,13 @@ fun ImageViewerScreen(
                         IconButton(onClick = { showLayersPanel = !showLayersPanel }) {
                             Icon(Icons.Default.Layers, contentDescription = stringResource(R.string.viewer_layers), tint = V20Ink)
                         }
+                        IconButton(onClick = onToggleDrawing) {
+                            Icon(
+                                if (isDrawingEnabled) Icons.Default.EditOff else Icons.Default.Edit,
+                                contentDescription = if (isDrawingEnabled) stringResource(R.string.draw_undo) else stringResource(R.string.draw_tool_pen),
+                                tint = if (isDrawingEnabled) V20GreenBright else V20Ink
+                            )
+                        }
                         IconButton(onClick = onTogglePresentation) {
                             Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.viewer_presentation), tint = V20GreenBright)
                         }
@@ -70,7 +95,21 @@ fun ImageViewerScreen(
             }
         },
         bottomBar = {
-            if (showToolbar) {
+            if (showToolbar && isDrawingEnabled) {
+                AnnotationToolbar(
+                    toolState = toolState,
+                    canUndo = canUndo,
+                    canRedo = canRedo,
+                    activeLayerId = activeLayerId,
+                    onToolChange = onToolChange,
+                    onColorChange = onColorChange,
+                    onStrokeWidthChange = onStrokeWidthChange,
+                    onUndo = onUndo,
+                    onRedo = onRedo,
+                    onSave = onSave,
+                    onClearLayer = onClearLayer
+                )
+            } else if (showToolbar) {
                 Surface(color = V20Surface2, modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.padding(12.dp).fillMaxWidth(),
@@ -99,16 +138,21 @@ fun ImageViewerScreen(
                 .padding(padding)
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onTap = { showToolbar = !showToolbar },
+                        onTap = { if (!isDrawingEnabled) showToolbar = !showToolbar },
                         onDoubleTap = {
-                            if (scale > 1.5f) {
-                                scale = 1f; offsetX = 0f; offsetY = 0f
-                            } else {
-                                scale = 2.5f
+                            if (!isDrawingEnabled) {
+                                if (scale > 1.5f) {
+                                    scale = 1f; offsetX = 0f; offsetY = 0f
+                                } else {
+                                    scale = 2.5f
+                                }
                             }
                         }
                     )
-                },
+                }
+                .then(
+                    if (isDrawingEnabled) Modifier else Modifier.transformable(state = transformableState)
+                ),
             contentAlignment = Alignment.Center
         ) {
             AsyncImage(
@@ -128,6 +172,23 @@ fun ImageViewerScreen(
                 contentScale = ContentScale.Fit
             )
 
+            AnnotationCanvas(
+                annotations = annotations.filter { layer -> layers.any { it.id == layer.layerId && it.visible } },
+                toolState = toolState,
+                activeLayerId = activeLayerId,
+                isDrawingEnabled = isDrawingEnabled,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offsetX,
+                        translationY = offsetY
+                    ),
+                onStrokeComplete = onStrokeComplete,
+                onPinTap = { }
+            )
+
             if (showLayersPanel) {
                 Surface(
                     modifier = Modifier
@@ -145,8 +206,19 @@ fun ImageViewerScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         layers.forEach { layer ->
+                            val isActive = layer.id == activeLayerId
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .background(
+                                        if (isActive) V20GreenBright.copy(alpha = 0.15f) else Color.Transparent,
+                                        shape = MaterialTheme.shapes.small
+                                    )
+                                    .pointerInput(layer.id) {
+                                        detectTapGestures(onTap = { onLayerTap(layer.id) })
+                                    }
+                                    .padding(8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
@@ -156,11 +228,20 @@ fun ImageViewerScreen(
                                     tint = if (layer.visible) V20GreenBright else V20InkFaint,
                                     modifier = Modifier.size(16.dp)
                                 )
-                                Text(
-                                    text = layer.name,
-                                    color = if (layer.visible) V20Ink else V20InkFaint,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = layer.name,
+                                        color = if (layer.visible) V20Ink else V20InkFaint,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    if (isActive) {
+                                        Text(
+                                            text = "● Active",
+                                            color = V20GreenBright,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                }
                             }
                         }
                         if (layers.isEmpty()) {

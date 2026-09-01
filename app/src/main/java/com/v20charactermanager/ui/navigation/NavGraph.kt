@@ -31,6 +31,9 @@ import com.v20charactermanager.ui.chronicle.ChronicleListScreen
 import com.v20charactermanager.ui.chronicle.ChronicleViewModel
 import com.v20charactermanager.ui.chronicle.ChronicleViewModelFactory
 import com.v20charactermanager.ui.chronicle.ImageViewerScreen
+import com.v20charactermanager.ui.chronicle.DrawToolState
+import com.v20charactermanager.ui.chronicle.DrawTool
+import com.v20charactermanager.ui.chronicle.toAnnotationType
 import com.v20charactermanager.ui.chronicle.MediaLibraryScreen
 import com.v20charactermanager.ui.chronicle.MediaViewModel
 import com.v20charactermanager.ui.chronicle.MediaViewModelFactory
@@ -681,13 +684,47 @@ fun V20NavGraph(
             LaunchedEffect(assetId) { mediaViewModel.loadAssetForViewing(assetId) }
 
             uiState.asset?.let { asset ->
+                var drawToolState by remember { mutableStateOf(DrawToolState()) }
+                val docId = uiState.document?.id ?: ""
+                val mediaId = asset.id
+
                 ImageViewerScreen(
                     mediaAsset = asset,
                     annotations = uiState.annotations,
                     layers = uiState.layers,
+                    toolState = drawToolState,
+                    canUndo = uiState.undoStack.isNotEmpty(),
+                    canRedo = uiState.redoStack.isNotEmpty(),
+                    isDrawingEnabled = uiState.isDrawingEnabled,
+                    activeLayerId = uiState.activeLayerId,
                     onBack = { navController.popBackStack() },
                     onToggleLayers = { },
-                    onTogglePresentation = { }
+                    onToggleDrawing = { mediaViewModel.toggleDrawingMode() },
+                    onTogglePresentation = { },
+                    onToolChange = { tool ->
+                        drawToolState = drawToolState.copy(tool = tool)
+                        mediaViewModel.selectAnnotationTool(tool.toAnnotationType())
+                    },
+                    onColorChange = { color -> drawToolState = drawToolState.copy(color = color) },
+                    onStrokeWidthChange = { w -> drawToolState = drawToolState.copy(strokeWidth = w) },
+                    onUndo = { mediaViewModel.undo() },
+                    onRedo = { mediaViewModel.redo() },
+                    onSave = {
+                        mediaViewModel.saveRevision(
+                            imageDocumentId = docId,
+                            mediaAssetId = mediaId
+                        )
+                    },
+                    onClearLayer = { mediaViewModel.clearActiveLayerAnnotations() },
+                    onStrokeComplete = { annotation ->
+                        mediaViewModel.addAnnotation(
+                            annotation.copy(
+                                imageDocumentId = docId,
+                                layerId = uiState.activeLayerId ?: annotation.layerId
+                            )
+                        )
+                    },
+                    onLayerTap = { layerId -> mediaViewModel.setActiveLayer(layerId) }
                 )
             }
         }

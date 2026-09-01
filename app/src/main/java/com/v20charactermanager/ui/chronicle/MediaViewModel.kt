@@ -26,6 +26,9 @@ data class ImageViewerUiState(
     val revisions: List<ImageRevision> = emptyList(),
     val currentAnnotationType: AnnotationType = AnnotationType.PEN_STROKE,
     val activeLayerId: String? = null,
+    val isDrawingEnabled: Boolean = false,
+    val undoStack: List<ImageAnnotation> = emptyList(),
+    val redoStack: List<ImageAnnotation> = emptyList(),
     val isLoading: Boolean = true
 )
 
@@ -93,9 +96,14 @@ class MediaViewModel(
             _viewerUiState.update { it.copy(asset = asset, isLoading = true) }
             mediaRepository.getDocumentByAssetId(assetId).collect { doc ->
                 if (doc != null) {
-                    _viewerUiState.update { it.copy(document = doc) }
+                    _viewerUiState.update { state ->
+                        state.copy(document = doc, activeLayerId = state.activeLayerId ?: state.layers.firstOrNull()?.id)
+                    }
                     mediaRepository.getLayersByDocument(doc.id).collect { layers ->
-                        _viewerUiState.update { it.copy(layers = layers) }
+                        _viewerUiState.update { state ->
+                            val newActiveLayer = state.activeLayerId ?: layers.firstOrNull()?.id
+                            state.copy(layers = layers, activeLayerId = newActiveLayer)
+                        }
                     }
                     mediaRepository.getAnnotationsByDocument(doc.id).collect { annotations ->
                         _viewerUiState.update { it.copy(annotations = annotations, isLoading = false) }
@@ -111,6 +119,12 @@ class MediaViewModel(
     fun addAnnotation(annotation: ImageAnnotation) {
         viewModelScope.launch {
             mediaRepository.insertAnnotation(annotation)
+            _viewerUiState.update { state ->
+                state.copy(
+                    undoStack = state.undoStack + annotation,
+                    redoStack = emptyList()
+                )
+            }
         }
     }
 
@@ -123,6 +137,61 @@ class MediaViewModel(
     fun deleteAnnotation(id: String) {
         viewModelScope.launch {
             mediaRepository.deleteAnnotation(id)
+        }
+    }
+
+    fun undo(): Boolean {
+        val state = _viewerUiState.value
+        if (state.undoStack.isEmpty()) return false
+        val last = state.undoStack.last()
+        viewModelScope.launch {
+            mediaRepository.deleteAnnotation(last.id)
+        }
+        _viewerUiState.update {
+            it.copy(
+                undoStack = it.undoStack.dropLast(1),
+                redoStack = it.redoStack + last
+            )
+        }
+        return true
+    }
+
+    fun redo(): Boolean {
+        val state = _viewerUiState.value
+        if (state.redoStack.isEmpty()) return false
+        val last = state.redoStack.last()
+        viewModelScope.launch {
+            mediaRepository.insertAnnotation(last)
+        }
+        _viewerUiState.update {
+            it.copy(
+                redoStack = it.redoStack.dropLast(1),
+                undoStack = it.undoStack + last
+            )
+        }
+        return true
+    }
+
+    fun toggleDrawingMode() {
+        _viewerUiState.update { it.copy(isDrawingEnabled = !it.isDrawingEnabled) }
+    }
+
+    fun setActiveLayer(layerId: String?) {
+        _viewerUiState.update { it.copy(activeLayerId = layerId) }
+    }
+
+    fun clearActiveLayerAnnotations() {
+        val state = _viewerUiState.value
+        val layerId = state.activeLayerId ?: return
+        val layerAnnotations = state.annotations.filter { it.layerId == layerId }
+        viewModelScope.launch {
+            layerAnnotations.forEach { mediaRepository.deleteAnnotation(it.id) }
+        }
+        _viewerUiState.update {
+            it.copy(
+                undoStack = it.undoStack + layerAnnotations,
+                redoStack = emptyList()
+            )
         }
     }
 
