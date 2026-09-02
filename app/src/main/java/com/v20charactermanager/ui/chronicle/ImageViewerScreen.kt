@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.chronicle
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -52,6 +53,7 @@ fun ImageViewerScreen(
     onLayerTap: (String) -> Unit,
     onNavigateToHistory: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var scale by remember { mutableFloatStateOf(1f) }
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
@@ -102,10 +104,13 @@ fun ImageViewerScreen(
                             Icon(Icons.Default.History, contentDescription = stringResource(R.string.version_history), tint = V20Ink)
                         }
                         IconButton(onClick = {
-                            isPresentationMode = true
-                            onTogglePresentation()
+                            val intent = Intent(context, ImagePresentationActivity::class.java).apply {
+                                putExtra(ImagePresentationActivity.EXTRA_FILE_PATH, mediaAsset.originalFilePath)
+                                putExtra(ImagePresentationActivity.EXTRA_TITLE, mediaAsset.title)
+                            }
+                            context.startActivity(intent)
                         }) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.presentation_mode), tint = V20GreenBright)
+                            Icon(Icons.Default.Fullscreen, contentDescription = stringResource(R.string.presentation_mode), tint = V20GreenBright)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)
