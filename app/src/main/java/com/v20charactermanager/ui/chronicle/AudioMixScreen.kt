@@ -4,10 +4,13 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -33,6 +36,7 @@ fun AudioMixContent(
     var showCategoryDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf<AudioTrack?>(null) }
     var showSavePresetDialog by remember { mutableStateOf(false) }
+    var selectedCategoryFilter by remember { mutableStateOf<AudioTrackCategory?>(null) }
     var pendingUri by remember { mutableStateOf<Uri?>(null) }
     var pendingTitle by remember { mutableStateOf("") }
 
@@ -106,6 +110,46 @@ fun AudioMixContent(
             }
         }
 
+        // Category filter chips
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = selectedCategoryFilter == null,
+                    onClick = { selectedCategoryFilter = null },
+                    label = { Text("Tutti") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = V20GoldBright,
+                        selectedLabelColor = V20Black
+                    )
+                )
+                AudioTrackCategory.entries.forEach { cat ->
+                    FilterChip(
+                        selected = selectedCategoryFilter == cat,
+                        onClick = {
+                            selectedCategoryFilter = if (selectedCategoryFilter == cat) null else cat
+                        },
+                        label = {
+                            Text(when (cat) {
+                                AudioTrackCategory.AMBIENCE -> "Ambience"
+                                AudioTrackCategory.MUSIC -> "Musica"
+                                AudioTrackCategory.SFX -> "SFX"
+                                AudioTrackCategory.CUSTOM -> "Custom"
+                            })
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = V20GoldBright,
+                            selectedLabelColor = V20Black
+                        )
+                    )
+                }
+            }
+        }
+
         // Tracks section
         item {
             Row(
@@ -173,7 +217,12 @@ fun AudioMixContent(
                 }
             }
         } else {
-            items(uiState.tracks, key = { it.id }) { track ->
+            val filteredTracks = if (selectedCategoryFilter != null) {
+                uiState.tracks.filter { it.category == selectedCategoryFilter }
+            } else {
+                uiState.tracks
+            }
+            items(filteredTracks, key = { it.id }) { track ->
                 AudioTrackCard(
                     track = track,
                     onTogglePlay = { audioViewModel.togglePlay(track.id) },

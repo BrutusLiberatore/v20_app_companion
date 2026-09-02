@@ -76,17 +76,6 @@ fun ChronicleStorytellerScreen(
 
     val chronicle = uiState.chronicle
 
-    var showAudioImport by remember { mutableStateOf(false) }
-
-    val audioImportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
-    ) { uri: android.net.Uri? ->
-        uri?.let {
-            val title = it.lastPathSegment?.substringAfterLast('/') ?: "Audio"
-            audioViewModel?.importAudio(chronicle?.id ?: "", it, title, com.v20charactermanager.domain.model.AudioTrackCategory.CUSTOM)
-        }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -97,9 +86,6 @@ fun ChronicleStorytellerScreen(
                     if (selectedNavItem == ChronicleBottomNavItem.AUDIO && audioViewModel != null) {
                         IconButton(onClick = { audioViewModel.stopAll() }) {
                             Icon(Icons.Filled.Stop, contentDescription = "Stop All", tint = Color.Red)
-                        }
-                        IconButton(onClick = { audioImportLauncher.launch("audio/*") }) {
-                            Icon(Icons.Filled.Add, contentDescription = "Import Audio", tint = V20Ink)
                         }
                     }
                     if (uiState.activeSession != null) {
