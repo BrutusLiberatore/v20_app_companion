@@ -18,6 +18,8 @@ import java.util.UUID
 data class MediaLibraryUiState(
     val assets: List<MediaAsset> = emptyList(),
     val selectedCategory: MediaAssetCategory = MediaAssetCategory.ALL,
+    val selectedTag: String? = null,
+    val availableTags: List<String> = emptyList(),
     val isLoading: Boolean = true,
     val message: String? = null,
     val errorType: V20ErrorType? = null,
@@ -52,7 +54,8 @@ class MediaViewModel(
     fun loadAssets(chronicleId: String) {
         viewModelScope.launch {
             mediaRepository.getAssetsByChronicle(chronicleId).collect { assets ->
-                _libraryUiState.update { it.copy(assets = assets, isLoading = false) }
+                val tags = assets.flatMap { it.tags }.distinct().sorted()
+                _libraryUiState.update { it.copy(assets = assets, availableTags = tags, isLoading = false) }
             }
         }
     }
@@ -90,6 +93,7 @@ class MediaViewModel(
                     id = assetId, chronicleId = chronicleId,
                     type = type, title = title,
                     originalFilePath = savedPath,
+                    tags = autoTagsForType(type),
                     visibility = visibility
                 )
                 mediaRepository.insertAsset(asset)
@@ -182,6 +186,7 @@ class MediaViewModel(
                     id = assetId, chronicleId = chronicleId,
                     type = MediaAssetType.DOCUMENT, title = title,
                     originalFilePath = savedPath,
+                    tags = listOf("Documenti"),
                     visibility = Visibility.GM_ONLY
                 )
                 mediaRepository.insertAsset(asset)
@@ -205,6 +210,44 @@ class MediaViewModel(
 
     fun clearError() {
         _libraryUiState.update { it.copy(errorType = null, errorDetails = null) }
+    }
+
+    fun filterByTag(tag: String?) {
+        _libraryUiState.update { it.copy(selectedTag = tag) }
+    }
+
+    fun addTagToAsset(assetId: String, tag: String) {
+        viewModelScope.launch {
+            val asset = mediaRepository.getAssetById(assetId) ?: return@launch
+            if (tag.isBlank()) return@launch
+            val newTags = (asset.tags + tag.trim()).distinct()
+            mediaRepository.updateAsset(asset.copy(tags = newTags, modifiedAt = System.currentTimeMillis()))
+            val currentTags = _libraryUiState.value.availableTags
+            if (!currentTags.contains(tag.trim())) {
+                _libraryUiState.update { it.copy(availableTags = (currentTags + tag.trim()).sorted()) }
+            }
+        }
+    }
+
+    fun removeTagFromAsset(assetId: String, tag: String) {
+        viewModelScope.launch {
+            val asset = mediaRepository.getAssetById(assetId) ?: return@launch
+            val newTags = asset.tags.filter { it != tag }
+            mediaRepository.updateAsset(asset.copy(tags = newTags, modifiedAt = System.currentTimeMillis()))
+            val allTags = _libraryUiState.value.assets.filter { it.id != assetId }.flatMap { it.tags }.distinct().sorted()
+            _libraryUiState.update { it.copy(availableTags = allTags) }
+        }
+    }
+
+    fun setAssetTags(assetId: String, tags: List<String>) {
+        viewModelScope.launch {
+            val asset = mediaRepository.getAssetById(assetId) ?: return@launch
+            mediaRepository.updateAsset(asset.copy(tags = tags, modifiedAt = System.currentTimeMillis()))
+            val allTags = _libraryUiState.value.assets.map { a ->
+                if (a.id == assetId) tags else a.tags
+            }.flatten().distinct().sorted()
+            _libraryUiState.update { it.copy(availableTags = allTags) }
+        }
     }
 
     fun deleteAsset(assetId: String) {
@@ -458,6 +501,16 @@ class MediaViewModel(
             mediaRepository.updateLayer(layer.copy(visible = !layer.visible))
         }
     }
+}
+
+val STANDARD_TAGS = listOf("Mappe", "PNG", "Luoghi", "Indizi", "Documenti", "Altro")
+
+private fun autoTagsForType(type: MediaAssetType): List<String> = when (type) {
+    MediaAssetType.MAP, MediaAssetType.LOCATION_MAP -> listOf("Mappe")
+    MediaAssetType.PORTRAIT -> listOf("PNG")
+    MediaAssetType.CLUE_VISUAL -> listOf("Indizi")
+    MediaAssetType.DOCUMENT -> listOf("Documenti")
+    else -> listOf("Altro")
 }
 
 class MediaViewModelFactory(

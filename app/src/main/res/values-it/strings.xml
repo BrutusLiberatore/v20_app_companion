@@ -607,4 +607,12 @@
     <string name="error_save_failed">Salvataggio fallito</string>
     <string name="error_save_failed_desc">Impossibile salvare le modifiche. Controlla lo spazio disponibile e riprova.</string>
 
+    <!-- Tag Editor -->
+    <string name="tag_manage">Gestisci Tag</string>
+    <string name="tag_assigned">Tag assegnati:</string>
+    <string name="tag_none">Nessun tag</string>
+    <string name="tag_add_standard">Aggiungi tag standard:</string>
+    <string name="tag_custom">Tag personalizzato:</string>
+    <string name="tag_new_hint">Nuovo tag</string>
+
 </resources>

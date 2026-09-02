@@ -607,4 +607,12 @@
     <string name="error_save_failed">Save failed</string>
     <string name="error_save_failed_desc">Unable to save changes. Check available disk space and try again.</string>
 
+    <!-- Tag Editor -->
+    <string name="tag_manage">Manage Tags</string>
+    <string name="tag_assigned">Assigned Tags:</string>
+    <string name="tag_none">No tags</string>
+    <string name="tag_add_standard">Add standard tags:</string>
+    <string name="tag_custom">Custom tag:</string>
+    <string name="tag_new_hint">New tag</string>
+
 </resources>

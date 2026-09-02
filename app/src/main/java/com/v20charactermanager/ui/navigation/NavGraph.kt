@@ -744,6 +744,8 @@ fun V20NavGraph(
             MediaLibraryScreen(
                 chronicleId = chronicleId,
                 assets = uiState.assets,
+                availableTags = uiState.availableTags,
+                selectedTag = uiState.selectedTag,
                 onImportImage = { pickImageLauncher.launch("image/*") },
                 onImportDocument = { pickDocumentLauncher.launch("application/pdf") },
                 onAssetClick = { asset ->
@@ -755,6 +757,9 @@ fun V20NavGraph(
                 },
                 onAssetDelete = { mediaViewModel.deleteAsset(it) },
                 onAssetRename = { assetId, newTitle -> mediaViewModel.renameAsset(assetId, newTitle) },
+                onAssetTagAdd = { assetId, tag -> mediaViewModel.addTagToAsset(assetId, tag) },
+                onAssetTagRemove = { assetId, tag -> mediaViewModel.removeTagFromAsset(assetId, tag) },
+                onFilterByTag = { tag -> mediaViewModel.filterByTag(tag) },
                 message = uiState.message,
                 onClearMessage = { mediaViewModel.clearMessage() },
                 errorType = uiState.errorType,
