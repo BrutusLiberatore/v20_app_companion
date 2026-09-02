@@ -51,7 +51,7 @@ A dedicated chronicle management system separate from individual character files
 
 ### Storyteller Workspace
 
-A mobile-first storyteller interface organized around a five-tab bottom navigation:
+A mobile-first storyteller interface organized around a six-tab bottom navigation:
 
 **Live** -- Active session dashboard with real-time controls:
 - Session status display with start/end controls
@@ -71,9 +71,18 @@ A mobile-first storyteller interface organized around a five-tab bottom navigati
 - Scene list with hooks
 
 **Visual** -- Media library (navigates to full Media Library screen):
-- Image import with automatic thumbnail generation
-- PDF/document import with built-in viewer
+- Image import with automatic thumbnail generation (JPEG, PNG, GIF, WebP, SVG)
+- PDF/document import with built-in viewer and presentation mode
+- Video import with thumbnail generation and ExoPlayer playback
 - Category filtering (Maps, NPC, Locations, Clues, Documents)
+- Tag system for organizing media assets
+
+**Audio** -- Audio mix board for live session soundscapes:
+- Multi-track layered playback (multiple sounds simultaneously)
+- Per-track volume, loop, play/pause controls
+- Audio categories: Ambience, Music, SFX, Custom
+- Audio presets: save current mix as named preset, one-tap activation
+- Import MP3, WAV, OGG, FLAC, AAC, M4A
 
 **More** -- Utility section:
 - Dice roller
@@ -99,7 +108,7 @@ A custom composable that adds `@` autocomplete to any note field. Typing `@` fol
 | `@SCENE` | `@SCENE` | Scenes |
 | `@OGGETTI` | `@ITEM` | Items |
 
-Selecting an item inserts a `[TYPE:ID:Name]` reference that renders as a clickable chip in read mode. The system supports both Italian and English keywords.
+Selecting an item inserts a `[TYPE:ID:Name]` reference that renders as a clickable chip in read mode. The system supports both Italian and English keywords. Typing `@` alone shows all available entities.
 
 ### Visual Board & Annotation System
 
@@ -112,10 +121,28 @@ A layered image annotation system for maps, location plans, and visual reference
 - **Presentation mode**: Fullscreen display with GM tools hidden, public layers only
 - **Image management**: Rename, category filtering, internal storage with 1920px max resolution
 
+### PDF Viewer & Presentation
+
+Built-in PDF viewer with:
+- Page-by-page lazy rendering (shows first page instantly)
+- Fast page navigation via slider
+- Last page memory (per PDF, saved in SharedPreferences)
+- Fullscreen presentation mode with rotation support
+- Pinch-to-zoom with double-tap toggle
+
+### Video Player
+
+Video playback with:
+- ExoPlayer-based player with Material 3 UI
+- Automatic loop by default (toggle on/off)
+- Fullscreen with system controls
+- MP4, WebM, 3GPP, AVI, MOV support
+
 ### Dice Engine
 
 V20 tabletop dice roller supporting:
 - Standard rolls with custom dice count and difficulty
+- Attribute-ability pairing with correct V20 defaults (e.g., Athletics→Dexterity, Investigation→Perception)
 - Botch detection
 - Willpower and blood expenditure dice
 - Specialty and automatic success rules
@@ -136,10 +163,12 @@ Full Italian and English localization (~600+ strings). Language can be switched 
 |-----------|-----------|
 | Language | Kotlin 2.0.0 |
 | UI | Jetpack Compose with Material 3 |
-| Database | Room (currently v8, 7 migrations) |
+| Database | Room (currently v11, 10 migrations) |
 | DI | Manual via `AppContainer` |
-| Images | Coil for async loading, `BitmapFactory` for import |
-| PDF | Android `PdfRenderer` (built-in, no external dependencies) |
+| Images | Coil 2.6.0 (JPEG, PNG, GIF, WebP, SVG) |
+| PDF | Android `PdfRenderer` (built-in) |
+| Video | Media3 ExoPlayer 1.4.1 |
+| Audio | Android `MediaPlayer` (multi-track) |
 | Serialization | `kotlinx.serialization` |
 | Min SDK | 26 (Android 8.0) |
 | Target SDK | 34 |
@@ -147,7 +176,7 @@ Full Italian and English localization (~600+ strings). Language can be switched 
 
 ### Database
 
-Room database with 15+ entities covering characters, chronicles, sessions, scenes, NPCs, locations, factions, relationships, plot arcs, secrets, clues, events, media assets, annotations, layers, revisions, quick notes, and session events.
+Room database with 17+ entities covering characters, chronicles, sessions, scenes, NPCs, locations, factions, relationships, plot arcs, secrets, clues, events, media assets, annotations, layers, revisions, quick notes, session events, audio tracks, and audio presets.
 
 Migrations are versioned and tested. A `fallbackToDestructiveMigration` is configured as a safety net.
 
@@ -188,11 +217,12 @@ app/src/main/java/com/v20charactermanager/
     local/
       V20Database.kt                -- Room database + migrations
       ChronicleImageManager.kt      -- Image storage and thumbnails
-      dao/                          -- 15+ Room DAOs
-      entity/                       -- 15+ Room entities
+      dao/                          -- 17+ Room DAOs
+      entity/                       -- 17+ Room entities
     repository/                     -- Repository implementations + mappers
   domain/
-    engine/                         -- Import/export engines
+    definition/                     -- AbilityId, AttributeId, RuleSet enums
+    engine/                         -- DiceEngine, DicePoolBuilder, Import/Export engines
     model/                          -- Pure Kotlin domain models
     repository/                     -- Repository interfaces
   ui/

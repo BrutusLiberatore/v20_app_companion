@@ -16,6 +16,42 @@ object DicePoolBuilder {
         val specialtyBonus: Int = 0
     )
 
+    fun defaultAttributeForAbility(ability: AbilityId): AttributeId = when (ability) {
+        // Talents
+        AbilityId.ATHLETICS -> AttributeId.DEXTERITY
+        AbilityId.ALERTNESS -> AttributeId.PERCEPTION
+        AbilityId.EMPATHY -> AttributeId.WITS
+        AbilityId.EXPRESSION -> AttributeId.CHARISMA
+        AbilityId.INTIMIDATE -> AttributeId.MANIPULATION
+        AbilityId.INTUITION -> AttributeId.WITS
+        AbilityId.LEADERSHIP -> AttributeId.CHARISMA
+        AbilityId.STREETWISE -> AttributeId.MANIPULATION
+        AbilityId.SUBTERFUGE -> AttributeId.MANIPULATION
+
+        // Skills
+        AbilityId.ANIMAL_KEN -> AttributeId.STAMINA
+        AbilityId.CRAFTS -> AttributeId.DEXTERITY
+        AbilityId.DRIVE -> AttributeId.DEXTERITY
+        AbilityId.FIREARMS -> AttributeId.DEXTERITY
+        AbilityId.LARCENY -> AttributeId.DEXTERITY
+        AbilityId.MELEE -> AttributeId.STRENGTH
+        AbilityId.PERFORMANCE -> AttributeId.CHARISMA
+        AbilityId.SECURITY -> AttributeId.DEXTERITY
+        AbilityId.STEALTH -> AttributeId.DEXTERITY
+        AbilityId.SURVIVAL -> AttributeId.STAMINA
+
+        // Knowledges
+        AbilityId.ACADEMICS -> AttributeId.INTELLIGENCE
+        AbilityId.COMPUTER -> AttributeId.INTELLIGENCE
+        AbilityId.FINANCE -> AttributeId.INTELLIGENCE
+        AbilityId.INVESTIGATION -> AttributeId.PERCEPTION
+        AbilityId.LAW -> AttributeId.INTELLIGENCE
+        AbilityId.MEDICINE -> AttributeId.INTELLIGENCE
+        AbilityId.OCCULT -> AttributeId.INTELLIGENCE
+        AbilityId.POLITICS -> AttributeId.INTELLIGENCE
+        AbilityId.SCIENCE -> AttributeId.INTELLIGENCE
+    }
+
     fun buildFromAttributes(
         character: Character,
         attribute: AttributeId,
@@ -71,7 +107,8 @@ object DicePoolBuilder {
         difficulty: Int = RuleSet.DIFFICULTY_STANDARD,
         willpowerUsed: Boolean = false
     ): DiceResult {
-        val pool = buildFromAttributes(character, AttributeId.INTELLIGENCE, ability)
+        val attribute = defaultAttributeForAbility(ability)
+        val pool = buildFromAttributes(character, attribute, ability)
         return DiceEngine.roll(
             pool = pool.totalPool,
             difficulty = difficulty,

@@ -111,8 +111,10 @@ Vampire Tavern Scene:
 
 ### Database
 - New table: `audio_tracks` (Room, version 10)
+- New table: `audio_presets` (Room, version 11)
 - Fields: id, chronicleId, title, filePath, category, isLooping, volume, isActive, createdAt
-- Migration 9→10 adds the table
+- Migration 9→10 adds audio_tracks
+- Migration 10→11 adds audio_presets
 
 ### File Storage
 - Audio files: `context.filesDir/chronicle_audio/`
