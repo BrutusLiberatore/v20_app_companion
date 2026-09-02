@@ -114,7 +114,7 @@ fun NpcDetailSheet(
                     minLines = 2
                 )
             } else {
-                if (description.contains("[")) {
+                if (description.contains("[") || description.contains("#")) {
                     LinkedTextDisplay(
                         text = description,
                         linkableItems = linkableItems,
@@ -146,7 +146,7 @@ fun NpcDetailSheet(
                     placeholder = stringResource(R.string.npc_notes_hint)
                 )
             } else {
-                if (notes.contains("[")) {
+                if (notes.contains("[") || notes.contains("#")) {
                     LinkedTextDisplay(
                         text = notes,
                         linkableItems = linkableItems,

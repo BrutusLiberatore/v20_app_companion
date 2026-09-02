@@ -248,7 +248,7 @@ private fun EditableNoteCard(
                 }
             } else {
                 Spacer(modifier = Modifier.height(4.dp))
-                if (note.text.contains("[")) {
+                if (note.text.contains("[") || note.text.contains("#")) {
                     LinkedTextDisplay(
                         text = note.text,
                         linkableItems = linkableItems,

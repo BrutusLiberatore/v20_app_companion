@@ -871,6 +871,7 @@ fun V20NavGraph(
             )
         ) { backStackEntry ->
             val assetId = backStackEntry.arguments?.getString("assetId") ?: return@composable
+            val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: return@composable
             val mediaViewModel: MediaViewModel = viewModel(
                 factory = MediaViewModelFactory(
                     appContainer.mediaRepository,
@@ -878,6 +879,7 @@ fun V20NavGraph(
                 )
             )
             val uiState by mediaViewModel.libraryUiState.collectAsState()
+            LaunchedEffect(chronicleId) { mediaViewModel.loadAssets(chronicleId) }
             val asset = uiState.assets.find { it.id == assetId }
 
             DocumentViewerScreen(
