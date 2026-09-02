@@ -3,7 +3,6 @@ package com.v20charactermanager.ui.chronicle
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,25 +15,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.AudioTrack
 import com.v20charactermanager.domain.model.AudioTrackCategory
 import com.v20charactermanager.ui.theme.*
-import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AudioMixScreen(
+fun AudioMixContent(
     chronicleId: String,
     audioViewModel: AudioViewModel,
-    onBack: () -> Unit
+    modifier: Modifier = Modifier
 ) {
     val uiState by audioViewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     var showCategoryDialog by remember { mutableStateOf(false) }
     var pendingUri by remember { mutableStateOf<Uri?>(null) }
     var pendingTitle by remember { mutableStateOf("") }
@@ -49,17 +41,6 @@ fun AudioMixScreen(
         }
     }
 
-    LaunchedEffect(chronicleId) {
-        audioViewModel.loadTracks(chronicleId)
-    }
-
-    LaunchedEffect(uiState.message) {
-        uiState.message?.let {
-            snackbarHostState.showSnackbar(it)
-            audioViewModel.clearMessage()
-        }
-    }
-
     if (showCategoryDialog && pendingUri != null) {
         CategoryPickerDialog(
             onDismiss = { showCategoryDialog = false; pendingUri = null },
@@ -71,80 +52,90 @@ fun AudioMixScreen(
         )
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
+    if (uiState.tracks.isEmpty()) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = V20InkFaint,
+                    modifier = Modifier.size(64.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Nessun audio importato",
+                    color = V20InkFaint,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Torna alla tab Visual per importare file audio",
+                    color = V20InkFaint,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = { audioLauncher.launch("audio/*") },
+                    colors = ButtonDefaults.buttonColors(containerColor = V20GoldBright)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = V20Black)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Importa Audio", color = V20Black)
+                }
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = "Audio Mix",
-                        color = V20GoldBright,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        audioViewModel.stopAll()
-                        onBack()
-                    }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = V20Ink)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { audioViewModel.stopAll() }) {
-                        Icon(Icons.Default.Stop, contentDescription = "Stop All", tint = Color.Red)
-                    }
-                    IconButton(onClick = { audioLauncher.launch("audio/*") }) {
-                        Icon(Icons.Default.Add, contentDescription = "Import Audio", tint = V20Ink)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)
-            )
-        },
-        containerColor = V20Black
-    ) { padding ->
-        if (uiState.tracks.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.MusicNote,
-                        contentDescription = null,
-                        tint = V20InkFaint,
-                        modifier = Modifier.size(64.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Nessun audio importato",
-                        color = V20InkFaint,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Importa file audio per creare la tua colonna sonora",
+                        text = "${uiState.tracks.size} tracce",
                         color = V20InkFaint,
                         style = MaterialTheme.typography.bodySmall
                     )
+                    Row {
+                        Button(
+                            onClick = { audioLauncher.launch("audio/*") },
+                            colors = ButtonDefaults.buttonColors(containerColor = V20GoldBright),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, tint = V20Black, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Importa", color = V20Black, style = MaterialTheme.typography.labelMedium)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = { audioViewModel.stopAll() },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.8f)),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Default.Stop, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Stop All", color = Color.White, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(uiState.tracks, key = { it.id }) { track ->
-                    AudioTrackCard(
-                        track = track,
-                        onTogglePlay = { audioViewModel.togglePlay(track.id) },
-                        onStop = { audioViewModel.stopTrack(track.id) },
-                        onVolumeChange = { vol -> audioViewModel.setVolume(track.id, vol) },
-                        onLoopToggle = { looping -> audioViewModel.setLooping(track.id, looping) },
-                        onDelete = { audioViewModel.deleteTrack(track.id, chronicleId) }
-                    )
-                }
+            items(uiState.tracks, key = { it.id }) { track ->
+                AudioTrackCard(
+                    track = track,
+                    onTogglePlay = { audioViewModel.togglePlay(track.id) },
+                    onStop = { audioViewModel.stopTrack(track.id) },
+                    onVolumeChange = { vol -> audioViewModel.setVolume(track.id, vol) },
+                    onLoopToggle = { looping -> audioViewModel.setLooping(track.id, looping) },
+                    onDelete = { audioViewModel.deleteTrack(track.id, chronicleId) }
+                )
             }
         }
     }
@@ -189,7 +180,7 @@ private fun AudioTrackCard(
                         Text(
                             text = track.title,
                             color = V20Ink,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(

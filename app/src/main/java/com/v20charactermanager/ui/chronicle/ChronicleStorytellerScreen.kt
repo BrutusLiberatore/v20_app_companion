@@ -6,10 +6,12 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
+import com.v20charactermanager.ui.theme.V20Ink
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +76,17 @@ fun ChronicleStorytellerScreen(
 
     val chronicle = uiState.chronicle
 
+    var showAudioImport by remember { mutableStateOf(false) }
+
+    val audioImportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let {
+            val title = it.lastPathSegment?.substringAfterLast('/') ?: "Audio"
+            audioViewModel?.importAudio(chronicle?.id ?: "", it, title, com.v20charactermanager.domain.model.AudioTrackCategory.CUSTOM)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -81,6 +94,14 @@ fun ChronicleStorytellerScreen(
                     Text(chronicle?.name ?: "")
                 },
                 actions = {
+                    if (selectedNavItem == ChronicleBottomNavItem.AUDIO && audioViewModel != null) {
+                        IconButton(onClick = { audioViewModel.stopAll() }) {
+                            Icon(Icons.Filled.Stop, contentDescription = "Stop All", tint = Color.Red)
+                        }
+                        IconButton(onClick = { audioImportLauncher.launch("audio/*") }) {
+                            Icon(Icons.Filled.Add, contentDescription = "Import Audio", tint = V20Ink)
+                        }
+                    }
                     if (uiState.activeSession != null) {
                         Text(
                             text = "LIVE",
@@ -175,10 +196,10 @@ fun ChronicleStorytellerScreen(
             }
             ChronicleBottomNavItem.AUDIO -> {
                 if (audioViewModel != null && chronicle != null) {
-                    AudioMixScreen(
+                    AudioMixContent(
                         chronicleId = chronicle.id,
                         audioViewModel = audioViewModel,
-                        onBack = { selectedNavItem = ChronicleBottomNavItem.LIVE }
+                        modifier = Modifier.padding(padding)
                     )
                 }
             }
