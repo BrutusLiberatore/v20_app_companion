@@ -186,6 +186,7 @@ class MediaViewModel(
                     id = assetId, chronicleId = chronicleId,
                     type = MediaAssetType.DOCUMENT, title = title,
                     originalFilePath = savedPath,
+                    thumbnailFilePath = generatePdfThumbnail(context, savedPath, assetId),
                     tags = listOf("Documenti"),
                     visibility = Visibility.GM_ONLY
                 )
@@ -504,6 +505,42 @@ class MediaViewModel(
 }
 
 val STANDARD_TAGS = listOf("Mappe", "PNG", "Luoghi", "Indizi", "Documenti", "Altro")
+
+private fun generatePdfThumbnail(context: Context, pdfPath: String, assetId: String): String? {
+    return try {
+        val pfd = android.os.ParcelFileDescriptor.open(
+            java.io.File(pdfPath),
+            android.os.ParcelFileDescriptor.MODE_READ_ONLY
+        )
+        val renderer = android.graphics.pdf.PdfRenderer(pfd)
+        if (renderer.pageCount == 0) {
+            renderer.close()
+            pfd.close()
+            return null
+        }
+        val page = renderer.openPage(0)
+        val bitmap = android.graphics.Bitmap.createBitmap(
+            page.width * 2, page.height * 2,
+            android.graphics.Bitmap.Config.ARGB_8888
+        )
+        bitmap.eraseColor(android.graphics.Color.WHITE)
+        page.render(bitmap, null, null, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+        page.close()
+        renderer.close()
+        pfd.close()
+
+        val thumbDir = java.io.File(context.filesDir, "chronicle_documents")
+        thumbDir.mkdirs()
+        val thumbFile = java.io.File(thumbDir, "thumb_${assetId}.jpg")
+        thumbFile.outputStream().use { out ->
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, out)
+        }
+        bitmap.recycle()
+        thumbFile.absolutePath
+    } catch (e: Exception) {
+        null
+    }
+}
 
 private fun autoTagsForType(type: MediaAssetType): List<String> = when (type) {
     MediaAssetType.MAP, MediaAssetType.LOCATION_MAP -> listOf("Mappe")

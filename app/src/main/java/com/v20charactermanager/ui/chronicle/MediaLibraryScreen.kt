@@ -259,11 +259,12 @@ private fun MediaAssetCard(
         shape = RoundedCornerShape(8.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            val file = File(asset.originalFilePath)
-            if (file.exists()) {
+            val displayFile = asset.thumbnailFilePath?.let { File(it) }?.takeIf { it.exists() }
+                ?: File(asset.originalFilePath).takeIf { it.exists() }
+            if (displayFile != null) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(file)
+                        .data(displayFile)
                         .crossfade(true)
                         .build(),
                     contentDescription = asset.title,
