@@ -19,6 +19,8 @@ object ChronicleImageManager {
     private const val THUMB_MAX_SIZE = 256
     private const val JPEG_QUALITY = 92
 
+    private val BITMAP_MIMES = setOf("image/jpeg", "image/png", "image/webp")
+
     private fun getImagesDir(context: Context): File {
         val dir = File(context.filesDir, IMAGES_DIR)
         if (!dir.exists()) dir.mkdirs()
@@ -31,6 +33,15 @@ object ChronicleImageManager {
         return dir
     }
 
+    private fun extensionForMime(mime: String?): String = when (mime) {
+        "image/jpeg" -> "jpg"
+        "image/png" -> "png"
+        "image/gif" -> "gif"
+        "image/svg+xml" -> "svg"
+        "image/webp" -> "webp"
+        else -> "jpg"
+    }
+
     fun saveImage(context: Context, entityId: String, sourceUri: Uri): String? {
         return try {
             val inputStream = context.contentResolver.openInputStream(sourceUri)
@@ -38,11 +49,24 @@ object ChronicleImageManager {
                 Log.e(TAG, "Failed to open input stream for URI: $sourceUri")
                 return null
             }
+
+            val mimeType = context.contentResolver.getType(sourceUri)
+            val ext = extensionForMime(mimeType)
+
+            if (mimeType !in BITMAP_MIMES) {
+                val imagesDir = getImagesDir(context)
+                if (!imagesDir.exists()) imagesDir.mkdirs()
+                val outFile = File(imagesDir, "$entityId.$ext")
+                outFile.outputStream().use { out -> inputStream.use { input -> input.copyTo(out) } }
+                Log.d(TAG, "Raw file saved: ${outFile.absolutePath} (mime=$mimeType)")
+                return outFile.absolutePath
+            }
+
             val original = BitmapFactory.decodeStream(inputStream)
             inputStream.close()
 
             if (original == null) {
-                Log.e(TAG, "BitmapFactory returned null for URI: $sourceUri (mimeType=${context.contentResolver.getType(sourceUri)})")
+                Log.e(TAG, "BitmapFactory returned null for URI: $sourceUri (mimeType=$mimeType)")
                 return null
             }
 
@@ -61,9 +85,14 @@ object ChronicleImageManager {
             val imagesDir = getImagesDir(context)
             if (!imagesDir.exists()) imagesDir.mkdirs()
 
-            val fullFile = File(imagesDir, "$entityId.jpg")
+            val fullFile = File(imagesDir, "$entityId.$ext")
+            val compressFormat = when (ext) {
+                "png" -> Bitmap.CompressFormat.PNG
+                "webp" -> Bitmap.CompressFormat.WEBP_LOSSY
+                else -> Bitmap.CompressFormat.JPEG
+            }
             FileOutputStream(fullFile).use { out ->
-                full.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)
+                full.compress(compressFormat, JPEG_QUALITY, out)
             }
             full.recycle()
 
@@ -81,7 +110,7 @@ object ChronicleImageManager {
                 thumb.recycle()
             }
 
-            Log.d(TAG, "Image saved: ${fullFile.absolutePath} (rotation=$rotation)")
+            Log.d(TAG, "Image saved: ${fullFile.absolutePath} (rotation=$rotation, mime=$mimeType)")
             fullFile.absolutePath
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save image for entityId=$entityId", e)
@@ -107,7 +136,8 @@ object ChronicleImageManager {
     }
 
     fun deleteAllForEntity(context: Context, entityId: String) {
-        File(getImagesDir(context), "$entityId.jpg").delete()
+        val imagesDir = getImagesDir(context)
+        imagesDir.listFiles()?.filter { it.name.startsWith(entityId) }?.forEach { it.delete() }
         File(getThumbnailsDir(context), "$entityId.jpg").delete()
     }
 
