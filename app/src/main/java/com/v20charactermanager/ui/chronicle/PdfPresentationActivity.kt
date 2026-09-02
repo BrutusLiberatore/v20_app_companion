@@ -25,15 +25,12 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.v20charactermanager.ui.theme.V20Black
 import com.v20charactermanager.ui.theme.V20GoldBright
-import com.v20charactermanager.ui.theme.V20Ink
-import com.v20charactermanager.ui.theme.V20Surface2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
@@ -69,6 +66,19 @@ class PdfPresentationActivity : ComponentActivity() {
     }
 }
 
+private fun renderPage(renderer: PdfRenderer, index: Int): Bitmap {
+    val page = renderer.openPage(index)
+    val bitmap = Bitmap.createBitmap(
+        page.width * 2,
+        page.height * 2,
+        Bitmap.Config.ARGB_8888
+    )
+    bitmap.eraseColor(android.graphics.Color.WHITE)
+    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+    page.close()
+    return bitmap
+}
+
 @Composable
 private fun PdfPresentationScreen(
     filePath: String,
@@ -76,54 +86,78 @@ private fun PdfPresentationScreen(
     onFinish: () -> Unit
 ) {
     val file = remember(filePath) { java.io.File(filePath) }
-    var pages by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
+    val pageCache = remember { mutableStateMapOf<Int, Bitmap>() }
     var currentPage by remember { mutableIntStateOf(startPage.coerceAtLeast(0)) }
-    var isLoading by remember { mutableStateOf(true) }
     var totalPages by remember { mutableIntStateOf(0) }
+    var isLoadingCurrent by remember { mutableStateOf(true) }
+    var isLoadingAll by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var showControls by remember { mutableStateOf(true) }
 
+    val scope = rememberCoroutineScope()
+    var renderer by remember { mutableStateOf<PdfRenderer?>(null) }
+    var pfd by remember { mutableStateOf<ParcelFileDescriptor?>(null) }
+
+    DisposableEffect(file) {
+        onDispose {
+            renderer?.close()
+            pfd?.close()
+        }
+    }
+
     LaunchedEffect(file) {
-        isLoading = true
         error = null
+        isLoadingCurrent = true
+        isLoadingAll = true
         try {
             withContext(Dispatchers.IO) {
-                val pfd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
-                val renderer = PdfRenderer(pfd)
-                val count = renderer.pageCount
-                totalPages = count
-                val bitmaps = mutableListOf<Bitmap>()
-                for (i in 0 until count) {
+                val descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+                pfd = descriptor
+                val pdfRenderer = PdfRenderer(descriptor)
+                renderer = pdfRenderer
+                totalPages = pdfRenderer.pageCount
+
+                val start = currentPage.coerceIn(0, totalPages - 1)
+                val bmp = renderPage(pdfRenderer, start)
+                pageCache[start] = bmp
+                isLoadingCurrent = false
+
+                for (i in 0 until totalPages) {
                     if (!isActive) break
-                    val page = renderer.openPage(i)
-                    val bitmap = Bitmap.createBitmap(
-                        page.width * 2,
-                        page.height * 2,
-                        Bitmap.Config.ARGB_8888
-                    )
-                    bitmap.eraseColor(android.graphics.Color.WHITE)
-                    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                    bitmaps.add(bitmap)
-                    page.close()
+                    if (i !in pageCache) {
+                        val b = renderPage(pdfRenderer, i)
+                        pageCache[i] = b
+                    }
                 }
-                renderer.close()
-                pfd.close()
-                pages = bitmaps
+                isLoadingAll = false
             }
-            isLoading = false
         } catch (e: OutOfMemoryError) {
-            isLoading = false
+            isLoadingCurrent = false
+            isLoadingAll = false
             error = "Memoria esaurita"
         } catch (e: Exception) {
-            isLoading = false
+            isLoadingCurrent = false
+            isLoadingAll = false
             error = e.message ?: "Errore sconosciuto"
         }
     }
 
+    LaunchedEffect(currentPage) {
+        val r = renderer ?: return@LaunchedEffect
+        if (currentPage !in pageCache) {
+            isLoadingCurrent = true
+            withContext(Dispatchers.IO) {
+                val bmp = renderPage(r, currentPage)
+                pageCache[currentPage] = bmp
+            }
+            isLoadingCurrent = false
+        }
+    }
+
     val transformState = rememberTransformableState { zoomChange, panChange, _ ->
-        scale = (scale * zoomChange).coerceIn(0.5f, 5f)
+        scale = (scale * zoomChange).coerceIn(0.5f, 8f)
         offset = Offset(
             x = offset.x + panChange.x,
             y = offset.y + panChange.y
@@ -152,52 +186,57 @@ private fun PdfPresentationScreen(
                 )
             }
     ) {
-        if (isLoading) {
+        if (error != null) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CircularProgressIndicator(color = V20GoldBright)
+                Icon(Icons.Filled.BrokenImage, null, tint = Color.Red, modifier = Modifier.size(64.dp))
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Caricamento PDF...",
-                    color = V20GoldBright,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-        } else if (error != null) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
                 Text(text = error!!, color = Color.Red)
                 Spacer(modifier = Modifier.height(16.dp))
                 TextButton(onClick = onFinish) {
                     Text("Chiudi", color = V20GoldBright)
                 }
             }
-        } else if (pages.isNotEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .transformable(state = transformState),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    bitmap = pages[currentPage].asImageBitmap(),
-                    contentDescription = "Page ${currentPage + 1}",
-                    contentScale = ContentScale.Fit,
+        } else {
+            val currentBitmap = pageCache[currentPage]
+            if (currentBitmap != null) {
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                            translationX = offset.x
-                            translationY = offset.y
-                        }
-                )
+                        .transformable(state = transformState),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        bitmap = currentBitmap.asImageBitmap(),
+                        contentDescription = "Page ${currentPage + 1}",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = scale
+                                scaleY = scale
+                                translationX = offset.x
+                                translationY = offset.y
+                            }
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(color = V20GoldBright)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Caricamento pagina ${currentPage + 1}...",
+                        color = V20GoldBright,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
 
             if (showControls) {
@@ -263,13 +302,13 @@ private fun PdfPresentationScreen(
 
                         IconButton(
                             onClick = {
-                                if (currentPage < pages.size - 1) {
+                                if (currentPage < totalPages - 1) {
                                     currentPage++
                                     scale = 1f
                                     offset = Offset.Zero
                                 }
                             },
-                            enabled = currentPage < pages.size - 1
+                            enabled = currentPage < totalPages - 1
                         ) {
                             Icon(Icons.Filled.ChevronRight, "Successiva", tint = Color.White, modifier = Modifier.size(36.dp))
                         }
