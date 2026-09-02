@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
@@ -20,6 +21,7 @@ object ChronicleImageManager {
     private const val JPEG_QUALITY = 92
 
     private val BITMAP_MIMES = setOf("image/jpeg", "image/png", "image/webp")
+    private val VIDEO_MIMES = setOf("video/mp4", "video/webm", "video/3gpp", "video/x-msvideo", "video/quicktime")
 
     private fun getImagesDir(context: Context): File {
         val dir = File(context.filesDir, IMAGES_DIR)
@@ -39,6 +41,11 @@ object ChronicleImageManager {
         "image/gif" -> "gif"
         "image/svg+xml" -> "svg"
         "image/webp" -> "webp"
+        "video/mp4" -> "mp4"
+        "video/webm" -> "webm"
+        "video/3gpp" -> "3gp"
+        "video/x-msvideo" -> "avi"
+        "video/quicktime" -> "mov"
         else -> "jpg"
     }
 
@@ -58,6 +65,11 @@ object ChronicleImageManager {
                 if (!imagesDir.exists()) imagesDir.mkdirs()
                 val outFile = File(imagesDir, "$entityId.$ext")
                 outFile.outputStream().use { out -> inputStream.use { input -> input.copyTo(out) } }
+
+                if (mimeType in VIDEO_MIMES) {
+                    generateVideoThumbnail(context, outFile.absolutePath, entityId)
+                }
+
                 Log.d(TAG, "Raw file saved: ${outFile.absolutePath} (mime=$mimeType)")
                 return outFile.absolutePath
             }
@@ -157,6 +169,26 @@ object ChronicleImageManager {
             } ?: 0
         } catch (e: Exception) {
             0
+        }
+    }
+
+    private fun generateVideoThumbnail(context: Context, videoPath: String, entityId: String) {
+        try {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(videoPath)
+            val thumbBmp = retriever.getFrameAtTime(0)
+            retriever.release()
+            if (thumbBmp != null) {
+                val thumbDir = getThumbnailsDir(context)
+                if (!thumbDir.exists()) thumbDir.mkdirs()
+                val thumbFile = File(thumbDir, "$entityId.jpg")
+                FileOutputStream(thumbFile).use { out ->
+                    thumbBmp.compress(Bitmap.CompressFormat.JPEG, 80, out)
+                }
+                thumbBmp.recycle()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to generate video thumbnail for $videoPath", e)
         }
     }
 

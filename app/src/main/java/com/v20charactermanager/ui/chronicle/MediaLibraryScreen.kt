@@ -44,6 +44,7 @@ fun MediaLibraryScreen(
     selectedTag: String? = null,
     onImportImage: () -> Unit,
     onImportDocument: () -> Unit,
+    onImportVideo: () -> Unit,
     onAssetClick: (MediaAsset) -> Unit,
     onAssetDelete: (String) -> Unit,
     onAssetRename: (String, String) -> Unit,
@@ -97,6 +98,9 @@ fun MediaLibraryScreen(
                 actions = {
                     IconButton(onClick = onImportDocument) {
                         Icon(Icons.Default.InsertDriveFile, contentDescription = stringResource(R.string.import_document), tint = V20Ink)
+                    }
+                    IconButton(onClick = onImportVideo) {
+                        Icon(Icons.Default.VideoFile, contentDescription = stringResource(R.string.import_video), tint = V20Ink)
                     }
                     V20IvoryButton(text = stringResource(R.string.media_import), onClick = onImportImage)
                 },
@@ -304,6 +308,24 @@ private fun MediaAssetCard(
                             )
                         }
                     }
+                }
+            }
+
+            // Play icon for videos
+            if (asset.type == MediaAssetType.VIDEO) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(48.dp)
+                        .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(24.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = V20GoldBright,
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
 

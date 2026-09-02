@@ -205,6 +205,95 @@ class MediaViewModel(
         }
     }
 
+    fun importVideo(chronicleId: String, uri: Uri, title: String) {
+        viewModelScope.launch {
+            try {
+                _libraryUiState.update { it.copy(isLoading = true, errorType = null) }
+                val assetId = UUID.randomUUID().toString()
+                val mimeType = context.contentResolver.getType(uri)
+                val ext = when (mimeType) {
+                    "video/mp4" -> "mp4"
+                    "video/webm" -> "webm"
+                    "video/3gpp" -> "3gp"
+                    "video/x-msvideo" -> "avi"
+                    "video/quicktime" -> "mov"
+                    else -> "mp4"
+                }
+                val fileName = "video_${assetId}.$ext"
+                val savedPath = try {
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                    if (inputStream == null) {
+                        _libraryUiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorType = V20ErrorType.DOCUMENT_IMPORT_FAILED,
+                                errorDetails = "ContentResolver returned null stream for URI: $uri"
+                            )
+                        }
+                        return@launch
+                    }
+                    val dir = java.io.File(context.filesDir, "chronicle_documents")
+                    dir.mkdirs()
+                    val file = java.io.File(dir, fileName)
+                    file.outputStream().use { output -> inputStream.use { input -> input.copyTo(output) } }
+                    file.absolutePath
+                } catch (e: Exception) {
+                    _libraryUiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorType = V20ErrorType.DOCUMENT_IMPORT_FAILED,
+                            errorDetails = e.message
+                        )
+                    }
+                    return@launch
+                }
+
+                val thumbPath = generateVideoThumbnail(context, savedPath, assetId)
+
+                val asset = MediaAsset(
+                    id = assetId, chronicleId = chronicleId,
+                    type = MediaAssetType.VIDEO, title = title,
+                    originalFilePath = savedPath,
+                    thumbnailFilePath = thumbPath,
+                    tags = listOf("Video"),
+                    visibility = Visibility.GM_ONLY
+                )
+                mediaRepository.insertAsset(asset)
+                loadAssets(chronicleId)
+                _libraryUiState.update { it.copy(isLoading = false, message = "Video imported") }
+            } catch (e: Exception) {
+                _libraryUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorType = V20ErrorType.DOCUMENT_IMPORT_FAILED,
+                        errorDetails = e.message
+                    )
+                }
+            }
+        }
+    }
+
+    private fun generateVideoThumbnail(context: Context, videoPath: String, assetId: String): String? {
+        return try {
+            val retriever = android.media.MediaMetadataRetriever()
+            retriever.setDataSource(videoPath)
+            val thumbBmp = retriever.getFrameAtTime(0)
+            retriever.release()
+            if (thumbBmp != null) {
+                val thumbDir = java.io.File(context.filesDir, "chronicle_documents")
+                thumbDir.mkdirs()
+                val thumbFile = java.io.File(thumbDir, "thumb_${assetId}.jpg")
+                thumbFile.outputStream().use { out ->
+                    thumbBmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, out)
+                }
+                thumbBmp.recycle()
+                thumbFile.absolutePath
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun clearMessage() {
         _libraryUiState.update { it.copy(message = null) }
     }
@@ -504,7 +593,7 @@ class MediaViewModel(
     }
 }
 
-val STANDARD_TAGS = listOf("Mappe", "PNG", "Luoghi", "Indizi", "Documenti", "Altro")
+val STANDARD_TAGS = listOf("Mappe", "PNG", "Luoghi", "Indizi", "Documenti", "Video", "Altro")
 
 private fun generatePdfThumbnail(context: Context, pdfPath: String, assetId: String): String? {
     return try {
@@ -547,6 +636,7 @@ private fun autoTagsForType(type: MediaAssetType): List<String> = when (type) {
     MediaAssetType.PORTRAIT -> listOf("PNG")
     MediaAssetType.CLUE_VISUAL -> listOf("Indizi")
     MediaAssetType.DOCUMENT -> listOf("Documenti")
+    MediaAssetType.VIDEO -> listOf("Video")
     else -> listOf("Altro")
 }
 

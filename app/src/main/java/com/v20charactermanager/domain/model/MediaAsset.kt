@@ -3,7 +3,7 @@ package com.v20charactermanager.domain.model
 import kotlinx.serialization.Serializable
 
 enum class MediaAssetType {
-    MAP, LOCATION_MAP, PORTRAIT, SYMBOL, DOCUMENT, PHOTO, CLUE_VISUAL, DIAGRAM, OTHER
+    MAP, LOCATION_MAP, PORTRAIT, SYMBOL, DOCUMENT, PHOTO, CLUE_VISUAL, DIAGRAM, VIDEO, OTHER
 }
 
 enum class MediaAssetCategory {

@@ -565,6 +565,7 @@
     <string name="npc_linked_to_pg">linked to PG</string>
     <string name="document_not_found">Document not found</string>
     <string name="import_document">Import Document</string>
+    <string name="import_video">Import Video</string>
     <string name="session_create">New Session</string>
     <string name="search_hint">Search chronicle…</string>
     <string name="search_no_results">No results found</string>

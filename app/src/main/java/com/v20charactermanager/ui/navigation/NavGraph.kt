@@ -87,6 +87,7 @@ object Routes {
     const val MEDIA_LIBRARY = "chronicle/{chronicleId}/media"
     const val IMAGE_VIEWER = "chronicle/{chronicleId}/media/{assetId}"
     const val DOCUMENT_VIEWER = "chronicle/{chronicleId}/document/{assetId}"
+    const val VIDEO_VIEWER = "chronicle/{chronicleId}/video/{assetId}"
     const val CHRONICLE_SEARCH = "chronicle/{chronicleId}/search"
     const val VERSION_HISTORY = "chronicle/{chronicleId}/media/{assetId}/versions"
     const val LOCATION_IMAGE = "chronicle/{chronicleId}/location/{locationId}/image"
@@ -102,6 +103,7 @@ object Routes {
     fun mediaLibrary(chronicleId: String) = "chronicle/$chronicleId/media"
     fun imageViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId"
     fun documentViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/document/$assetId"
+    fun videoViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/video/$assetId"
     fun chronicleSearch(chronicleId: String) = "chronicle/$chronicleId/search"
     fun versionHistory(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId/versions"
     fun locationImage(chronicleId: String, locationId: String) = "chronicle/$chronicleId/location/$locationId/image"
@@ -741,6 +743,15 @@ fun V20NavGraph(
                 }
             }
 
+            val pickVideoLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri: Uri? ->
+                uri?.let {
+                    val title = uri.lastPathSegment?.substringAfterLast('/') ?: "Video"
+                    mediaViewModel.importVideo(chronicleId, it, title)
+                }
+            }
+
             MediaLibraryScreen(
                 chronicleId = chronicleId,
                 assets = uiState.assets,
@@ -748,11 +759,21 @@ fun V20NavGraph(
                 selectedTag = uiState.selectedTag,
                 onImportImage = { pickImageLauncher.launch("image/*") },
                 onImportDocument = { pickDocumentLauncher.launch("application/pdf") },
+                onImportVideo = { pickVideoLauncher.launch("video/*") },
                 onAssetClick = { asset ->
-                    if (asset.type == MediaAssetType.DOCUMENT) {
-                        navController.navigate(Routes.documentViewer(chronicleId, asset.id))
-                    } else {
-                        navController.navigate(Routes.imageViewer(chronicleId, asset.id))
+                    when (asset.type) {
+                        MediaAssetType.DOCUMENT -> navController.navigate(Routes.documentViewer(chronicleId, asset.id))
+                        MediaAssetType.VIDEO -> {
+                            val intent = android.content.Intent(
+                                navController.context,
+                                com.v20charactermanager.ui.chronicle.VideoPlayerActivity::class.java
+                            ).apply {
+                                putExtra(com.v20charactermanager.ui.chronicle.VideoPlayerActivity.EXTRA_FILE_PATH, asset.originalFilePath)
+                                putExtra(com.v20charactermanager.ui.chronicle.VideoPlayerActivity.EXTRA_TITLE, asset.title)
+                            }
+                            navController.context.startActivity(intent)
+                        }
+                        else -> navController.navigate(Routes.imageViewer(chronicleId, asset.id))
                     }
                 },
                 onAssetDelete = { mediaViewModel.deleteAsset(it) },
