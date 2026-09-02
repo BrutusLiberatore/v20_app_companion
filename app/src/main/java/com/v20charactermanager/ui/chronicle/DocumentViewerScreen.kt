@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.chronicle
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
@@ -29,6 +30,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.math.roundToInt
+
+private const val PREFS_NAME = "v20_pdf_pages"
+private const val KEY_PREFIX = "last_page_"
+
+private fun getLastPage(context: Context, filePath: String): Int {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getInt(KEY_PREFIX + filePath.hashCode(), 0)
+}
+
+private fun saveLastPage(context: Context, filePath: String, page: Int) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putInt(KEY_PREFIX + filePath.hashCode(), page).apply()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,8 +100,9 @@ private fun PdfRendererContent(
     modifier: Modifier = Modifier,
     onBack: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var totalPages by remember { mutableIntStateOf(0) }
-    var renderedPages by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
+    var renderedPages by remember { mutableStateOf<Map<Int, Bitmap>>(emptyMap()) }
     var currentPage by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(true) }
     var loadingMessage by remember { mutableStateOf("") }
@@ -94,6 +110,9 @@ private fun PdfRendererContent(
     var error by remember { mutableStateOf<String?>(null) }
     var renderer by remember { mutableStateOf<PdfRenderer?>(null) }
     var pfd by remember { mutableStateOf<ParcelFileDescriptor?>(null) }
+    var isSeeking by remember { mutableStateOf(false) }
+
+    val savedPage = remember(file) { getLastPage(context, file.absolutePath) }
 
     DisposableEffect(file) {
         onDispose {
@@ -107,6 +126,7 @@ private fun PdfRendererContent(
         loadingMessage = "Apertura documento..."
         loadingProgress = 0f
         error = null
+        currentPage = savedPage.coerceAtLeast(0)
         try {
             withContext(Dispatchers.IO) {
                 val descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
@@ -117,7 +137,7 @@ private fun PdfRendererContent(
                 totalPages = count
                 loadingMessage = "Caricamento pagina 1 di $count..."
 
-                val bitmaps = mutableListOf<Bitmap>()
+                val bitmaps = mutableMapOf<Int, Bitmap>()
                 for (i in 0 until count) {
                     if (!isActive) break
                     loadingMessage = "Caricamento pagina ${i + 1} di $count..."
@@ -132,11 +152,10 @@ private fun PdfRendererContent(
                     )
                     bitmap.eraseColor(android.graphics.Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                    bitmaps.add(bitmap)
+                    bitmaps[i] = bitmap
                     page.close()
 
-                    renderedPages = bitmaps.toList()
-                    currentPage = i
+                    renderedPages = bitmaps.toMap()
                 }
                 loadingProgress = 1f
                 loadingMessage = "Pronto!"
@@ -151,6 +170,10 @@ private fun PdfRendererContent(
         }
     }
 
+    LaunchedEffect(currentPage, file) {
+        saveLastPage(context, file.absolutePath, currentPage)
+    }
+
     if (error != null) {
         val (errorType, details) = when {
             error?.startsWith("MEMORY:") == true ->
@@ -163,7 +186,7 @@ private fun PdfRendererContent(
             errorDetails = details,
             onRetry = {
                 error = null
-                renderedPages = emptyList()
+                renderedPages = emptyMap()
                 currentPage = 0
                 isLoading = true
             },
@@ -193,31 +216,60 @@ private fun PdfRendererContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { if (currentPage > 0) currentPage-- },
+                    onClick = {
+                        if (currentPage > 0) {
+                            currentPage--
+                        }
+                    },
                     enabled = currentPage > 0
                 ) {
                     Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous", tint = V20Ink)
                 }
+
                 Text(
                     text = "${currentPage + 1} / $totalPages",
                     style = MaterialTheme.typography.bodyMedium,
                     color = V20Ink
                 )
+
                 IconButton(
-                    onClick = { if (currentPage < renderedPages.size - 1) currentPage++ },
-                    enabled = currentPage < renderedPages.size - 1
+                    onClick = {
+                        if (currentPage < totalPages - 1) {
+                            currentPage++
+                        }
+                    },
+                    enabled = currentPage < totalPages - 1
                 ) {
                     Icon(Icons.Filled.ChevronRight, contentDescription = "Next", tint = V20Ink)
                 }
             }
 
-            if (currentPage < renderedPages.size) {
+            if (totalPages > 1) {
+                Slider(
+                    value = currentPage.toFloat(),
+                    onValueChange = { newValue ->
+                        isSeeking = true
+                        currentPage = newValue.roundToInt()
+                    },
+                    onValueChangeFinished = { isSeeking = false },
+                    valueRange = 0f..(totalPages - 1).coerceAtLeast(0).toFloat(),
+                    steps = (totalPages - 2).coerceAtLeast(0),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    colors = SliderDefaults.colors(
+                        thumbColor = V20GoldBright,
+                        activeTrackColor = V20GoldBright,
+                        inactiveTrackColor = V20Surface2
+                    )
+                )
+            }
+
+            if (currentPage in renderedPages) {
                 Box(
                     modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
                     contentAlignment = Alignment.TopCenter
                 ) {
                     Image(
-                        bitmap = renderedPages[currentPage].asImageBitmap(),
+                        bitmap = renderedPages[currentPage]!!.asImageBitmap(),
                         contentDescription = "Page ${currentPage + 1}",
                         contentScale = ContentScale.FillWidth,
                         modifier = Modifier.fillMaxWidth()
@@ -226,7 +278,7 @@ private fun PdfRendererContent(
             } else {
                 PdfLoadingScreen(
                     message = "Caricamento pagina ${currentPage + 1} di $totalPages...",
-                    progress = loadingProgress,
+                    progress = if (totalPages > 0) (currentPage.toFloat() / totalPages) else 0f,
                     modifier = Modifier.weight(1f)
                 )
             }
