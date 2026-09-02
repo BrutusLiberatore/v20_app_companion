@@ -1,6 +1,7 @@
 package com.v20charactermanager.ui.chronicle
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
@@ -51,6 +52,9 @@ fun DocumentViewerScreen(
     asset: MediaAsset?,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val pdfPageState = remember { mutableIntStateOf(0) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -58,6 +62,19 @@ fun DocumentViewerScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = V20Ink)
+                    }
+                },
+                actions = {
+                    if (asset != null) {
+                        IconButton(onClick = {
+                            val intent = Intent(context, PdfPresentationActivity::class.java).apply {
+                                putExtra(PdfPresentationActivity.EXTRA_FILE_PATH, asset.originalFilePath)
+                                putExtra(PdfPresentationActivity.EXTRA_PAGE, pdfPageState.intValue)
+                            }
+                            context.startActivity(intent)
+                        }) {
+                            Icon(Icons.Filled.Fullscreen, contentDescription = "Presentazione", tint = V20GoldBright)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)
@@ -80,6 +97,7 @@ fun DocumentViewerScreen(
                 PdfRendererContent(
                     file = file,
                     modifier = Modifier.fillMaxSize().padding(padding),
+                    onPageChanged = { pdfPageState.intValue = it },
                     onBack = onBack
                 )
             } else {
@@ -98,6 +116,7 @@ fun DocumentViewerScreen(
 private fun PdfRendererContent(
     file: File,
     modifier: Modifier = Modifier,
+    onPageChanged: (Int) -> Unit = {},
     onBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -208,6 +227,10 @@ private fun PdfRendererContent(
                     color = V20GoldBright,
                     trackColor = V20Surface2
                 )
+            }
+
+            LaunchedEffect(currentPage) {
+                onPageChanged(currentPage)
             }
 
             Row(
