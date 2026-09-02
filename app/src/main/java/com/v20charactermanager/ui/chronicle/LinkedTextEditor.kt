@@ -156,11 +156,18 @@ fun LinkedTextEditor(
     var debounceJob by remember { mutableStateOf<Job?>(null) }
 
     val filteredItems = remember(activeCategory, query, linkableItems) {
-        if (activeCategory == null) return@remember emptyList()
-        val typeUpper = activeCategory!!.keywords.first().uppercase()
-        linkableItems.filter { item ->
-            item.type.uppercase() == typeUpper &&
-                    item.name.contains(query, ignoreCase = true)
+        if (activeCategory != null) {
+            val typeUpper = activeCategory!!.keywords.first().uppercase()
+            linkableItems.filter { item ->
+                item.type.uppercase() == typeUpper &&
+                        item.name.contains(query, ignoreCase = true)
+            }
+        } else if (query.isNotEmpty()) {
+            linkableItems.filter { item ->
+                item.name.contains(query, ignoreCase = true)
+            }
+        } else {
+            linkableItems
         }
     }
 
@@ -196,32 +203,20 @@ fun LinkedTextEditor(
                     val tagMatch = Regex("""#(\w*)$""").find(textBeforeCursor)
 
                     if (atMatch != null) {
-                        val typed = atMatch.groupValues[1].uppercase()
-                        val matchedCategory = LinkCategory.findByKeyword(typed)
+                        val typed = atMatch.groupValues[1]
+                        val matchedCategory = LinkCategory.findByKeyword(typed.uppercase())
                         if (matchedCategory != null && typed.isNotEmpty()) {
                             activeCategory = matchedCategory
                             query = ""
                             showPopup = true
                             isTagMode = false
                             cursorPosition = newCursor
-                        } else if (typed.isEmpty()) {
-                            showPopup = false
-                            activeCategory = null
                         } else {
-                            debounceJob?.cancel()
-                            debounceJob = scope.launch {
-                                delay(150)
-                                val cat = LinkCategory.findByKeyword(typed)
-                                if (cat != null) {
-                                    activeCategory = cat
-                                    query = ""
-                                    showPopup = true
-                                    isTagMode = false
-                                    cursorPosition = newCursor
-                                } else {
-                                    showPopup = false
-                                }
-                            }
+                            activeCategory = null
+                            query = typed
+                            showPopup = true
+                            isTagMode = false
+                            cursorPosition = newCursor
                         }
                     } else if (tagMatch != null) {
                         tagQuery = tagMatch.groupValues[1]
@@ -264,7 +259,7 @@ fun LinkedTextEditor(
             ) {
                 Column(modifier = Modifier.heightIn(max = 240.dp)) {
                     Text(
-                        text = activeCategory?.label ?: "",
+                        text = activeCategory?.label ?: "Entità",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,

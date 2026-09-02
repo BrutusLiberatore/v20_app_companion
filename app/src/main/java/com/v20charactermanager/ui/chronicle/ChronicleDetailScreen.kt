@@ -86,7 +86,8 @@ fun ChronicleDetailScreen(
     onCreateEvent: (String, String) -> Unit,
     onDeleteEvent: (String) -> Unit,
     onUpdateEvent: (ChronicleEvent) -> Unit,
-    onOpenMediaLibrary: (String) -> Unit
+    onOpenMediaLibrary: (String) -> Unit,
+    onLinkClick: (String, String) -> Unit = { _, _ -> }
 ) {
     val chronicle = uiState.chronicle ?: return
     val tabs = listOf(
@@ -232,18 +233,22 @@ fun ChronicleDetailScreen(
                 9 -> NotesTab(
                     chronicleId = chronicle.id,
                     notes = uiState.notes,
+                    linkableItems = uiState.toLinkableItems(),
                     onCreateNote = onCreateNote,
                     onUpdateNote = onUpdateNote,
-                    onDeleteNote = onDeleteNote
+                    onDeleteNote = onDeleteNote,
+                    onLinkClick = onLinkClick
                 )
                 10 -> CharacterNotesTab(
                     chronicleId = chronicle.id,
                     notes = uiState.characterNotes,
                     members = uiState.members,
                     availableCharacters = uiState.availableCharacters,
+                    linkableItems = uiState.toLinkableItems(),
                     onCreateNote = onCreateCharacterNote,
                     onUpdateNote = onUpdateCharacterNote,
-                    onDeleteNote = onDeleteCharacterNote
+                    onDeleteNote = onDeleteCharacterNote,
+                    onLinkClick = onLinkClick
                 )
             }
         }
@@ -634,9 +639,11 @@ fun CreateSessionDialog(
 fun NotesTab(
     chronicleId: String,
     notes: List<ChronicleNote>,
+    linkableItems: List<LinkableItem>,
     onCreateNote: (String, String) -> Unit,
     onUpdateNote: (ChronicleNote) -> Unit,
-    onDeleteNote: (String) -> Unit
+    onDeleteNote: (String) -> Unit,
+    onLinkClick: (String, String) -> Unit = { _, _ -> }
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
 
@@ -680,8 +687,10 @@ fun NotesTab(
                 items(notes) { note ->
                     NoteCard(
                         note = note,
+                        linkableItems = linkableItems,
                         onUpdate = onUpdateNote,
-                        onDelete = { onDeleteNote(note.id) }
+                        onDelete = { onDeleteNote(note.id) },
+                        onLinkClick = onLinkClick
                     )
                 }
             }
@@ -690,6 +699,7 @@ fun NotesTab(
 
     if (showCreateDialog) {
         CreateNoteDialog(
+            linkableItems = linkableItems,
             onDismiss = { showCreateDialog = false },
             onCreate = { text ->
                 onCreateNote(chronicleId, text)
@@ -702,8 +712,10 @@ fun NotesTab(
 @Composable
 fun NoteCard(
     note: ChronicleNote,
+    linkableItems: List<LinkableItem>,
     onUpdate: (ChronicleNote) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onLinkClick: (String, String) -> Unit = { _, _ -> }
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var editText by remember { mutableStateOf(note.text) }
@@ -747,9 +759,10 @@ fun NoteCard(
             }
 
             if (isEditing) {
-                OutlinedTextField(
+                LinkedTextEditor(
                     value = editText,
                     onValueChange = { editText = it },
+                    linkableItems = linkableItems,
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3
                 )
@@ -762,11 +775,19 @@ fun NoteCard(
                     }
                 )
             } else {
-                Text(
-                    text = note.text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = V20Ink
-                )
+                if (note.text.contains("[") || note.text.contains("#")) {
+                    LinkedTextDisplay(
+                        text = note.text,
+                        linkableItems = linkableItems,
+                        onLinkClick = onLinkClick
+                    )
+                } else {
+                    Text(
+                        text = note.text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = V20Ink
+                    )
+                }
             }
         }
     }
@@ -774,6 +795,7 @@ fun NoteCard(
 
 @Composable
 fun CreateNoteDialog(
+    linkableItems: List<LinkableItem>,
     onDismiss: () -> Unit,
     onCreate: (String) -> Unit
 ) {
@@ -783,12 +805,13 @@ fun CreateNoteDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.chronicle_new_note)) },
         text = {
-            OutlinedTextField(
+            LinkedTextEditor(
                 value = text,
                 onValueChange = { text = it },
-                label = { Text(stringResource(R.string.chronicle_note_text)) },
+                linkableItems = linkableItems,
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 5
+                minLines = 5,
+                placeholder = stringResource(R.string.chronicle_note_text)
             )
         },
         confirmButton = {
@@ -813,9 +836,11 @@ fun CharacterNotesTab(
     notes: List<ChronicleCharacterNote>,
     members: List<ChronicleMember>,
     availableCharacters: List<Character>,
+    linkableItems: List<LinkableItem>,
     onCreateNote: (String, String, String) -> Unit,
     onUpdateNote: (ChronicleCharacterNote) -> Unit,
-    onDeleteNote: (String) -> Unit
+    onDeleteNote: (String) -> Unit,
+    onLinkClick: (String, String) -> Unit = { _, _ -> }
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
 
@@ -861,8 +886,10 @@ fun CharacterNotesTab(
                     CharacterNoteCard(
                         note = note,
                         characterName = character?.identity?.name ?: stringResource(R.string.character_unnamed),
+                        linkableItems = linkableItems,
                         onUpdate = onUpdateNote,
-                        onDelete = { onDeleteNote(note.id) }
+                        onDelete = { onDeleteNote(note.id) },
+                        onLinkClick = onLinkClick
                     )
                 }
             }
@@ -874,6 +901,7 @@ fun CharacterNotesTab(
             characters = members.mapNotNull { m ->
                 availableCharacters.find { it.id == m.characterId }
             },
+            linkableItems = linkableItems,
             onDismiss = { showCreateDialog = false },
             onCreate = { characterId, text ->
                 onCreateNote(chronicleId, characterId, text)
@@ -887,8 +915,10 @@ fun CharacterNotesTab(
 fun CharacterNoteCard(
     note: ChronicleCharacterNote,
     characterName: String,
+    linkableItems: List<LinkableItem>,
     onUpdate: (ChronicleCharacterNote) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onLinkClick: (String, String) -> Unit = { _, _ -> }
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var editText by remember { mutableStateOf(note.text) }
@@ -940,9 +970,10 @@ fun CharacterNoteCard(
             }
 
             if (isEditing) {
-                OutlinedTextField(
+                LinkedTextEditor(
                     value = editText,
                     onValueChange = { editText = it },
+                    linkableItems = linkableItems,
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3
                 )
@@ -955,11 +986,19 @@ fun CharacterNoteCard(
                     }
                 )
             } else {
-                Text(
-                    text = note.text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = V20Ink
-                )
+                if (note.text.contains("[") || note.text.contains("#")) {
+                    LinkedTextDisplay(
+                        text = note.text,
+                        linkableItems = linkableItems,
+                        onLinkClick = onLinkClick
+                    )
+                } else {
+                    Text(
+                        text = note.text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = V20Ink
+                    )
+                }
             }
         }
     }
@@ -968,6 +1007,7 @@ fun CharacterNoteCard(
 @Composable
 fun CreateCharacterNoteDialog(
     characters: List<Character>,
+    linkableItems: List<LinkableItem>,
     onDismiss: () -> Unit,
     onCreate: (String, String) -> Unit
 ) {
@@ -1005,12 +1045,13 @@ fun CreateCharacterNoteDialog(
                         }
                     }
                 }
-                OutlinedTextField(
+                LinkedTextEditor(
                     value = text,
                     onValueChange = { text = it },
-                    label = { Text(stringResource(R.string.chronicle_note_text)) },
+                    linkableItems = linkableItems,
                     modifier = Modifier.fillMaxWidth(),
-                    minLines = 3
+                    minLines = 3,
+                    placeholder = stringResource(R.string.chronicle_note_text)
                 )
             }
         },
