@@ -64,6 +64,7 @@ private fun VideoPlayerScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     var isPlaying by remember { mutableStateOf(false) }
     var isLooping by remember { mutableStateOf(true) }
+    var isMuted by remember { mutableStateOf(false) }
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
@@ -106,6 +107,17 @@ private fun VideoPlayerScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        isMuted = !isMuted
+                        exoPlayer.volume = if (isMuted) 0f else 1f
+                    }) {
+                        Icon(
+                            if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                            contentDescription = null,
+                            tint = if (isMuted) Color.Red else Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                     IconButton(onClick = {
                         isLooping = !isLooping
                         exoPlayer.repeatMode = if (isLooping) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF

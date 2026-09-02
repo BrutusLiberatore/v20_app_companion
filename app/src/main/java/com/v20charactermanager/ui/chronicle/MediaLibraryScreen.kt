@@ -56,6 +56,7 @@ fun MediaLibraryScreen(
     errorType: V20ErrorType? = null,
     errorDetails: String? = null,
     onClearError: () -> Unit = {},
+    onVideoPresent: ((MediaAsset) -> Unit)? = null,
     onBack: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf<MediaAsset?>(null) }
@@ -169,7 +170,8 @@ fun MediaLibraryScreen(
                             onLongClick = { showDeleteDialog = asset },
                             onTagClick = { tag -> onFilterByTag(if (selectedTag == tag) null else tag) },
                             onEditTags = { showTagEditorDialog = asset },
-                            onEditTitle = { showRenameDialog = asset }
+                            onEditTitle = { showRenameDialog = asset },
+                            onVideoPresent = if (asset.type == MediaAssetType.VIDEO) {{ a -> onVideoPresent?.invoke(a)}} else null
                         )
                     }
                 }
@@ -249,7 +251,8 @@ private fun MediaAssetCard(
     onLongClick: () -> Unit,
     onTagClick: (String) -> Unit,
     onEditTags: () -> Unit,
-    onEditTitle: () -> Unit
+    onEditTitle: () -> Unit,
+    onVideoPresent: ((MediaAsset) -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
@@ -325,6 +328,21 @@ private fun MediaAssetCard(
                         contentDescription = null,
                         tint = V20GoldBright,
                         modifier = Modifier.size(32.dp)
+                    )
+                }
+                IconButton(
+                    onClick = { onVideoPresent?.invoke(asset) },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp)
+                        .size(28.dp)
+                        .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                ) {
+                    Icon(
+                        Icons.Default.Fullscreen,
+                        contentDescription = null,
+                        tint = V20GoldBright,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }

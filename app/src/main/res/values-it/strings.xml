@@ -710,6 +710,9 @@
     <string name="video_back">Indietro</string>
     <string name="video_loop_on">Loop ON</string>
     <string name="video_loop_off">Loop OFF</string>
+    <string name="video_mute">Muto</string>
+    <string name="video_unmute">Riattiva audio</string>
+    <string name="video_present">Modalità Presentazione</string>
 
     <!-- Media Library -->
     <string name="media_tags">Tag</string>

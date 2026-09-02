@@ -801,6 +801,16 @@ fun V20NavGraph(
                 errorType = uiState.errorType,
                 errorDetails = uiState.errorDetails,
                 onClearError = { mediaViewModel.clearError() },
+                onVideoPresent = { asset ->
+                    val intent = android.content.Intent(
+                        navController.context,
+                        com.v20charactermanager.ui.chronicle.VideoPresentationActivity::class.java
+                    ).apply {
+                        putExtra(com.v20charactermanager.ui.chronicle.VideoPresentationActivity.EXTRA_FILE_PATH, asset.originalFilePath)
+                        putExtra(com.v20charactermanager.ui.chronicle.VideoPresentationActivity.EXTRA_TITLE, asset.title)
+                    }
+                    navController.context.startActivity(intent)
+                },
                 onBack = { navController.popBackStack() }
             )
         }
