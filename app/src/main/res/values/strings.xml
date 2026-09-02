@@ -537,6 +537,7 @@
     <string name="bottom_nav_people">People</string>
     <string name="bottom_nav_plots">Plots</string>
     <string name="bottom_nav_media">Visual</string>
+    <string name="bottom_nav_audio">Audio</string>
     <string name="bottom_nav_more">More</string>
 
     <!-- Generic -->

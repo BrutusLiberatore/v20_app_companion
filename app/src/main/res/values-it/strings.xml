@@ -537,6 +537,7 @@
     <string name="bottom_nav_people">Persone</string>
     <string name="bottom_nav_plots">Trame</string>
     <string name="bottom_nav_media">Visual</string>
+    <string name="bottom_nav_audio">Audio</string>
     <string name="bottom_nav_more">Altro</string>
 
     <!-- Generic -->

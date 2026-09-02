@@ -35,9 +35,10 @@ import com.v20charactermanager.data.local.entity.*
         ImageAnnotationEntity::class,
         ImageRevisionEntity::class,
         QuickNoteEntity::class,
-        SessionEventEntity::class
+        SessionEventEntity::class,
+        AudioTrackEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -65,6 +66,7 @@ abstract class V20Database : RoomDatabase() {
     abstract fun imageRevisionDao(): ImageRevisionDao
     abstract fun quickNoteDao(): QuickNoteDao
     abstract fun sessionEventDao(): SessionEventDao
+    abstract fun audioTrackDao(): AudioTrackDao
 
     companion object {
         @Volatile
@@ -578,6 +580,27 @@ abstract class V20Database : RoomDatabase() {
             }
         }
 
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS audio_tracks (
+                        id TEXT NOT NULL,
+                        chronicleId TEXT NOT NULL,
+                        title TEXT NOT NULL,
+                        filePath TEXT NOT NULL,
+                        category TEXT NOT NULL DEFAULT 'CUSTOM',
+                        isLooping INTEGER NOT NULL DEFAULT 1,
+                        volume REAL NOT NULL DEFAULT 0.7,
+                        isActive INTEGER NOT NULL DEFAULT 0,
+                        createdAt INTEGER NOT NULL,
+                        PRIMARY KEY(id),
+                        FOREIGN KEY(chronicleId) REFERENCES chronicles(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_audio_tracks_chronicleId ON audio_tracks(chronicleId)")
+            }
+        }
+
         fun getDatabase(context: Context): V20Database {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -585,7 +608,7 @@ abstract class V20Database : RoomDatabase() {
                     V20Database::class.java,
                     "v20_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

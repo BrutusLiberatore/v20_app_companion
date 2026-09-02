@@ -39,6 +39,8 @@ import com.v20charactermanager.ui.chronicle.DrawToolState
 import com.v20charactermanager.ui.chronicle.DrawTool
 import com.v20charactermanager.ui.chronicle.toAnnotationType
 import com.v20charactermanager.ui.chronicle.MediaLibraryScreen
+import com.v20charactermanager.ui.chronicle.AudioViewModel
+import com.v20charactermanager.ui.chronicle.AudioViewModelFactory
 import com.v20charactermanager.ui.chronicle.MediaViewModel
 import com.v20charactermanager.ui.chronicle.MediaViewModelFactory
 import com.v20charactermanager.ui.chronicle.VersionHistoryScreen
@@ -530,6 +532,13 @@ fun V20NavGraph(
             )
             val uiState by viewModel.detailUiState.collectAsState()
 
+            val audioViewModel: AudioViewModel = viewModel(
+                factory = AudioViewModelFactory(
+                    appContainer.audioRepository,
+                    context.applicationContext
+                )
+            )
+
             LaunchedEffect(chronicleId) {
                 viewModel.loadChronicleDetail(chronicleId)
             }
@@ -708,7 +717,8 @@ fun V20NavGraph(
                     uiState.chronicle?.let { chronicle ->
                         navController.navigate(Routes.chronicleSearch(chronicle.id))
                     }
-                }
+                },
+                audioViewModel = audioViewModel
             )
         }
 

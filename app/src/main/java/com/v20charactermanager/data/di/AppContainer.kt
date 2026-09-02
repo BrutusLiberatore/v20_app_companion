@@ -3,6 +3,7 @@ package com.v20charactermanager.data.di
 import android.content.Context
 import com.v20charactermanager.data.datastore.SettingsDataStore
 import com.v20charactermanager.data.local.V20Database
+import com.v20charactermanager.data.repository.AudioRepositoryImpl
 import com.v20charactermanager.data.repository.CharacterRepositoryImpl
 import com.v20charactermanager.data.repository.ChronicleRepositoryImpl
 import com.v20charactermanager.data.repository.MediaRepositoryImpl
@@ -112,6 +113,10 @@ class AppContainer(private val context: Context) {
         database.sessionEventDao()
     }
 
+    private val audioTrackDao by lazy {
+        database.audioTrackDao()
+    }
+
     private val settingsDataStore by lazy {
         SettingsDataStore(context)
     }
@@ -139,6 +144,10 @@ class AppContainer(private val context: Context) {
             mediaAssetDao, imageDocumentDao, imageLayerDao,
             imageAnnotationDao, imageRevisionDao
         )
+    }
+
+    val audioRepository: AudioRepositoryImpl by lazy {
+        AudioRepositoryImpl(audioTrackDao)
     }
 
     val ruleRepository: RuleRepository by lazy {

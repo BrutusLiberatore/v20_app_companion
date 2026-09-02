@@ -18,6 +18,7 @@ enum class ChronicleBottomNavItem(
     PEOPLE("people", Icons.Filled.People, R.string.bottom_nav_people),
     PLOTS("plots", Icons.Filled.AutoStories, R.string.bottom_nav_plots),
     MEDIA("media", Icons.Filled.Map, R.string.bottom_nav_media),
+    AUDIO("audio", Icons.Filled.MusicNote, R.string.bottom_nav_audio),
     MORE("more", Icons.Filled.MoreHoriz, R.string.bottom_nav_more)
 }
 

@@ -61,12 +61,14 @@ private fun VideoPlayerScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var isPlaying by remember { mutableStateOf(false) }
+    var isLooping by remember { mutableStateOf(true) }
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             val file = File(filePath)
             val uri = Uri.fromFile(file)
             setMediaItem(MediaItem.fromUri(uri))
+            repeatMode = Player.REPEAT_MODE_ALL
             prepare()
             playWhenReady = true
             addListener(object : Player.Listener {
@@ -99,6 +101,18 @@ private fun VideoPlayerScreen(
                         onFinish()
                     }) {
                         Icon(Icons.Default.ArrowBack, "Indietro", tint = Color.White)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        isLooping = !isLooping
+                        exoPlayer.repeatMode = if (isLooping) Player.REPEAT_MODE_ALL else Player.REPEAT_MODE_OFF
+                    }) {
+                        Icon(
+                            if (isLooping) Icons.Default.Repeat else Icons.Default.RepeatOne,
+                            contentDescription = if (isLooping) "Loop ON" else "Loop OFF",
+                            tint = if (isLooping) V20GoldBright else Color.Gray
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)

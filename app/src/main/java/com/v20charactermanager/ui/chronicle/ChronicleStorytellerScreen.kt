@@ -66,7 +66,8 @@ fun ChronicleStorytellerScreen(
     onRemoveCharacter: (String, String) -> Unit,
     onNavigateToDice: () -> Unit,
     onLinkClick: (String, String) -> Unit,
-    onSearchClick: () -> Unit = {}
+    onSearchClick: () -> Unit = {},
+    audioViewModel: AudioViewModel? = null
 ) {
     var selectedNavItem by remember { mutableStateOf(ChronicleBottomNavItem.LIVE) }
     var showSceneDeck by remember { mutableStateOf(false) }
@@ -170,6 +171,15 @@ fun ChronicleStorytellerScreen(
             ChronicleBottomNavItem.MEDIA -> {
                 LaunchedEffect(Unit) {
                     onOpenMediaLibrary(chronicle?.id ?: "")
+                }
+            }
+            ChronicleBottomNavItem.AUDIO -> {
+                if (audioViewModel != null && chronicle != null) {
+                    AudioMixScreen(
+                        chronicleId = chronicle.id,
+                        audioViewModel = audioViewModel,
+                        onBack = { selectedNavItem = ChronicleBottomNavItem.LIVE }
+                    )
                 }
             }
             ChronicleBottomNavItem.MORE -> {
