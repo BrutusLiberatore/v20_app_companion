@@ -541,6 +541,7 @@ fun V20NavGraph(
 
             LaunchedEffect(chronicleId) {
                 viewModel.loadChronicleDetail(chronicleId)
+                audioViewModel.loadTracks(chronicleId)
             }
 
             ChronicleStorytellerScreen(
