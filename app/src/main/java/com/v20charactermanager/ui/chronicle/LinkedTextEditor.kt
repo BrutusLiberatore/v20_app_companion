@@ -2,6 +2,7 @@ package com.v20charactermanager.ui.chronicle
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -302,6 +303,7 @@ fun LinkedTextEditor(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun LinkedTextDisplay(
     text: String,
@@ -311,7 +313,10 @@ fun LinkedTextDisplay(
 ) {
     val segments = remember(text) { parseSegments(text) }
 
-    Column(modifier) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(0.dp)
+    ) {
         segments.forEach { segment ->
             when (segment.type) {
                 SegmentType.LINK -> {
@@ -323,7 +328,7 @@ fun LinkedTextDisplay(
                         label = { Text(segment.text) },
                         leadingIcon = {
                             Text(
-                                text = "🔗",
+                                text = "\uD83D\uDD17",
                                 style = MaterialTheme.typography.labelSmall
                             )
                         },
@@ -331,13 +336,12 @@ fun LinkedTextDisplay(
                     )
                 }
                 SegmentType.TAG -> {
-                    AssistChip(
-                        onClick = { /* Tags are non-navigable for now */ },
-                        label = { Text(segment.text, color = MaterialTheme.colorScheme.onTertiaryContainer) },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        ),
-                        modifier = Modifier.padding(2.dp)
+                    Text(
+                        text = segment.text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.padding(horizontal = 2.dp)
                     )
                 }
                 SegmentType.PLAIN -> {
@@ -345,7 +349,7 @@ fun LinkedTextDisplay(
                         Text(
                             text = segment.text,
                             style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 2.dp)
                         )
                     }
                 }
