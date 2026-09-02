@@ -222,17 +222,20 @@
 - MediaViewModel collegato in NavGraph
 
 ### Da implementare (prossimi passi)
-- Annotation system (pen, shapes, text, pins, eraser) — Canvas drawing
-- Undo/Redo system
-- Version History UI
-- Presentation Mode
-- Session/Scene integration
+- ~~Annotation system~~ ✅ COMPLETATO
+- ~~Undo/Redo system~~ ✅ COMPLETATO (trough revision history)
+- ~~Version History UI~~ ✅ COMPLETATO
+- ~~Presentation Mode~~ ✅ COMPLETATO
+- Session/Scene integration (auto-log eventi, riepilogo fine sessione)
 - Pin interattivi collegati a entità cronaca
 - Export .v20chronicle (archive format)
+- Layout adattivo (Compact/Medium/Expanded)
+- House Rules configurabili
+- Roll dal character sheet
 
 ---
 
-## Database Schema (v6)
+## Database Schema (v11)
 
 ```
 characters
@@ -256,6 +259,10 @@ image_documents
 image_layers
 image_annotations
 image_revisions
+quick_notes
+session_events
+audio_tracks
+audio_presets
 ```
 
 ---
