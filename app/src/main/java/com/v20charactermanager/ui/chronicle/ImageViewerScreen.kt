@@ -266,7 +266,7 @@ fun ImageViewerScreen(
                                     )
                                     if (isActive) {
                                         Text(
-                                            text = "● Active",
+                                            text = "● ${stringResource(R.string.layer_active)}",
                                             color = V20GreenBright,
                                             style = MaterialTheme.typography.labelSmall
                                         )

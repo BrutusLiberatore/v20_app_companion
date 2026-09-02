@@ -12,7 +12,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -24,19 +26,19 @@ data class LinkableItem(
     val name: String
 )
 
-enum class LinkCategory(val keywords: List<String>, val label: String) {
-    PG(listOf("PG", "PC"), "Personaggi Giocanti"),
-    NPC(listOf("NPC"), "Personaggi Non Giocanti"),
-    LUOGHI(listOf("LUOGHI", "LUOGO", "LOC", "LOCATION"), "Luoghi"),
-    MAPPE(listOf("MAPPE", "MAPPA", "MAP", "MAPS"), "Mappe e Immagini"),
-    SEGRETI(listOf("SEGRETI", "SEGRETO", "SECRET"), "Segreti"),
-    INDIZI(listOf("INDIZI", "INDIZIO", "CLUE"), "Indizi"),
-    NOTE(listOf("NOTE", "NOTA", "NOTE"), "Note"),
-    SESSIONI(listOf("SESSIONI", "SESSIONE", "SESSION"), "Sessioni"),
-    FAZIONI(listOf("FAZIONI", "FAZIONE", "FACTION"), "Fazioni"),
-    EVENTI(listOf("EVENTI", "EVENTO", "EVENT"), "Eventi"),
-    SCENE(listOf("SCENE", "SCENA", "SCENE"), "Scene"),
-    OGGETTI(listOf("OGGETTI", "OGGETTO", "ITEM", "OBJECT"), "Oggetti");
+enum class LinkCategory(val keywords: List<String>, val stringResId: Int) {
+    PG(listOf("PG", "PC"), R.string.link_category_pg),
+    NPC(listOf("NPC"), R.string.link_category_npc),
+    LUOGHI(listOf("LUOGHI", "LUOGO", "LOC", "LOCATION"), R.string.link_category_luoghi),
+    MAPPE(listOf("MAPPE", "MAPPA", "MAP", "MAPS"), R.string.link_category_mappe),
+    SEGRETI(listOf("SEGRETI", "SEGRETO", "SECRET"), R.string.link_category_segreti),
+    INDIZI(listOf("INDIZI", "INDIZIO", "CLUE"), R.string.link_category_indizi),
+    NOTE(listOf("NOTE", "NOTA", "NOTE"), R.string.link_category_note),
+    SESSIONI(listOf("SESSIONI", "SESSIONE", "SESSION"), R.string.link_category_sessioni),
+    FAZIONI(listOf("FAZIONI", "FAZIONE", "FACTION"), R.string.link_category_fazioni),
+    EVENTI(listOf("EVENTI", "EVENTO", "EVENT"), R.string.link_category_eventi),
+    SCENE(listOf("SCENE", "SCENA", "SCENE"), R.string.link_category_scene),
+    OGGETTI(listOf("OGGETTI", "OGGETTO", "ITEM", "OBJECT"), R.string.link_category_oggetti);
 
     companion object {
         fun findByKeyword(query: String): LinkCategory? {
@@ -183,7 +185,7 @@ fun LinkedTextEditor(
                     )
                 ) {
                     Text(
-                        text = "Tag: #$tagQuery",
+                        text = "${stringResource(R.string.link_tag_prefix)} #$tagQuery",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
@@ -259,7 +261,7 @@ fun LinkedTextEditor(
             ) {
                 Column(modifier = Modifier.heightIn(max = 240.dp)) {
                     Text(
-                        text = activeCategory?.label ?: "Entità",
+                        text = activeCategory?.let { stringResource(it.stringResId) } ?: stringResource(R.string.link_entity_fallback),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,

@@ -23,6 +23,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
+import com.v20charactermanager.R
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -197,7 +199,7 @@ private fun PdfPresentationScreen(
                 Text(text = error!!, color = Color.Red)
                 Spacer(modifier = Modifier.height(16.dp))
                 TextButton(onClick = onFinish) {
-                    Text("Chiudi", color = V20GoldBright)
+                    Text(stringResource(R.string.image_close), color = V20GoldBright)
                 }
             }
         } else {
@@ -211,7 +213,7 @@ private fun PdfPresentationScreen(
                 ) {
                     Image(
                         bitmap = currentBitmap.asImageBitmap(),
-                        contentDescription = "Page ${currentPage + 1}",
+                        contentDescription = stringResource(R.string.pdf_page_desc, currentPage + 1),
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .fillMaxSize()
@@ -232,7 +234,7 @@ private fun PdfPresentationScreen(
                     CircularProgressIndicator(color = V20GoldBright)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Caricamento pagina ${currentPage + 1}...",
+                        text = stringResource(R.string.pdf_loading_page, currentPage + 1),
                         color = V20GoldBright,
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -250,7 +252,7 @@ private fun PdfPresentationScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onFinish) {
-                            Icon(Icons.Filled.Close, "Chiudi", tint = Color.White)
+                            Icon(Icons.Filled.Close, stringResource(R.string.image_close), tint = Color.White)
                         }
                         Text(
                             text = "${currentPage + 1} / $totalPages",
@@ -259,7 +261,7 @@ private fun PdfPresentationScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (scale > 1.1f) "Zoom: ${String.format("%.1f", scale)}x" else "",
+                            text = if (scale > 1.1f) String.format(stringResource(R.string.pdf_zoom_format), scale) else "",
                             color = V20GoldBright,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -285,7 +287,7 @@ private fun PdfPresentationScreen(
                             },
                             enabled = currentPage > 0
                         ) {
-                            Icon(Icons.Filled.ChevronLeft, "Precedente", tint = Color.White, modifier = Modifier.size(36.dp))
+                            Icon(Icons.Filled.ChevronLeft, stringResource(R.string.pdf_previous), tint = Color.White, modifier = Modifier.size(36.dp))
                         }
 
                         Slider(
@@ -310,7 +312,7 @@ private fun PdfPresentationScreen(
                             },
                             enabled = currentPage < totalPages - 1
                         ) {
-                            Icon(Icons.Filled.ChevronRight, "Successiva", tint = Color.White, modifier = Modifier.size(36.dp))
+                            Icon(Icons.Filled.ChevronRight, stringResource(R.string.pdf_next), tint = Color.White, modifier = Modifier.size(36.dp))
                         }
                     }
                 }

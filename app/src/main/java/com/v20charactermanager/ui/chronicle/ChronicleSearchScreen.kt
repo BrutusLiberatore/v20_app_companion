@@ -34,7 +34,10 @@ fun ChronicleSearchScreen(
     var query by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("ALL") }
 
-    val allResults = remember(uiState) {
+    val sessionLabel = stringResource(R.string.search_session_prefix, 0).substringBefore("0").trim()
+    val noteLabel = stringResource(R.string.link_category_note)
+
+    val allResults = remember(uiState, sessionLabel, noteLabel) {
         val results = mutableListOf<SearchResult>()
 
         uiState.members.filter { it.role == ChronicleMemberRole.PLAYER_CHARACTER }.forEach { m ->
@@ -55,7 +58,7 @@ fun ChronicleSearchScreen(
             results.add(SearchResult("SCENE", it.id, it.title, it.hook?.take(60) ?: "", "SCENE"))
         }
         uiState.sessions.forEach {
-            results.add(SearchResult("SESSIONI", it.id, "Sessione #${it.number}", it.title, "SESSIONI"))
+            results.add(SearchResult("SESSIONI", it.id, "$sessionLabel #${it.number}", it.title, "SESSIONI"))
         }
         uiState.secrets.forEach {
             results.add(SearchResult("SEGRETI", it.id, it.title, it.content.take(60), "SEGRETI"))
@@ -64,7 +67,7 @@ fun ChronicleSearchScreen(
             results.add(SearchResult("INDIZI", it.id, it.title, it.content?.take(60) ?: "", "INDIZI"))
         }
         uiState.notes.forEach {
-            results.add(SearchResult("NOTE", it.id, "Nota", it.text.take(60), "NOTE"))
+            results.add(SearchResult("NOTE", it.id, noteLabel, it.text.take(60), "NOTE"))
         }
         uiState.factions.forEach {
             results.add(SearchResult("FAZIONI", it.id, it.name, it.description.take(60), "FAZIONI"))
@@ -85,15 +88,29 @@ fun ChronicleSearchScreen(
 
     val filters = listOf(
         "ALL" to stringResource(R.string.media_all),
-        "PG" to "PG",
-        "NPC" to "NPC",
-        "LUOGHI" to stringResource(R.string.media_locations),
-        "TRAME" to stringResource(R.string.chronicle_tab_plots),
-        "SESSIONI" to stringResource(R.string.chronicle_tab_sessions),
-        "SEGRETI" to stringResource(R.string.chronicle_tab_secrets),
-        "INDIZI" to stringResource(R.string.chronicle_tab_clues),
-        "NOTE" to stringResource(R.string.chronicle_tab_notes),
-        "FAZIONI" to stringResource(R.string.chronicle_tab_factions)
+        "PG" to stringResource(R.string.search_filter_pg),
+        "NPC" to stringResource(R.string.search_filter_npc),
+        "LUOGHI" to stringResource(R.string.search_type_locations),
+        "TRAME" to stringResource(R.string.search_type_plots),
+        "SESSIONI" to stringResource(R.string.search_type_notes),
+        "SEGRETI" to stringResource(R.string.search_type_secrets),
+        "INDIZI" to stringResource(R.string.search_type_clues),
+        "NOTE" to stringResource(R.string.search_type_notes),
+        "FAZIONI" to stringResource(R.string.search_type_factions)
+    )
+
+    val entityTypeLabels = mapOf(
+        "PG" to stringResource(R.string.search_filter_pg),
+        "NPC" to stringResource(R.string.search_filter_npc),
+        "LUOGHI" to stringResource(R.string.search_type_locations),
+        "TRAME" to stringResource(R.string.search_type_plots),
+        "SCENE" to stringResource(R.string.link_category_scene),
+        "SESSIONI" to stringResource(R.string.link_category_sessioni),
+        "SEGRETI" to stringResource(R.string.search_type_secrets),
+        "INDIZI" to stringResource(R.string.search_type_clues),
+        "NOTE" to stringResource(R.string.search_type_notes),
+        "FAZIONI" to stringResource(R.string.search_type_factions),
+        "EVENTI" to stringResource(R.string.search_type_events)
     )
 
     Scaffold(
@@ -194,7 +211,7 @@ fun ChronicleSearchScreen(
                             trailingContent = {
                                 AssistChip(
                                     onClick = { },
-                                    label = { Text(result.entityType, style = MaterialTheme.typography.labelSmall) }
+                                    label = { Text(entityTypeLabels[result.entityType] ?: result.entityType, style = MaterialTheme.typography.labelSmall) }
                                 )
                             },
                             modifier = Modifier.clickable {

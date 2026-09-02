@@ -85,19 +85,19 @@ fun ChronicleStorytellerScreen(
                 actions = {
                     if (selectedNavItem == ChronicleBottomNavItem.AUDIO && audioViewModel != null) {
                         IconButton(onClick = { audioViewModel.stopAll() }) {
-                            Icon(Icons.Filled.Stop, contentDescription = "Stop All", tint = Color.Red)
+                            Icon(Icons.Filled.Stop, contentDescription = stringResource(R.string.stop_all), tint = Color.Red)
                         }
                     }
                     if (uiState.activeSession != null) {
                         Text(
-                            text = "LIVE",
+                            text = stringResource(R.string.live_badge),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                     IconButton(onClick = onSearchClick) {
-                        Icon(Icons.Filled.Search, contentDescription = "Search")
+                        Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.action_search))
                     }
                 }
             )

@@ -357,7 +357,7 @@ private fun MediaAssetCard(
                     ) {
                         Icon(
                             Icons.Default.Label,
-                            contentDescription = "Tags",
+                            contentDescription = stringResource(R.string.media_tags),
                             tint = V20Gold,
                             modifier = Modifier.size(16.dp)
                         )
@@ -428,7 +428,7 @@ private fun TagEditorDialog(
                                 onClick = { onRemoveTag(tag) },
                                 label = { Text(tag, style = MaterialTheme.typography.labelSmall) },
                                 trailingIcon = {
-                                    Icon(Icons.Default.Close, contentDescription = "Rimuovi", modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.media_remove_tag), modifier = Modifier.size(14.dp))
                                 },
                                 colors = InputChipDefaults.inputChipColors(
                                     selectedContainerColor = MaterialTheme.colorScheme.primaryContainer

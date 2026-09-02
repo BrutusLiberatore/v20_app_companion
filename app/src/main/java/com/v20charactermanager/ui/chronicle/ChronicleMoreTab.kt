@@ -151,7 +151,12 @@ fun ChronicleMoreTab(
                 },
                 supportingContent = {
                     Text(
-                        text = session.status.name,
+                        text = when (session.status) {
+                            SessionStatus.PLANNED -> stringResource(R.string.session_status_planned)
+                            SessionStatus.ACTIVE -> stringResource(R.string.session_status_active)
+                            SessionStatus.COMPLETED -> stringResource(R.string.session_status_completed)
+                            else -> session.status.name
+                        },
                         color = when (session.status) {
                             SessionStatus.ACTIVE -> MaterialTheme.colorScheme.primary
                             SessionStatus.COMPLETED -> MaterialTheme.colorScheme.outline

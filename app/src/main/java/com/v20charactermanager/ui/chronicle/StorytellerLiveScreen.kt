@@ -67,7 +67,7 @@ fun StorytellerLiveScreen(
                     if (session != null) {
                         Text(
                             text = "${stringResource(R.string.session_title)} ${session.number}" +
-                                    if (session.status == SessionStatus.ACTIVE) " \u2022 LIVE" else "",
+                                    if (session.status == SessionStatus.ACTIVE) " \u2022 ${stringResource(R.string.live_badge)}" else "",
                             style = MaterialTheme.typography.bodyMedium,
                             color = if (session.status == SessionStatus.ACTIVE)
                                 MaterialTheme.colorScheme.error

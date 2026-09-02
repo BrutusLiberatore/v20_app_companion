@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
+import com.v20charactermanager.R
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -137,7 +139,7 @@ private fun ImagePresentationScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onFinish) {
-                        Icon(Icons.Filled.Close, "Chiudi", tint = Color.White)
+                        Icon(Icons.Filled.Close, stringResource(R.string.image_close), tint = Color.White)
                     }
                     Text(
                         text = title,
@@ -146,7 +148,7 @@ private fun ImagePresentationScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (scale > 1.1f) "Zoom: ${String.format("%.1f", scale)}x" else "",
+                        text = if (scale > 1.1f) String.format(stringResource(R.string.image_zoom_format), scale) else "",
                         color = V20GoldBright,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -167,7 +169,7 @@ private fun ImagePresentationScreen(
                             scale = 1f
                             offset = Offset.Zero
                         }) {
-                            Text("Reset zoom", color = V20GoldBright)
+                            Text(stringResource(R.string.image_reset_zoom), color = V20GoldBright)
                         }
                     }
                 }

@@ -70,7 +70,7 @@ fun QuickActionBar(
             onClick = { showQuickNpcDialog = true },
             label = {
                 Text(
-                    text = "PNG Rapido",
+                    text = stringResource(R.string.quick_npc),
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -105,13 +105,13 @@ private fun QuickNpcDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("PNG Rapido") },
+        title = { Text(stringResource(R.string.quick_npc_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nombre *") },
+                    label = { Text(stringResource(R.string.quick_npc_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -123,7 +123,7 @@ private fun QuickNpcDialog(
                         value = creatureType.name.replaceFirstChar { it.titlecase() },
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Tipo") },
+                        label = { Text(stringResource(R.string.quick_npc_type)) },
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                         },
@@ -149,7 +149,7 @@ private fun QuickNpcDialog(
                 OutlinedTextField(
                     value = role,
                     onValueChange = { role = it },
-                    label = { Text("Rol (opcional)") },
+                    label = { Text(stringResource(R.string.quick_npc_role)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -164,7 +164,7 @@ private fun QuickNpcDialog(
                 },
                 enabled = name.isNotBlank()
             ) {
-                Text("Crear")
+                Text(stringResource(R.string.quick_npc_create))
             }
         },
         dismissButton = {

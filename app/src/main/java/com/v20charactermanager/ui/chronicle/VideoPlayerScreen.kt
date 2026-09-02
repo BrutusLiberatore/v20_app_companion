@@ -14,9 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.v20charactermanager.R
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -100,7 +102,7 @@ private fun VideoPlayerScreen(
                         exoPlayer.release()
                         onFinish()
                     }) {
-                        Icon(Icons.Default.ArrowBack, "Indietro", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, stringResource(R.string.video_back), tint = Color.White)
                     }
                 },
                 actions = {
@@ -110,7 +112,7 @@ private fun VideoPlayerScreen(
                     }) {
                         Icon(
                             if (isLooping) Icons.Default.Repeat else Icons.Default.RepeatOne,
-                            contentDescription = if (isLooping) "Loop ON" else "Loop OFF",
+                            contentDescription = if (isLooping) stringResource(R.string.video_loop_on) else stringResource(R.string.video_loop_off),
                             tint = if (isLooping) V20GoldBright else Color.Gray
                         )
                     }

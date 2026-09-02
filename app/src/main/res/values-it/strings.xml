@@ -650,4 +650,83 @@
     <string name="audio_category_music">Musica (colonna sonora)</string>
     <string name="audio_category_sfx">SFX (effetti sonori)</string>
 
+    <!-- LinkedText Categories -->
+    <string name="link_category_pg">Personaggi Giocanti</string>
+    <string name="link_category_npc">Personaggi Non Giocanti</string>
+    <string name="link_category_luoghi">Luoghi</string>
+    <string name="link_category_mappe">Mappe e Immagini</string>
+    <string name="link_category_segreti">Segreti</string>
+    <string name="link_category_indizi">Indizi</string>
+    <string name="link_category_note">Note</string>
+    <string name="link_category_sessioni">Sessioni</string>
+    <string name="link_category_fazioni">Fazioni</string>
+    <string name="link_category_eventi">Eventi</string>
+    <string name="link_category_scene">Scene</string>
+    <string name="link_category_oggetti">Oggetti</string>
+    <string name="link_tag_prefix">Tag:</string>
+    <string name="link_entity_fallback">Entità</string>
+
+    <!-- Search Screen -->
+    <string name="search_filter_pg">PG</string>
+    <string name="search_filter_npc">PNG</string>
+    <string name="search_type_locations">LUOGHI</string>
+    <string name="search_type_plots">TRAME</string>
+    <string name="search_type_secrets">SEGRETI</string>
+    <string name="search_type_clues">INDIZI</string>
+    <string name="search_type_factions">FAZIONI</string>
+    <string name="search_type_events">EVENTI</string>
+    <string name="search_type_notes">NOTE</string>
+    <string name="search_session_prefix">Sessione #%d</string>
+    <string name="search_gen_label">Gen.</string>
+
+    <!-- Quick ActionBar (NPC) -->
+    <string name="quick_npc">PNG Rapido</string>
+    <string name="quick_npc_title">PNG Rapido</string>
+    <string name="quick_npc_name">Nome *</string>
+    <string name="quick_npc_type">Tipo</string>
+    <string name="quick_npc_role">Ruolo (opzionale)</string>
+    <string name="quick_npc_create">Crea</string>
+
+    <!-- Storyteller Screen -->
+    <string name="stop_all">Stop Totale</string>
+    <string name="live_badge">LIVE</string>
+    <string name="action_search">Cerca</string>
+
+    <!-- PDF Presentation -->
+    <string name="pdf_error_memory">Memoria esaurita</string>
+    <string name="pdf_error_unknown">Errore sconosciuto</string>
+    <string name="pdf_loading_page">Caricamento pagina %d…</string>
+    <string name="pdf_previous">Precedente</string>
+    <string name="pdf_next">Successiva</string>
+    <string name="pdf_zoom_format">Zoom: %.1fx</string>
+    <string name="pdf_page_desc">Pagina %d</string>
+
+    <!-- Image Presentation -->
+    <string name="image_close">Chiudi</string>
+    <string name="image_reset_zoom">Azzera zoom</string>
+    <string name="image_zoom_format">Zoom: %.1fx</string>
+
+    <!-- Video Player -->
+    <string name="video_back">Indietro</string>
+    <string name="video_loop_on">Loop ON</string>
+    <string name="video_loop_off">Loop OFF</string>
+
+    <!-- Media Library -->
+    <string name="media_tags">Tag</string>
+    <string name="media_remove_tag">Rimuovi</string>
+
+    <!-- Image Viewer -->
+    <string name="layer_active">Attivo</string>
+
+    <!-- NPC Detail -->
+    <string name="npc_placeholder">--</string>
+
+    <!-- Session Status -->
+    <string name="session_status_planned">Pianificata</string>
+    <string name="session_status_active">Attiva</string>
+    <string name="session_status_completed">Completata</string>
+
+    <!-- Character Live Card -->
+    <string name="health_ok">OK</string>
+
 </resources>
