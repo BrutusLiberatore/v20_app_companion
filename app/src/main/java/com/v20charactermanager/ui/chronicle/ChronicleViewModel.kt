@@ -479,6 +479,25 @@ class ChronicleViewModel(
         }
     }
 
+    // Blood Pool & Willpower (from Live storyteller view)
+    fun updateCharacterBloodPool(characterId: String, delta: Int) {
+        viewModelScope.launch {
+            val character = characterRepository.getCharacterByIdOnce(characterId) ?: return@launch
+            val newBlood = if (delta > 0) character.bloodPool.refill(delta) else character.bloodPool.spend(-delta)
+            val updated = character.copy(bloodPool = newBlood)
+            characterRepository.updateCharacter(updated)
+        }
+    }
+
+    fun updateCharacterWillpower(characterId: String, delta: Int) {
+        viewModelScope.launch {
+            val character = characterRepository.getCharacterByIdOnce(characterId) ?: return@launch
+            val newWillpower = if (delta > 0) character.willpower.recover(delta) else character.willpower.spend(-delta)
+            val updated = character.copy(willpower = newWillpower)
+            characterRepository.updateCharacter(updated)
+        }
+    }
+
     // Session Events (manual)
     fun createSessionEvent(chronicleId: String, sessionId: String?, title: String, description: String = "", type: SessionEventType = SessionEventType.MANUAL_EVENT) {
         viewModelScope.launch {

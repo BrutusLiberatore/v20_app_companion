@@ -20,7 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.AudioPreset
 import com.v20charactermanager.domain.model.AudioTrack
 import com.v20charactermanager.domain.model.AudioTrackCategory
@@ -91,7 +93,7 @@ fun AudioMixContent(
         if (uiState.presets.isNotEmpty()) {
             item {
                 Text(
-                    text = "PRESET",
+                    text = stringResource(R.string.audio_presets),
                     color = V20GoldBright,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
@@ -121,7 +123,7 @@ fun AudioMixContent(
                 FilterChip(
                     selected = selectedCategoryFilter == null,
                     onClick = { selectedCategoryFilter = null },
-                    label = { Text("Tutti") },
+                    label = { Text(stringResource(R.string.audio_all)) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = V20GoldBright,
                         selectedLabelColor = V20Black
@@ -135,10 +137,10 @@ fun AudioMixContent(
                         },
                         label = {
                             Text(when (cat) {
-                                AudioTrackCategory.AMBIENCE -> "Ambience"
-                                AudioTrackCategory.MUSIC -> "Musica"
-                                AudioTrackCategory.SFX -> "SFX"
-                                AudioTrackCategory.CUSTOM -> "Custom"
+                                AudioTrackCategory.AMBIENCE -> stringResource(R.string.audio_ambience)
+                                AudioTrackCategory.MUSIC -> stringResource(R.string.audio_music)
+                                AudioTrackCategory.SFX -> stringResource(R.string.audio_sfx)
+                                AudioTrackCategory.CUSTOM -> stringResource(R.string.audio_custom)
                             })
                         },
                         colors = FilterChipDefaults.filterChipColors(
@@ -158,7 +160,7 @@ fun AudioMixContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "TRACCE (${uiState.tracks.size})",
+                    text = stringResource(R.string.audio_tracks_label, uiState.tracks.size),
                     color = V20GoldBright,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
@@ -172,7 +174,7 @@ fun AudioMixContent(
                     ) {
                         Icon(Icons.Default.Save, contentDescription = null, tint = V20Black, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Salva Preset", color = V20Black, style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.audio_save_preset), color = V20Black, style = MaterialTheme.typography.labelSmall)
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     Button(
@@ -182,7 +184,7 @@ fun AudioMixContent(
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, tint = V20Black, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Importa", color = V20Black, style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.audio_import), color = V20Black, style = MaterialTheme.typography.labelSmall)
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     Button(
@@ -192,7 +194,7 @@ fun AudioMixContent(
                     ) {
                         Icon(Icons.Default.Stop, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Stop", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.audio_stop_all), color = Color.White, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -212,7 +214,7 @@ fun AudioMixContent(
                             modifier = Modifier.size(48.dp)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text("Nessun audio importato", color = V20InkFaint)
+                        Text(stringResource(R.string.audio_empty), color = V20InkFaint)
                     }
                 }
             }
@@ -250,16 +252,16 @@ private fun PresetCard(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Elimina preset?") },
-            text = { Text("Eliminare '${preset.name}'?") },
+            title = { Text(stringResource(R.string.audio_preset_delete_title)) },
+            text = { Text(stringResource(R.string.audio_preset_delete_msg, preset.name)) },
             confirmButton = {
                 TextButton(onClick = { onDelete(); showDeleteConfirm = false }) {
-                    Text("Elimina", color = Color.Red)
+                    Text(stringResource(R.string.action_delete), color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text("Annulla")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -281,7 +283,7 @@ private fun PresetCard(
                 IconButton(onClick = onActivate, modifier = Modifier.size(40.dp)) {
                     Icon(
                         Icons.Default.PlayArrow,
-                        contentDescription = "Attiva",
+                        contentDescription = stringResource(R.string.audio_activate),
                         tint = V20GoldBright,
                         modifier = Modifier.size(28.dp)
                     )
@@ -295,7 +297,7 @@ private fun PresetCard(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "${preset.tracks.size} tracce",
+                        text = stringResource(R.string.audio_tracks_count, preset.tracks.size),
                         color = V20InkFaint,
                         style = MaterialTheme.typography.labelSmall
                     )
@@ -304,7 +306,7 @@ private fun PresetCard(
             IconButton(onClick = { showDeleteConfirm = true }, modifier = Modifier.size(36.dp)) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Elimina",
+                        contentDescription = stringResource(R.string.action_delete),
                     tint = V20InkFaint,
                     modifier = Modifier.size(20.dp)
                 )
@@ -346,7 +348,7 @@ private fun AudioTrackCard(
                     IconButton(onClick = onTogglePlay, modifier = Modifier.size(40.dp)) {
                         Icon(
                             if (track.isActive) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (track.isActive) "Pausa" else "Riproduci",
+                            contentDescription = if (track.isActive) stringResource(R.string.audio_pause) else stringResource(R.string.audio_play),
                             tint = if (track.isActive) V20GoldBright else V20Ink,
                             modifier = Modifier.size(28.dp)
                         )
@@ -362,10 +364,10 @@ private fun AudioTrackCard(
                         )
                         Text(
                             text = when (track.category) {
-                                AudioTrackCategory.AMBIENCE -> "Ambience"
-                                AudioTrackCategory.MUSIC -> "Musica"
-                                AudioTrackCategory.SFX -> "SFX"
-                                AudioTrackCategory.CUSTOM -> "Custom"
+                                AudioTrackCategory.AMBIENCE -> stringResource(R.string.audio_ambience)
+                                AudioTrackCategory.MUSIC -> stringResource(R.string.audio_music)
+                                AudioTrackCategory.SFX -> stringResource(R.string.audio_sfx)
+                                AudioTrackCategory.CUSTOM -> stringResource(R.string.audio_custom)
                             },
                             color = V20InkFaint,
                             style = MaterialTheme.typography.labelSmall
@@ -376,7 +378,7 @@ private fun AudioTrackCard(
                     IconButton(onClick = { onLoopToggle(!track.isLooping) }, modifier = Modifier.size(36.dp)) {
                         Icon(
                             Icons.Default.Repeat,
-                            contentDescription = "Loop",
+                            contentDescription = stringResource(R.string.audio_loop),
                             tint = if (track.isLooping) V20GoldBright else V20InkFaint,
                             modifier = Modifier.size(20.dp)
                         )
@@ -384,7 +386,7 @@ private fun AudioTrackCard(
                     IconButton(onClick = onStop, modifier = Modifier.size(36.dp)) {
                         Icon(
                             Icons.Default.Stop,
-                            contentDescription = "Stop",
+                            contentDescription = stringResource(R.string.audio_stop_all),
                             tint = Color.Red.copy(alpha = 0.7f),
                             modifier = Modifier.size(20.dp)
                         )
@@ -393,14 +395,14 @@ private fun AudioTrackCard(
                         IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
                             Icon(
                                 Icons.Default.MoreVert,
-                                contentDescription = "Menu",
+                                contentDescription = stringResource(R.string.audio_menu),
                                 tint = V20InkFaint,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
                         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                             DropdownMenuItem(
-                                text = { Text("Rinomina") },
+                                text = { Text(stringResource(R.string.audio_rename)) },
                                 onClick = { showMenu = false; onRename() },
                                 leadingIcon = { Icon(Icons.Default.Edit, null) }
                             )
@@ -408,10 +410,10 @@ private fun AudioTrackCard(
                                 DropdownMenuItem(
                                     text = {
                                         Text(when (cat) {
-                                            AudioTrackCategory.AMBIENCE -> "Ambience"
-                                            AudioTrackCategory.MUSIC -> "Musica"
-                                            AudioTrackCategory.SFX -> "SFX"
-                                            AudioTrackCategory.CUSTOM -> "Custom"
+                                            AudioTrackCategory.AMBIENCE -> stringResource(R.string.audio_ambience)
+                                            AudioTrackCategory.MUSIC -> stringResource(R.string.audio_music)
+                                            AudioTrackCategory.SFX -> stringResource(R.string.audio_sfx)
+                                            AudioTrackCategory.CUSTOM -> stringResource(R.string.audio_custom)
                                         })
                                     },
                                     onClick = { showMenu = false; onCategoryChange(cat) },
@@ -424,7 +426,7 @@ private fun AudioTrackCard(
                                 )
                             }
                             DropdownMenuItem(
-                                text = { Text("Elimina", color = Color.Red) },
+                                text = { Text(stringResource(R.string.action_delete), color = Color.Red) },
                                 onClick = { showMenu = false; onDelete() },
                                 leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) }
                             )
@@ -484,12 +486,12 @@ private fun RenameAudioDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Rinomina Audio") },
+        title = { Text(stringResource(R.string.audio_rename_title)) },
         text = {
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("Nome") },
+                label = { Text(stringResource(R.string.audio_name)) },
                 singleLine = true
             )
         },
@@ -500,7 +502,7 @@ private fun RenameAudioDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annulla")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )
@@ -515,11 +517,11 @@ private fun SavePresetDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Salva Preset") },
+        title = { Text(stringResource(R.string.audio_preset_save_title)) },
         text = {
             Column {
                 Text(
-                    text = "Salva le tracce attive come preset per riutilizzo rapido",
+                    text = stringResource(R.string.audio_preset_save_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = V20InkFaint
                 )
@@ -527,20 +529,20 @@ private fun SavePresetDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nome preset") },
-                    placeholder = { Text("es. Taverna gotica") },
+                    label = { Text(stringResource(R.string.audio_preset_name_hint)) },
+                    placeholder = { Text(stringResource(R.string.audio_preset_name_example)) },
                     singleLine = true
                 )
             }
         },
         confirmButton = {
             TextButton(onClick = { if (name.isNotBlank()) onConfirm(name) }) {
-                Text("Salva")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annulla")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )
@@ -555,11 +557,11 @@ private fun CategoryPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Categoria Audio") },
+        title = { Text(stringResource(R.string.audio_category_title)) },
         text = {
             Column {
                 Text(
-                    text = "Scegli la categoria per questo audio:",
+                    text = stringResource(R.string.audio_category_desc),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -578,10 +580,10 @@ private fun CategoryPickerDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = when (category) {
-                                AudioTrackCategory.AMBIENCE -> "Ambience (suoni ambientali)"
-                                AudioTrackCategory.MUSIC -> "Musica (colonna sonora)"
-                                AudioTrackCategory.SFX -> "SFX (effetti sonori)"
-                                AudioTrackCategory.CUSTOM -> "Custom"
+                                AudioTrackCategory.AMBIENCE -> stringResource(R.string.audio_category_ambience)
+                                AudioTrackCategory.MUSIC -> stringResource(R.string.audio_category_music)
+                                AudioTrackCategory.SFX -> stringResource(R.string.audio_category_sfx)
+                                AudioTrackCategory.CUSTOM -> stringResource(R.string.audio_custom)
                             }
                         )
                     }
@@ -595,7 +597,7 @@ private fun CategoryPickerDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annulla")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )

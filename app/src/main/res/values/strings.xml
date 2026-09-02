@@ -617,4 +617,37 @@
     <string name="tag_custom">Custom tag:</string>
     <string name="tag_new_hint">New tag</string>
 
+    <!-- Audio Mix Board -->
+    <string name="audio_presets">PRESETS</string>
+    <string name="audio_tracks_label">TRACKS (%d)</string>
+    <string name="audio_all">All</string>
+    <string name="audio_ambience">Ambience</string>
+    <string name="audio_music">Music</string>
+    <string name="audio_sfx">SFX</string>
+    <string name="audio_custom">Custom</string>
+    <string name="audio_save_preset">Save Preset</string>
+    <string name="audio_import">Import</string>
+    <string name="audio_stop_all">Stop</string>
+    <string name="audio_empty">No audio imported</string>
+    <string name="audio_preset_delete_title">Delete preset?</string>
+    <string name="audio_preset_delete_msg">Delete \"%s\"?</string>
+    <string name="audio_activate">Activate</string>
+    <string name="audio_tracks_count">%d tracks</string>
+    <string name="audio_pause">Pause</string>
+    <string name="audio_play">Play</string>
+    <string name="audio_loop">Loop</string>
+    <string name="audio_menu">Menu</string>
+    <string name="audio_rename">Rename</string>
+    <string name="audio_rename_title">Rename Audio</string>
+    <string name="audio_name">Name</string>
+    <string name="audio_preset_save_title">Save Preset</string>
+    <string name="audio_preset_save_desc">Save active tracks as a preset for quick reuse</string>
+    <string name="audio_preset_name_hint">Preset name</string>
+    <string name="audio_preset_name_example">e.g. Gothic tavern</string>
+    <string name="audio_category_title">Audio Category</string>
+    <string name="audio_category_desc">Choose the category for this audio:</string>
+    <string name="audio_category_ambience">Ambience (ambient sounds)</string>
+    <string name="audio_category_music">Music (soundtrack)</string>
+    <string name="audio_category_sfx">SFX (sound effects)</string>
+
 </resources>

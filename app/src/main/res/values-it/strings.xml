@@ -617,4 +617,37 @@
     <string name="tag_custom">Tag personalizzato:</string>
     <string name="tag_new_hint">Nuovo tag</string>
 
+    <!-- Audio Mix Board -->
+    <string name="audio_presets">PRESET</string>
+    <string name="audio_tracks_label">TRACCE (%d)</string>
+    <string name="audio_all">Tutti</string>
+    <string name="audio_ambience">Ambience</string>
+    <string name="audio_music">Musica</string>
+    <string name="audio_sfx">SFX</string>
+    <string name="audio_custom">Custom</string>
+    <string name="audio_save_preset">Salva Preset</string>
+    <string name="audio_import">Importa</string>
+    <string name="audio_stop_all">Stop</string>
+    <string name="audio_empty">Nessun audio importato</string>
+    <string name="audio_preset_delete_title">Elimina preset?</string>
+    <string name="audio_preset_delete_msg">Eliminare \"%s\"?</string>
+    <string name="audio_activate">Attiva</string>
+    <string name="audio_tracks_count">%d tracce</string>
+    <string name="audio_pause">Pausa</string>
+    <string name="audio_play">Riproduci</string>
+    <string name="audio_loop">Loop</string>
+    <string name="audio_menu">Menu</string>
+    <string name="audio_rename">Rinomina</string>
+    <string name="audio_rename_title">Rinomina Audio</string>
+    <string name="audio_name">Nome</string>
+    <string name="audio_preset_save_title">Salva Preset</string>
+    <string name="audio_preset_save_desc">Salva le tracce attive come preset per riutilizzo rapido</string>
+    <string name="audio_preset_name_hint">Nome preset</string>
+    <string name="audio_preset_name_example">es. Taverna gotica</string>
+    <string name="audio_category_title">Categoria Audio</string>
+    <string name="audio_category_desc">Scegli la categoria per questo audio:</string>
+    <string name="audio_category_ambience">Ambience (suoni ambientali)</string>
+    <string name="audio_category_music">Musica (colonna sonora)</string>
+    <string name="audio_category_sfx">SFX (effetti sonori)</string>
+
 </resources>

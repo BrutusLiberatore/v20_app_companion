@@ -557,10 +557,10 @@ fun V20NavGraph(
                     navController.navigate(Routes.sheet(characterId))
                 },
                 onCharacterBloodChange = { character, delta ->
-                    // TODO: Update character blood pool
+                    viewModel.updateCharacterBloodPool(character.id, delta)
                 },
                 onCharacterWillpowerChange = { character, delta ->
-                    // TODO: Update character willpower
+                    viewModel.updateCharacterWillpower(character.id, delta)
                 },
                 onNpcClick = { npc ->
                     // TODO: Open NPC detail
@@ -703,15 +703,19 @@ fun V20NavGraph(
                 onLinkClick = { type, id ->
                     when (type) {
                         "PG" -> navController.navigate(Routes.sheet(id))
-                        "NPC" -> { /* NPC detail handled by sheet */ }
-                        "LUOGHI" -> { /* Location detail */ }
-                        "SEGRETI" -> { /* Secret detail */ }
-                        "INDIZI" -> { /* Clue detail */ }
+                        "NPC" -> { /* NPC detail is opened via onNpcClick in People tab */ }
+                        "LUOGHI" -> {
+                            uiState.chronicle?.let { chronicle ->
+                                navController.navigate(Routes.locationImage(chronicle.id, id))
+                            }
+                        }
+                        "SEGRETI" -> { /* No dedicated screen — user finds in Plots tab */ }
+                        "INDIZI" -> { /* No dedicated screen — user finds in Plots tab */ }
                         "NOTE" -> { /* Note stays in place */ }
-                        "SESSIONI" -> { /* Session detail */ }
-                        "FAZIONI" -> { /* Faction detail */ }
-                        "EVENTI" -> { /* Event detail */ }
-                        "SCENE" -> { /* Scene detail */ }
+                        "SESSIONI" -> { /* No dedicated screen — user finds in More > Sessions */ }
+                        "FAZIONI" -> { /* No dedicated screen — user finds in More > Factions */ }
+                        "EVENTI" -> { /* No dedicated screen — user finds in Plots tab */ }
+                        "SCENE" -> { /* No dedicated screen — user finds in Plots tab */ }
                     }
                 },
                 onSearchClick = {
