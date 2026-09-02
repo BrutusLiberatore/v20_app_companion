@@ -36,9 +36,10 @@ import com.v20charactermanager.data.local.entity.*
         ImageRevisionEntity::class,
         QuickNoteEntity::class,
         SessionEventEntity::class,
-        AudioTrackEntity::class
+        AudioTrackEntity::class,
+        AudioPresetEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -67,6 +68,7 @@ abstract class V20Database : RoomDatabase() {
     abstract fun quickNoteDao(): QuickNoteDao
     abstract fun sessionEventDao(): SessionEventDao
     abstract fun audioTrackDao(): AudioTrackDao
+    abstract fun audioPresetDao(): AudioPresetDao
 
     companion object {
         @Volatile
@@ -601,6 +603,23 @@ abstract class V20Database : RoomDatabase() {
             }
         }
 
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS audio_presets (
+                        id TEXT NOT NULL,
+                        chronicleId TEXT NOT NULL,
+                        name TEXT NOT NULL,
+                        tracksJson TEXT NOT NULL DEFAULT '[]',
+                        createdAt INTEGER NOT NULL,
+                        PRIMARY KEY(id),
+                        FOREIGN KEY(chronicleId) REFERENCES chronicles(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_audio_presets_chronicleId ON audio_presets(chronicleId)")
+            }
+        }
+
         fun getDatabase(context: Context): V20Database {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -608,7 +627,7 @@ abstract class V20Database : RoomDatabase() {
                     V20Database::class.java,
                     "v20_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

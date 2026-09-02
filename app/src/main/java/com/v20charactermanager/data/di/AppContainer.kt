@@ -117,6 +117,10 @@ class AppContainer(private val context: Context) {
         database.audioTrackDao()
     }
 
+    private val audioPresetDao by lazy {
+        database.audioPresetDao()
+    }
+
     private val settingsDataStore by lazy {
         SettingsDataStore(context)
     }
@@ -147,7 +151,7 @@ class AppContainer(private val context: Context) {
     }
 
     val audioRepository: AudioRepositoryImpl by lazy {
-        AudioRepositoryImpl(audioTrackDao)
+        AudioRepositoryImpl(audioTrackDao, audioPresetDao)
     }
 
     val ruleRepository: RuleRepository by lazy {
