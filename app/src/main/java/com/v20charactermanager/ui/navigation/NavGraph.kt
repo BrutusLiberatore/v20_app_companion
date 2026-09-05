@@ -4,6 +4,9 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -11,6 +14,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -22,10 +27,8 @@ import com.v20charactermanager.data.di.AppContainer
 import com.v20charactermanager.util.LocaleHelper
 import com.v20charactermanager.domain.model.CharacterRandomizer
 import com.v20charactermanager.domain.model.ChronicleLocation
-import com.v20charactermanager.domain.model.CreatureType
 import com.v20charactermanager.domain.model.MediaAsset
 import com.v20charactermanager.domain.model.MediaAssetType
-import com.v20charactermanager.domain.model.PlotType
 import com.v20charactermanager.domain.model.Visibility
 import com.v20charactermanager.ui.compendium.CompendiumDetailScreen
 import com.v20charactermanager.ui.chronicle.ChronicleDetailScreen
@@ -35,8 +38,9 @@ import com.v20charactermanager.ui.chronicle.ChronicleListScreen
 import com.v20charactermanager.ui.chronicle.ChronicleViewModel
 import com.v20charactermanager.ui.chronicle.ChronicleViewModelFactory
 import com.v20charactermanager.ui.chronicle.ImageViewerScreen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.v20charactermanager.ui.chronicle.DrawToolState
-import com.v20charactermanager.ui.chronicle.DrawTool
 import com.v20charactermanager.ui.chronicle.toAnnotationType
 import com.v20charactermanager.ui.chronicle.MediaLibraryScreen
 import com.v20charactermanager.ui.chronicle.AudioViewModel
@@ -66,6 +70,9 @@ import com.v20charactermanager.ui.session.SessionViewModelFactory
 import com.v20charactermanager.ui.settings.SettingsScreen
 import com.v20charactermanager.ui.settings.SettingsViewModel
 import com.v20charactermanager.ui.settings.SettingsViewModelFactory
+import com.v20charactermanager.ui.settings.HouseRulesScreen
+import com.v20charactermanager.ui.settings.HouseRulesViewModel
+import com.v20charactermanager.ui.settings.HouseRulesViewModelFactory
 import com.v20charactermanager.ui.sheet.EditCharacterViewModel
 import com.v20charactermanager.ui.sheet.EditCharacterViewModelFactory
 import com.v20charactermanager.ui.sheet.SheetScreen
@@ -93,6 +100,12 @@ object Routes {
     const val CHRONICLE_SEARCH = "chronicle/{chronicleId}/search"
     const val VERSION_HISTORY = "chronicle/{chronicleId}/media/{assetId}/versions"
     const val LOCATION_IMAGE = "chronicle/{chronicleId}/location/{locationId}/image"
+    const val HOUSE_RULES = "house_rules/{chronicleId}"
+    const val SESSION_RECAP = "session_recap/{sessionId}/{chronicleId}"
+    const val LIVE_ROOM = "live_room/{chronicleId}/{asMaster}?host={host}&port={port}&playerName={playerName}&characterId={characterId}"
+    const val SELECT_CHARACTER = "select_character?host={host}&port={port}&roomName={roomName}&masterName={masterName}"
+    const val FIND_TABLE = "find_table"
+    const val CRASH_LOGS = "crash_logs"
 
     fun xpSpending(characterId: String) = "xp_spending/$characterId"
 
@@ -109,6 +122,16 @@ object Routes {
     fun chronicleSearch(chronicleId: String) = "chronicle/$chronicleId/search"
     fun versionHistory(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId/versions"
     fun locationImage(chronicleId: String, locationId: String) = "chronicle/$chronicleId/location/$locationId/image"
+    fun houseRules(chronicleId: String) = "house_rules/$chronicleId"
+    fun sessionRecap(sessionId: String, chronicleId: String) = "session_recap/$sessionId/$chronicleId"
+    fun liveRoom(chronicleId: String, asMaster: Boolean = true, host: String = "", port: Int = 0, playerName: String = "", characterId: String = ""): String {
+        val cid = chronicleId.ifEmpty { "_join" }
+        val safeName = playerName.replace(" ", "%20")
+        return "live_room/$cid/$asMaster?host=$host&port=$port&playerName=$safeName&characterId=$characterId"
+    }
+    fun selectCharacter(host: String, port: Int, roomName: String, masterName: String) =
+        "select_character?host=$host&port=$port&roomName=${roomName.replace(" ", "%20")}&masterName=${masterName.replace(" ", "%20")}"
+    fun crashLogs() = "crash_logs"
 }
 
 @Composable
@@ -382,7 +405,7 @@ fun V20NavGraph(
         }
         composable(Routes.SETTINGS) {
             val viewModel: SettingsViewModel = viewModel(
-                factory = SettingsViewModelFactory(appContainer.settingsRepository)
+                factory = SettingsViewModelFactory(appContainer.settingsRepository, appContainer.chronicleRepository)
             )
             val uiState by viewModel.uiState.collectAsState()
 
@@ -397,7 +420,36 @@ fun V20NavGraph(
                 },
                 onImportExportClick = {
                     navController.navigate(Routes.IMPORT_EXPORT)
-                }
+                },
+                onHouseRulesClick = { chronicleId ->
+                    navController.navigate(Routes.houseRules(chronicleId))
+                },
+                onCrashLogsClick = {
+                    navController.navigate(Routes.crashLogs())
+                },
+                chronicles = uiState.chronicles.map { it.id to it.name }
+            )
+        }
+        composable(
+            route = Routes.HOUSE_RULES,
+            arguments = listOf(navArgument("chronicleId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: return@composable
+            val viewModel: HouseRulesViewModel = viewModel(
+                factory = HouseRulesViewModelFactory(appContainer.houseRuleRepository)
+            )
+            val uiState by viewModel.uiState.collectAsState()
+
+            LaunchedEffect(chronicleId) {
+                viewModel.loadRules(chronicleId)
+            }
+
+            HouseRulesScreen(
+                uiState = uiState,
+                onUpdateRules = { viewModel.updateRules(it) },
+                onSave = { viewModel.save() },
+                onResetDefaults = { viewModel.resetToDefaults() },
+                onBack = { navController.popBackStack() }
             )
         }
         composable(Routes.COMPENDIUM) {
@@ -517,6 +569,9 @@ fun V20NavGraph(
                 onDeleteChronicle = { chronicleId ->
                     viewModel.deleteChronicle(chronicleId)
                 },
+                onFindTable = {
+                    navController.navigate(Routes.FIND_TABLE)
+                },
                 onBack = {
                     navController.popBackStack()
                 }
@@ -562,6 +617,9 @@ fun V20NavGraph(
                 onCharacterWillpowerChange = { character, delta ->
                     viewModel.updateCharacterWillpower(character.id, delta)
                 },
+                onCharacterHealthChange = { character, delta ->
+                    viewModel.updateCharacterHealth(character.id, delta)
+                },
                 onNpcClick = { npc ->
                     // TODO: Open NPC detail
                 },
@@ -583,8 +641,10 @@ fun V20NavGraph(
                         }
                     }
                 },
-                onEventClick = { chronicleId, sessionId ->
-                    viewModel.createSessionEvent(chronicleId, sessionId, "Evento Manuale")
+                onEventClick = { title, desc ->
+                    uiState.activeSession?.let { session ->
+                        viewModel.createSessionEvent(session.chronicleId, session.id, title, desc)
+                    }
                 },
                 onMediaClick = {
                     uiState.chronicle?.let { chronicle ->
@@ -642,6 +702,9 @@ fun V20NavGraph(
                 },
                 onUpdateChronicle = { chronicle ->
                     viewModel.updateChronicle(chronicle)
+                },
+                onCreateScene = { cId, title ->
+                    viewModel.createScene(cId, title)
                 },
                 onCreateLocation = { cId, name ->
                     viewModel.createLocation(cId, name)
@@ -723,7 +786,19 @@ fun V20NavGraph(
                         navController.navigate(Routes.chronicleSearch(chronicle.id))
                     }
                 },
-                audioViewModel = audioViewModel
+                audioViewModel = audioViewModel,
+                onViewRecap = { sessionId, chronicleId ->
+                    navController.navigate(Routes.sessionRecap(sessionId, chronicleId))
+                },
+                onCloneSession = { session ->
+                    viewModel.cloneSession(session)
+                },
+                onLiveRoom = {
+                    navController.navigate(Routes.liveRoom(chronicleId, asMaster = true))
+                },
+                onJoinLiveRoom = {
+                    navController.navigate(Routes.liveRoom(chronicleId, asMaster = false))
+                }
             )
         }
 
@@ -1049,6 +1124,180 @@ fun V20NavGraph(
                     }
                 )
             }
+        }
+
+        composable(
+            route = Routes.SESSION_RECAP,
+            arguments = listOf(
+                navArgument("sessionId") { type = NavType.StringType },
+                navArgument("chronicleId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getString("sessionId") ?: return@composable
+            val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: return@composable
+            val recapViewModel: ChronicleViewModel = viewModel(
+                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository)
+            )
+            val session by recapViewModel.getSession(sessionId).collectAsState(initial = null)
+            val sessionEvents by recapViewModel.getSessionEvents(sessionId).collectAsState(initial = emptyList())
+            val detailState by recapViewModel.detailUiState.collectAsState()
+
+            LaunchedEffect(chronicleId) {
+                recapViewModel.loadChronicleDetail(chronicleId)
+            }
+
+            session?.let { s ->
+                com.v20charactermanager.ui.session.SessionRecapScreen(
+                    session = s,
+                    events = sessionEvents,
+                    characters = detailState.availableCharacters,
+                    npcs = detailState.npcs,
+                    scenes = detailState.scenes,
+                    onBack = { navController.popBackStack() },
+                    onCloneSession = {
+                        recapViewModel.cloneSession(s)
+                        navController.popBackStack()
+                    },
+                    onNavigateToSheet = { charId ->
+                        navController.navigate(Routes.sheet(charId))
+                    }
+                )
+            }
+        }
+
+        composable(
+            route = Routes.LIVE_ROOM,
+            arguments = listOf(
+                navArgument("chronicleId") { type = NavType.StringType },
+                navArgument("asMaster") { type = NavType.StringType },
+                navArgument("host") { type = NavType.StringType; defaultValue = "" },
+                navArgument("port") { type = NavType.StringType; defaultValue = "0" },
+                navArgument("playerName") { type = NavType.StringType; defaultValue = "" },
+                navArgument("characterId") { type = NavType.StringType; defaultValue = "" }
+            )
+        ) { backStackEntry ->
+            val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: ""
+            val asMaster = backStackEntry.arguments?.getString("asMaster") == "true"
+            val autoHost = backStackEntry.arguments?.getString("host") ?: ""
+            val autoPort = backStackEntry.arguments?.getString("port")?.toIntOrNull() ?: 0
+            val autoPlayerName = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("playerName") ?: "", "UTF-8")
+            val autoCharacterId = backStackEntry.arguments?.getString("characterId") ?: ""
+            val context = LocalContext.current
+            val liveRoomViewModel: com.v20charactermanager.ui.liveroom.LiveRoomViewModel = viewModel(
+                factory = com.v20charactermanager.ui.liveroom.LiveRoomViewModelFactory(
+                    context.applicationContext as android.app.Application,
+                    appContainer.mediaRepository
+                )
+            )
+            val liveRoomState by liveRoomViewModel.uiState.collectAsState()
+
+            val chronicleRepo = appContainer.chronicleRepository
+            var chronicleName by remember { mutableStateOf("") }
+            LaunchedEffect(chronicleId) {
+                chronicleRepo.getChronicleById(chronicleId).collect { c ->
+                    chronicleName = c?.name ?: ""
+                }
+                liveRoomViewModel.loadChronicleAssets(chronicleId)
+            }
+
+            com.v20charactermanager.ui.liveroom.LiveRoomScreen(
+                uiState = liveRoomState,
+                startAsMaster = asMaster,
+                chronicleName = chronicleName,
+                autoHost = autoHost,
+                autoPort = autoPort,
+                autoPlayerName = autoPlayerName,
+                autoCharacterId = autoCharacterId,
+                onCreateRoom = { name, master, _ ->
+                    liveRoomViewModel.createRoom(name, master, chronicleId)
+                },
+                onJoinRoom = { host, port, name, charId ->
+                    liveRoomViewModel.joinRoom(host, port, name, charId)
+                },
+                onRetryJoin = { liveRoomViewModel.retryJoin() },
+                onPresentFile = { name, mime, data ->
+                    liveRoomViewModel.presentFile(name, mime, data)
+                },
+                onDismissFile = { liveRoomViewModel.dismissFile() },
+                onToggleFullscreen = { liveRoomViewModel.toggleFullscreen() },
+                onDisconnect = { liveRoomViewModel.disconnect() },
+                onBack = { navController.popBackStack() },
+                onClearError = { liveRoomViewModel.clearError() },
+                onSendStatUpdate = { charId, field, value ->
+                    liveRoomViewModel.sendStatUpdate(charId, field, value)
+                }
+            )
+        }
+
+        composable(Routes.FIND_TABLE) {
+            val context = LocalContext.current
+            val findTableViewModel: com.v20charactermanager.ui.liveroom.FindTableViewModel = viewModel(
+                factory = com.v20charactermanager.ui.liveroom.FindTableViewModelFactory(
+                    context.applicationContext as android.app.Application
+                )
+            )
+            val findTableState by findTableViewModel.uiState.collectAsState()
+
+            com.v20charactermanager.ui.liveroom.FindTableScreen(
+                discoveredTables = findTableState.discoveredTables,
+                isScanning = findTableState.isScanning,
+                onScan = { findTableViewModel.startScan() },
+                onStopScan = { findTableViewModel.stopScan() },
+                onConnect = { host, port ->
+                    val table = findTableState.discoveredTables.find { it.host == host && it.port == port }
+                    val roomName = table?.roomName ?: "Tavolo"
+                    val masterName = table?.masterName ?: "Master"
+                    navController.navigate(Routes.selectCharacter(host, port, roomName, masterName))
+                },
+                onManualConnect = { host, port ->
+                    navController.navigate(Routes.selectCharacter(host, port, "Tavolo", "Master"))
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.CRASH_LOGS) {
+            com.v20charactermanager.ui.settings.CrashLogScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.SELECT_CHARACTER,
+            arguments = listOf(
+                navArgument("host") { type = NavType.StringType; defaultValue = "" },
+                navArgument("port") { type = NavType.StringType; defaultValue = "0" },
+                navArgument("roomName") { type = NavType.StringType; defaultValue = "" },
+                navArgument("masterName") { type = NavType.StringType; defaultValue = "" }
+            )
+        ) { backStackEntry ->
+            val host = backStackEntry.arguments?.getString("host") ?: ""
+            val port = backStackEntry.arguments?.getString("port")?.toIntOrNull() ?: 0
+            val roomName = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("roomName") ?: "", "UTF-8")
+            val masterName = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("masterName") ?: "", "UTF-8")
+
+            var characters by remember { mutableStateOf<List<com.v20charactermanager.domain.model.Character>>(emptyList()) }
+            LaunchedEffect(Unit) {
+                withContext(Dispatchers.IO) {
+                    appContainer.characterRepository.getAllCharacters().collect { chars ->
+                        characters = chars
+                    }
+                }
+            }
+
+            com.v20charactermanager.ui.liveroom.SelectCharacterScreen(
+                characters = characters,
+                roomName = roomName,
+                masterName = masterName,
+                onCharacterSelected = { characterId, characterName ->
+                    navController.navigate(
+                        Routes.liveRoom("_join", asMaster = false, host = host, port = port, playerName = characterName, characterId = characterId)
+                    ) {
+                        popUpTo(Routes.SELECT_CHARACTER) { inclusive = true }
+                    }
+                },
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

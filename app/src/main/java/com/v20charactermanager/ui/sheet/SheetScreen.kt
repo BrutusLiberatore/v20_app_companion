@@ -198,7 +198,8 @@ fun SheetScreen(
                 2 -> AbilitiesTab(
                     character = character,
                     isEditing = isEditing,
-                    onAbilityChange = onAbilityChange
+                    onAbilityChange = onAbilityChange,
+                    onNavigateToDice = onNavigateToDice
                 )
                 3 -> AdvantagesTab(
                     character = character,
@@ -717,8 +718,11 @@ fun AbilitySelectionDialog(
 fun AbilitiesTab(
     character: Character,
     isEditing: Boolean = false,
-    onAbilityChange: (AbilityId, Int) -> Unit = { _, _ -> }
+    onAbilityChange: (AbilityId, Int) -> Unit = { _, _ -> },
+    onNavigateToDice: (Int) -> Unit
 ) {
+    var expandedAbility by remember { mutableStateOf<AbilityId?>(null) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -735,20 +739,51 @@ fun AbilitiesTab(
             )
 
             character.abilityByCategory[category]?.forEach { ability ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = ability.id.nameEn)
-                    V20DotRating(
-                        value = ability.value,
-                        maxValue = 5,
-                        editable = isEditing,
-                        onValueChange = { newValue -> onAbilityChange(ability.id, newValue) }
-                    )
+                Box {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (!isEditing) {
+                                    expandedAbility = ability.id
+                                }
+                            }
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = ability.id.nameEn)
+                        V20DotRating(
+                            value = ability.value,
+                            maxValue = 5,
+                            editable = isEditing,
+                            onValueChange = { newValue -> onAbilityChange(ability.id, newValue) }
+                        )
+                    }
+
+                    if (!isEditing) {
+                        DropdownMenu(
+                            expanded = expandedAbility == ability.id,
+                            onDismissRequest = { expandedAbility = null }
+                        ) {
+                            val defaultAttr = com.v20charactermanager.domain.engine.DicePoolBuilder.defaultAttributeForAbility(ability.id)
+                            val attrValue = character.getAttributeValue(defaultAttr)
+                            val pool = attrValue + ability.value
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.attribute_roll_x_dice, pool)) },
+                                onClick = {
+                                    expandedAbility = null
+                                    onNavigateToDice(pool)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.attribute_view_details)) },
+                                onClick = {
+                                    expandedAbility = null
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -1,12 +1,52 @@
 # V20 Character Manager — Cronologia Modifiche
 
-## Ultimo aggiornamento: 01/09/2026
+## Ultimo aggiornamento: 03/09/2026
 
 ---
 
-## Stato Build: ✅ SUCCESS (v12)
+## Stato Build: ✅ SUCCESS (v14)
 
 ---
+
+## Virtual Table Custom Assets + WiFi Direct (v14)
+
+### Virtual Table Redesign
+- **Custom medieval assets** — tavolo rotondo (`assets_tavolo.png`) e sedie (`assets_sedia.png`) dal design medievale
+- **Circular seat positioning** — sedie posizionate equidistantemente attorno al tavolo usando calcolo trigonometrico (angolo + raggio)
+- **ChairWithPlayer** — composable che mostra la sedia ruotata verso il centro con avatar del giocatore sopra
+- **SeatData** — data class con angolo, rotazione, dimensioni sedia/avatar, portraitUri
+- **buildCircularSeats()** — calcola posizioni circolari per 8 posti, master al top (-90°)
+- **onGloballyPositioned** — il container Box misura le dimensioni parent e calcola offset pixel per ogni sedia
+- **Rotation** — ogni sedia ruota `angleDeg + 90°` per affacciarsi verso il centro del tavolo
+
+### WiFi Direct (senza mDNS)
+- **WifiDirectManager** — gestione WiFi P2P: creazione gruppo, peer discovery, connessione diretta
+- **LiveRoomServer** — bind `0.0.0.0`, accetta connessioni TCP dirette (senza mDNS)
+- **LiveRoomClient** — connessione TCP diretta con IP del master
+- **Fallback** — se WiFi Direct non disponibile, fallback a connessione diretta per IP
+- **jmDNS rimosso** — dipendenza rimossa da `build.gradle.kts`
+
+### Permissions
+- Aggiunti: `CHANGE_WIFI_STATE`, `CHANGE_NETWORK_STATE`, `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `NEARBY_WIFI_DEVICES`
+
+### UI
+- QuickActionBar: icona 🎲 per "Tavolo Live"
+- Stringhe: "Tavolo Live" IT/EN
+
+### File Risorse
+- `res/drawable/assets_tavolo.png` — tavolo medievale rotondo
+- `res/drawable/assets_sedia.png` — sedia medievale
+- Permessi INTERNET + WIFI_STATE_STATE aggiunti
+
+### Crash Handler
+- **CrashHandler** — utility per logging crash su file con timestamp
+- **CrashLogScreen** — visualizzazione log crash con espandi/copia/cancella
+- **CrashDialog** in `MainActivity` — mostra crash al riavvio con pulsante "COPIA LOG"
+- Log crash copiabili negli Impostazioni
+- Route `crash_logs` accessibile da Impostazioni
+
+### Bug Fix
+- **NavGraph indentation fix** — rotte `session_recap`, `live_room`, `crash_logs` spostate a livello top-level del NavHost (da 12 a 8 spazi di indentazione)
 
 ## Moduli completati
 

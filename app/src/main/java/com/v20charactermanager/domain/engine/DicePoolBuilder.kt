@@ -4,6 +4,7 @@ import com.v20charactermanager.domain.definition.AttributeId
 import com.v20charactermanager.domain.definition.AbilityId
 import com.v20charactermanager.domain.definition.RuleSet
 import com.v20charactermanager.domain.model.Character
+import com.v20charactermanager.domain.model.HouseRules
 
 object DicePoolBuilder {
 
@@ -87,6 +88,23 @@ object DicePoolBuilder {
         )
     }
 
+    fun roll(
+        character: Character,
+        attribute: AttributeId,
+        ability: AbilityId? = null,
+        houseRules: HouseRules,
+        extraDice: Int = 0,
+        willpowerUsed: Boolean = false
+    ): DiceResult {
+        val pool = buildFromAttributes(character, attribute, ability)
+        return DiceEngine.roll(
+            pool = pool.totalPool,
+            difficulty = houseRules.difficultyDefault,
+            extraDice = extraDice,
+            willpowerUsed = willpowerUsed
+        )
+    }
+
     fun rollAttribute(
         character: Character,
         attribute: AttributeId,
@@ -97,6 +115,20 @@ object DicePoolBuilder {
         return DiceEngine.roll(
             pool = pool.totalPool,
             difficulty = difficulty,
+            willpowerUsed = willpowerUsed
+        )
+    }
+
+    fun rollAttribute(
+        character: Character,
+        attribute: AttributeId,
+        houseRules: HouseRules,
+        willpowerUsed: Boolean = false
+    ): DiceResult {
+        val pool = buildFromAttributes(character, attribute)
+        return DiceEngine.roll(
+            pool = pool.totalPool,
+            difficulty = houseRules.difficultyDefault,
             willpowerUsed = willpowerUsed
         )
     }
@@ -112,6 +144,21 @@ object DicePoolBuilder {
         return DiceEngine.roll(
             pool = pool.totalPool,
             difficulty = difficulty,
+            willpowerUsed = willpowerUsed
+        )
+    }
+
+    fun rollAbility(
+        character: Character,
+        ability: AbilityId,
+        houseRules: HouseRules,
+        willpowerUsed: Boolean = false
+    ): DiceResult {
+        val attribute = defaultAttributeForAbility(ability)
+        val pool = buildFromAttributes(character, attribute, ability)
+        return DiceEngine.roll(
+            pool = pool.totalPool,
+            difficulty = houseRules.difficultyDefault,
             willpowerUsed = willpowerUsed
         )
     }

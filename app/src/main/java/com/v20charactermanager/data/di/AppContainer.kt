@@ -6,6 +6,7 @@ import com.v20charactermanager.data.local.V20Database
 import com.v20charactermanager.data.repository.AudioRepositoryImpl
 import com.v20charactermanager.data.repository.CharacterRepositoryImpl
 import com.v20charactermanager.data.repository.ChronicleRepositoryImpl
+import com.v20charactermanager.data.repository.HouseRuleRepositoryImpl
 import com.v20charactermanager.data.repository.MediaRepositoryImpl
 import com.v20charactermanager.data.repository.RuleRepositoryImpl
 import com.v20charactermanager.data.repository.SettingsRepositoryImpl
@@ -121,6 +122,10 @@ class AppContainer(private val context: Context) {
         database.audioPresetDao()
     }
 
+    private val houseRuleDao by lazy {
+        database.houseRuleDao()
+    }
+
     private val settingsDataStore by lazy {
         SettingsDataStore(context)
     }
@@ -152,6 +157,10 @@ class AppContainer(private val context: Context) {
 
     val audioRepository: AudioRepositoryImpl by lazy {
         AudioRepositoryImpl(audioTrackDao, audioPresetDao)
+    }
+
+    val houseRuleRepository: HouseRuleRepositoryImpl by lazy {
+        HouseRuleRepositoryImpl(houseRuleDao)
     }
 
     val ruleRepository: RuleRepository by lazy {

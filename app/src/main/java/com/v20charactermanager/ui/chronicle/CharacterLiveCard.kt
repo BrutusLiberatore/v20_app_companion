@@ -23,12 +23,14 @@ fun CharacterLiveCard(
     onClick: () -> Unit,
     onBloodChange: (Int) -> Unit,
     onWillpowerChange: (Int) -> Unit,
+    onHealthChange: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val identity = character.identity
     val blood = character.bloodPool
     val willpower = character.willpower
     val health = character.health
+    val maxHealth = character.health.levels.size
 
     Card(
         modifier = modifier
@@ -77,7 +79,8 @@ fun CharacterLiveCard(
                     ) {
                         IconButton(
                             onClick = { onBloodChange(-1) },
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(28.dp),
+                            enabled = blood.current > 0
                         ) {
                             Icon(Icons.Filled.Remove, contentDescription = "-", modifier = Modifier.size(16.dp))
                         }
@@ -88,7 +91,8 @@ fun CharacterLiveCard(
                         )
                         IconButton(
                             onClick = { onBloodChange(1) },
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(28.dp),
+                            enabled = blood.current < blood.maximum
                         ) {
                             Icon(Icons.Filled.Add, contentDescription = "+", modifier = Modifier.size(16.dp))
                         }
@@ -107,7 +111,8 @@ fun CharacterLiveCard(
                     ) {
                         IconButton(
                             onClick = { onWillpowerChange(-1) },
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(28.dp),
+                            enabled = willpower.current > 0
                         ) {
                             Icon(Icons.Filled.Remove, contentDescription = "-", modifier = Modifier.size(16.dp))
                         }
@@ -118,25 +123,44 @@ fun CharacterLiveCard(
                         )
                         IconButton(
                             onClick = { onWillpowerChange(1) },
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(28.dp),
+                            enabled = willpower.current < willpower.permanent
                         ) {
                             Icon(Icons.Filled.Add, contentDescription = "+", modifier = Modifier.size(16.dp))
                         }
                     }
                 }
 
-                // Health summary
+                // Health summary with controls
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(R.string.sheet_health),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
-                    Text(
-                        text = getHealthSummary(health),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { onHealthChange(-1) },
+                            modifier = Modifier.size(28.dp),
+                            enabled = health.totalDamage > 0
+                        ) {
+                            Icon(Icons.Filled.Remove, contentDescription = "-", modifier = Modifier.size(16.dp))
+                        }
+                        Text(
+                            text = getHealthSummary(health, maxHealth),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        IconButton(
+                            onClick = { onHealthChange(1) },
+                            modifier = Modifier.size(28.dp),
+                            enabled = health.totalDamage < maxHealth
+                        ) {
+                            Icon(Icons.Filled.Add, contentDescription = "+", modifier = Modifier.size(16.dp))
+                        }
+                    }
                 }
             }
         }
@@ -184,7 +208,7 @@ fun NpcLiveCard(
     }
 }
 
-private fun getHealthSummary(health: com.v20charactermanager.domain.model.HealthState): String {
+private fun getHealthSummary(health: com.v20charactermanager.domain.model.HealthState, maxHealth: Int): String {
     val damaged = health.totalDamage
-    return if (damaged == 0) "OK" else "$damaged/7"
+    return if (damaged == 0) "OK" else "$damaged/$maxHealth"
 }

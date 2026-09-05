@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
@@ -23,6 +24,7 @@ fun ChronicleStorytellerScreen(
     onCharacterClick: (String) -> Unit,
     onCharacterBloodChange: (Character, Int) -> Unit,
     onCharacterWillpowerChange: (Character, Int) -> Unit,
+    onCharacterHealthChange: (Character, Int) -> Unit,
     onNpcClick: (NpcEntry) -> Unit,
     onOpenScene: (ChronicleScene) -> Unit,
     onChangeScene: (String) -> Unit,
@@ -48,6 +50,7 @@ fun ChronicleStorytellerScreen(
     onUpdateCharacterNote: (ChronicleCharacterNote) -> Unit,
     onDeleteCharacterNote: (String) -> Unit,
     onUpdateChronicle: (Chronicle) -> Unit,
+    onCreateScene: (String, String) -> Unit,
     onCreateLocation: (String, String) -> Unit,
     onDeleteLocation: (String) -> Unit,
     onUpdateLocation: (ChronicleLocation) -> Unit,
@@ -69,10 +72,16 @@ fun ChronicleStorytellerScreen(
     onNavigateToDice: () -> Unit,
     onLinkClick: (String, String) -> Unit,
     onSearchClick: () -> Unit = {},
-    audioViewModel: AudioViewModel? = null
+    audioViewModel: AudioViewModel? = null,
+    onViewRecap: (String, String) -> Unit,
+    onCloneSession: (Session) -> Unit,
+    onLiveRoom: () -> Unit,
+    onJoinLiveRoom: () -> Unit = {}
 ) {
     var selectedNavItem by remember { mutableStateOf(ChronicleBottomNavItem.LIVE) }
     var showSceneDeck by remember { mutableStateOf(false) }
+    var showNewSceneDialog by remember { mutableStateOf(false) }
+    var newSceneTitle by remember { mutableStateOf("") }
 
     val chronicle = uiState.chronicle
 
@@ -96,6 +105,41 @@ fun ChronicleStorytellerScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
+                    if (uiState.activeSession != null) {
+                        AssistChip(
+                            onClick = onLiveRoom,
+                            label = {
+                                Text(
+                                    text = stringResource(R.string.live_room_create_table),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.Casino,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        )
+                    }
+                    AssistChip(
+                        onClick = onJoinLiveRoom,
+                        label = {
+                            Text(
+                                text = stringResource(R.string.live_room_join_table),
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                            Icons.Filled.Casino,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
                     IconButton(onClick = onSearchClick) {
                         Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.action_search))
                     }
@@ -126,14 +170,15 @@ fun ChronicleStorytellerScreen(
                     onCharacterClick = onCharacterClick,
                     onCharacterBloodChange = onCharacterBloodChange,
                     onCharacterWillpowerChange = onCharacterWillpowerChange,
+                    onCharacterHealthChange = onCharacterHealthChange,
                     onNpcClick = onNpcClick,
                     onOpenScene = onOpenScene,
                     onChangeScene = { showSceneDeck = true },
                     onDiceClick = onDiceClick,
                     onQuickNote = onQuickNote,
-                    onEventClick = {
+                    onEventClick = { title, desc ->
                         uiState.activeSession?.let { session ->
-                            onEventClick(session.chronicleId, session.id)
+                            onEventClick(title, desc)
                         }
                     },
                     onMediaClick = onMediaClick,
@@ -142,6 +187,7 @@ fun ChronicleStorytellerScreen(
                             onCreateNpc(session.chronicleId, name, creatureType, role, null)
                         }
                     },
+                    onLiveRoom = onLiveRoom,
                     modifier = Modifier.padding(padding)
                 )
             }
@@ -213,6 +259,8 @@ fun ChronicleStorytellerScreen(
                     onCreateSession = onCreateSession,
                     onUpdateSession = onUpdateSession,
                     onDeleteSession = onDeleteSession,
+                    onViewRecap = onViewRecap,
+                    onCloneSession = onCloneSession,
                     modifier = Modifier.padding(padding)
                 )
             }
@@ -230,8 +278,48 @@ fun ChronicleStorytellerScreen(
                 }
                 showSceneDeck = false
             },
-            onNewScene = { /* TODO */ },
+            onNewScene = {
+                showSceneDeck = false
+                showNewSceneDialog = true
+            },
             onDismiss = { showSceneDeck = false }
+        )
+    }
+
+    // New Scene Dialog
+    if (showNewSceneDialog) {
+        AlertDialog(
+            onDismissRequest = { showNewSceneDialog = false },
+            title = { Text(stringResource(R.string.storyteller_new_scene)) },
+            text = {
+                OutlinedTextField(
+                    value = newSceneTitle,
+                    onValueChange = { newSceneTitle = it },
+                    label = { Text(stringResource(R.string.storyteller_scene_title)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (newSceneTitle.isNotBlank()) {
+                            chronicle?.let { c ->
+                                onCreateScene(c.id, newSceneTitle)
+                            }
+                            newSceneTitle = ""
+                            showNewSceneDialog = false
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.action_create))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { newSceneTitle = ""; showNewSceneDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
         )
     }
 }

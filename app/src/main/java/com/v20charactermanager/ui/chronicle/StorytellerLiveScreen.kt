@@ -33,14 +33,16 @@ fun StorytellerLiveScreen(
     onCharacterClick: (String) -> Unit,
     onCharacterBloodChange: (Character, Int) -> Unit,
     onCharacterWillpowerChange: (Character, Int) -> Unit,
+    onCharacterHealthChange: (Character, Int) -> Unit,
     onNpcClick: (NpcEntry) -> Unit,
     onOpenScene: (ChronicleScene) -> Unit,
     onChangeScene: () -> Unit,
     onDiceClick: () -> Unit,
     onQuickNote: (String) -> Unit,
-    onEventClick: () -> Unit,
+    onEventClick: (String, String) -> Unit,
     onMediaClick: () -> Unit,
     onQuickNpc: (String, CreatureType, String) -> Unit,
+    onLiveRoom: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showNewNoteDialog by remember { mutableStateOf(false) }
@@ -158,7 +160,8 @@ fun StorytellerLiveScreen(
                     character = character,
                     onClick = { onCharacterClick(character.id) },
                     onBloodChange = { delta -> onCharacterBloodChange(character, delta) },
-                    onWillpowerChange = { delta -> onCharacterWillpowerChange(character, delta) }
+                    onWillpowerChange = { delta -> onCharacterWillpowerChange(character, delta) },
+                    onHealthChange = { delta -> onCharacterHealthChange(character, delta) }
                 )
             }
         }
@@ -220,7 +223,8 @@ fun StorytellerLiveScreen(
                     onDiceClick = onDiceClick,
                     onNoteClick = { showNewNoteDialog = true },
                     onEventClick = { showNewEventDialog = true },
-                    onQuickNpc = onQuickNpc
+                    onQuickNpc = onQuickNpc,
+                    onLiveRoom = onLiveRoom
                 )
             }
         }
@@ -290,7 +294,7 @@ fun StorytellerLiveScreen(
                 TextButton(
                     onClick = {
                         if (eventTitle.isNotBlank()) {
-                            onEventClick()
+                            onEventClick(eventTitle, eventDesc)
                             showNewEventDialog = false
                         }
                     }

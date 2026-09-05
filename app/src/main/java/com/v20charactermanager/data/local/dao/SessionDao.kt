@@ -18,6 +18,9 @@ interface SessionDao {
     @Query("SELECT * FROM sessions WHERE chronicleId = :chronicleId AND status = 'ACTIVE' LIMIT 1")
     fun getActiveSession(chronicleId: String): Flow<SessionEntity?>
 
+    @Query("SELECT * FROM sessions WHERE chronicleId = :chronicleId ORDER BY number DESC LIMIT 1")
+    fun getLatestSession(chronicleId: String): Flow<SessionEntity?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(session: SessionEntity)
 

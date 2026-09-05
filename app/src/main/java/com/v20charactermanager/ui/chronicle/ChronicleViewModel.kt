@@ -170,11 +170,14 @@ class ChronicleViewModel(
             }
         }
         viewModelScope.launch {
-            chronicleRepository.getActiveSession(chronicleId).collect { session ->
+            chronicleRepository.getLatestSession(chronicleId).collect { session ->
                 _detailUiState.update { it.copy(activeSession = session) }
             }
         }
     }
+
+    fun getSession(sessionId: String): Flow<Session?> = chronicleRepository.getSessionById(sessionId)
+    fun getSessionEvents(sessionId: String): Flow<List<SessionEvent>> = chronicleRepository.getSessionEventsBySession(sessionId)
 
     fun selectTab(tab: Int) {
         _detailUiState.update { it.copy(selectedTab = tab) }
@@ -417,6 +420,25 @@ class ChronicleViewModel(
         }
     }
 
+    fun cloneSession(originalSession: Session) {
+        viewModelScope.launch {
+            val nextNumber = chronicleRepository.getNextSessionNumber(originalSession.chronicleId)
+            val clonedSession = Session(
+                id = UUID.randomUUID().toString(),
+                chronicleId = originalSession.chronicleId,
+                number = nextNumber,
+                title = "${originalSession.title} (Copia)",
+                status = SessionStatus.PLANNED,
+                participantCharacterIds = originalSession.participantCharacterIds,
+                plannedSceneIds = originalSession.plannedSceneIds,
+                preparationNotes = originalSession.preparationNotes,
+                notes = originalSession.notes,
+                inGameDate = originalSession.inGameDate
+            )
+            chronicleRepository.insertSession(clonedSession)
+        }
+    }
+
     fun setActiveScene(session: Session, sceneId: String?) {
         viewModelScope.launch {
             chronicleRepository.updateSession(
@@ -494,6 +516,21 @@ class ChronicleViewModel(
             val character = characterRepository.getCharacterByIdOnce(characterId) ?: return@launch
             val newWillpower = if (delta > 0) character.willpower.recover(delta) else character.willpower.spend(-delta)
             val updated = character.copy(willpower = newWillpower)
+            characterRepository.updateCharacter(updated)
+        }
+    }
+
+    fun updateCharacterHealth(characterId: String, delta: Int) {
+        viewModelScope.launch {
+            val character = characterRepository.getCharacterByIdOnce(characterId) ?: return@launch
+            val newHealth = if (delta > 0) {
+                val damagedIndex = character.health.levels.indexOfFirst { it == com.v20charactermanager.domain.definition.DamageType.NONE }
+                if (damagedIndex >= 0) character.health.withDamage(damagedIndex, com.v20charactermanager.domain.definition.DamageType.BASHING) else character.health
+            } else {
+                val damagedIndex = character.health.levels.indexOfLast { it != com.v20charactermanager.domain.definition.DamageType.NONE }
+                if (damagedIndex >= 0) character.health.heal(damagedIndex) else character.health
+            }
+            val updated = character.copy(health = newHealth)
             characterRepository.updateCharacter(updated)
         }
     }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.v20charactermanager.domain.definition.DamageType
 import com.v20charactermanager.domain.model.Character
 import com.v20charactermanager.domain.repository.CharacterRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,10 +26,12 @@ class SessionViewModel(
     val uiState: StateFlow<SessionUiState> = _uiState.asStateFlow()
 
     private var characterId: String? = null
+    private var collectJob: Job? = null
 
     fun loadCharacter(id: String) {
         characterId = id
-        viewModelScope.launch {
+        collectJob?.cancel()
+        collectJob = viewModelScope.launch {
             characterRepository.getCharacterById(id).collect { character ->
                 _uiState.value = _uiState.value.copy(
                     character = character,
@@ -40,32 +43,36 @@ class SessionViewModel(
 
     fun spendBlood(amount: Int = 1) {
         val character = _uiState.value.character ?: return
+        val newCurrent = (character.bloodPool.current - amount).coerceAtLeast(0)
         val updated = character.copy(
-            bloodPool = character.bloodPool.spend(amount)
+            bloodPool = character.bloodPool.copy(current = newCurrent)
         )
         updateCharacterInternal(updated)
     }
 
     fun refillBlood(amount: Int = 1) {
         val character = _uiState.value.character ?: return
+        val newCurrent = (character.bloodPool.current + amount).coerceAtMost(character.bloodPool.maximum)
         val updated = character.copy(
-            bloodPool = character.bloodPool.refill(amount)
+            bloodPool = character.bloodPool.copy(current = newCurrent)
         )
         updateCharacterInternal(updated)
     }
 
     fun spendWillpower(amount: Int = 1) {
         val character = _uiState.value.character ?: return
+        val newCurrent = (character.willpower.current - amount).coerceAtLeast(0)
         val updated = character.copy(
-            willpower = character.willpower.spend(amount)
+            willpower = character.willpower.copy(current = newCurrent)
         )
         updateCharacterInternal(updated)
     }
 
     fun recoverWillpower(amount: Int = 1) {
         val character = _uiState.value.character ?: return
+        val newCurrent = (character.willpower.current + amount).coerceAtMost(character.willpower.permanent)
         val updated = character.copy(
-            willpower = character.willpower.recover(amount)
+            willpower = character.willpower.copy(current = newCurrent)
         )
         updateCharacterInternal(updated)
     }
@@ -84,6 +91,27 @@ class SessionViewModel(
             health = character.health.heal(index)
         )
         updateCharacterInternal(updated)
+    }
+
+    fun applyHealthDelta(delta: Int) {
+        val character = _uiState.value.character ?: return
+        if (delta > 0) {
+            val damagedIndex = character.health.levels.indexOfFirst { it == DamageType.NONE }
+            if (damagedIndex >= 0) {
+                val updated = character.copy(
+                    health = character.health.withDamage(damagedIndex, DamageType.BASHING)
+                )
+                updateCharacterInternal(updated)
+            }
+        } else if (delta < 0) {
+            val damagedIndex = character.health.levels.indexOfLast { it != DamageType.NONE }
+            if (damagedIndex >= 0) {
+                val updated = character.copy(
+                    health = character.health.heal(damagedIndex)
+                )
+                updateCharacterInternal(updated)
+            }
+        }
     }
 
     fun earnExperience(amount: Int) {

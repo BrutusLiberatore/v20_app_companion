@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
@@ -32,6 +33,7 @@ fun ChronicleListScreen(
     onChronicleClick: (String) -> Unit,
     onCreateChronicle: (String, String, String, ChronicleUserRole) -> Unit,
     onDeleteChronicle: (String) -> Unit,
+    onFindTable: () -> Unit,
     onBack: () -> Unit
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -58,11 +60,23 @@ fun ChronicleListScreen(
             )
         },
         floatingActionButton = {
-            V20GothicFab(
-                icon = Icons.Default.Add,
-                contentDescription = stringResource(R.string.chronicle_create),
-                onClick = { showCreateDialog = true }
-            )
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                SmallFloatingActionButton(
+                    onClick = onFindTable,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Icon(Icons.Default.Casino, contentDescription = stringResource(R.string.live_room_find_table))
+                }
+                V20GothicFab(
+                    icon = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.chronicle_create),
+                    onClick = { showCreateDialog = true }
+                )
+            }
         }
     ) { padding ->
         if (uiState.chronicles.isEmpty() && !uiState.isLoading) {

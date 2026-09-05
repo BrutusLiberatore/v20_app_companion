@@ -530,6 +530,7 @@
     <string name="storyteller_scene_deck_title">Scene Deck</string>
     <string name="storyteller_no_scenes">No scenes in this session</string>
     <string name="storyteller_new_scene">New Scene</string>
+    <string name="storyteller_scene_title">Scene title</string>
     <string name="storyteller_active_plots">Active Plots</string>
 
     <!-- Bottom Navigation -->
@@ -731,5 +732,112 @@
 
     <!-- Character Live Card -->
     <string name="health_ok">OK</string>
+
+    <!-- House Rules -->
+    <string name="house_rules_title">House Rules</string>
+    <string name="house_rules_reset">Reset</string>
+    <string name="house_rules_creation">Character Creation</string>
+    <string name="house_rules_attr_primary">Primary Attributes</string>
+    <string name="house_rules_attr_secondary">Secondary Attributes</string>
+    <string name="house_rules_attr_tertiary">Tertiary Attributes</string>
+    <string name="house_rules_ability_primary">Primary Abilities</string>
+    <string name="house_rules_ability_secondary">Secondary Abilities</string>
+    <string name="house_rules_ability_tertiary">Tertiary Abilities</string>
+    <string name="house_rules_discipline_initial">Initial Disciplines</string>
+    <string name="house_rules_background_initial">Initial Backgrounds</string>
+    <string name="house_rules_virtue_initial">Initial Virtues</string>
+    <string name="house_rules_freebie_points">Freebie Points</string>
+    <string name="house_rules_freebie_costs">Freebie Costs</string>
+    <string name="house_rules_freebie_attr">Attribute (pts)</string>
+    <string name="house_rules_freebie_ability">Ability (pts)</string>
+    <string name="house_rules_freebie_discipline">Discipline (pts)</string>
+    <string name="house_rules_freebie_background">Background (pts)</string>
+    <string name="house_rules_freebie_virtue">Virtue (pts)</string>
+    <string name="house_rules_freebie_humanity">Humanity (pts)</string>
+    <string name="house_rules_freebie_willpower">Willpower (pts)</string>
+    <string name="house_rules_starting">Starting Values</string>
+    <string name="house_rules_starting_blood">Starting Blood Pool</string>
+    <string name="house_rules_starting_willpower">Starting Willpower</string>
+    <string name="house_rules_dice">Dice Rules</string>
+    <string name="house_rules_difficulty">Default Difficulty</string>
+    <string name="house_rules_button">House Rules</string>
+    <string name="house_rules_description">Configure house rules for character creation and XP costs.</string>
+    <string name="chronicles_select">Select Chronicle</string>
+
+    <!-- Session Recap -->
+    <string name="recap_title">Session %d — Recap</string>
+    <string name="recap_clone">Clone &amp; Resume</string>
+    <string name="recap_participants">Participants</string>
+    <string name="recap_scenes">Scenes</string>
+    <string name="recap_events">Events Timeline</string>
+    <string name="recap_events_lowercase">events</string>
+    <string name="recap_notes">Notes</string>
+    <string name="recap_rolls">Dice Rolls</string>
+    <string name="recap_media">Media Presented</string>
+    <string name="recap_recap">Recap</string>
+    <string name="recap_xp">XP Awarded: %d</string>
+    <string name="recap_ingame">In-game: %s</string>
+    <string name="recap_npcs">%d NPCs present</string>
+    <string name="recap_and_more">…and %d more</string>
+    <string name="recap_view">View Recap</string>
+    <string name="recap_clone_confirm">Clone this session as a new planned session?</string>
+
+    <!-- Live Room -->
+    <string name="live_room">Tavolo Live</string>
+    <string name="live_room_desc">Unisciti al tavolo del Master sulla rete locale.\nIl Master presenta file, i giocatori vedono tutto in tempo reale.</string>
+    <string name="live_room_create_table">Crea Tavolo</string>
+    <string name="live_room_join_table">Unisciti al Tavolo</string>
+    <string name="live_room_find_table">Cerca Tavolo</string>
+    <string name="live_room_scan_desc">Cerca tavoli attivi sulla stessa rete WiFi</string>
+    <string name="live_room_start_scan">Avvia Ricerca</string>
+    <string name="live_room_scanning">Ricerca in corso…</string>
+    <string name="live_room_found_tables">%d tavoli trovati</string>
+    <string name="live_room_no_tables">Nessun tavolo trovato.\nProva ad avviare la ricerca o connettiti manualmente.</string>
+    <string name="live_room_manual_connect">Connessione Manuale</string>
+    <string name="live_room_manual_desc">Inserisci l\'IP del Master per connetterti direttamente</string>
+    <string name="live_room_port">Porta</string>
+    <string name="live_room_share_ip">Condividi con i giocatori:</string>
+    <string name="live_connecting">Connessione in corso…</string>
+    <string name="live_retry">Riprova</string>
+    <string name="live_emulator_warning">Il Master sembra essere su un emulatore (BlueStacks): gli indirizzi 10.0.2.x non sono raggiungibili da altri dispositivi.\n\nConsiglio: usa un telefono fisico come Master sulla stessa rete WiFi dei giocatori.</string>
+    <string name="action_connect">Connetti</string>
+    <string name="live_create_room">Create Room</string>
+    <string name="live_join_room">Join Room</string>
+    <string name="live_join_manual">Manual Connection</string>
+    <string name="live_room_name">Room Name</string>
+    <string name="live_master_name">Master Name</string>
+    <string name="live_player_name">Your Name</string>
+    <string name="live_manual_ip">Enter IP manually</string>
+    <string name="live_room_active">Room Active</string>
+    <string name="live_port">Port</string>
+    <string name="live_connected_players">%d Players Connected</string>
+    <string name="live_waiting_players">Waiting for players to connect…</string>
+    <string name="live_present_file">Present File</string>
+    <string name="live_presenting">Presenting to all devices</string>
+    <string name="live_fullscreen">Fullscreen</string>
+    <string name="live_dismiss">Dismiss</string>
+    <string name="live_disconnect">Disconnect</string>
+    <string name="live_connected_as">Connected as: %s</string>
+    <string name="live_players">players</string>
+    <string name="live_tap_fullscreen">Tap to view fullscreen</string>
+    <string name="live_waiting_master">Waiting for Master to present…</string>
+    <string name="live_minimize">Minimize</string>
+    <string name="live_join">Join</string>
+
+    <!-- Crash Logs -->
+    <string name="crash_logs">Crash Logs</string>
+    <string name="crash_no_logs">No crash logs</string>
+    <string name="crash_no_logs_desc">The app has not crashed yet.</string>
+    <string name="crash_count">%d crash logs</string>
+    <string name="crash_copy">Copy log</string>
+    <string name="crash_copied">Crash log copied!</string>
+    <string name="crash_expand">Expand</string>
+    <string name="crash_clear_all">Clear all logs</string>
+    <string name="crash_clear_confirm">Delete all crash logs?</string>
+
+    <string name="select_character_title">Scegli il tuo personaggio</string>
+    <string name="select_character_subtitle">Seleziona un personaggio per unirti al tavolo</string>
+    <string name="select_character_empty">Nessun personaggio trovato.\nCrea un personaggio prima di unirti al tavolo.</string>
+    <string name="select_character_count">%d personaggi disponibili</string>
 
 </resources>

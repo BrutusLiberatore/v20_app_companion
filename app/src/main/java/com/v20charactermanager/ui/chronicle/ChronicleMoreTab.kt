@@ -40,6 +40,8 @@ fun ChronicleMoreTab(
     onCreateSession: (String, String) -> Unit,
     onUpdateSession: (Session) -> Unit,
     onDeleteSession: (String) -> Unit,
+    onViewRecap: (String, String) -> Unit,
+    onCloneSession: (Session) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showAddSessionDialog by remember { mutableStateOf(false) }
@@ -167,6 +169,14 @@ fun ChronicleMoreTab(
                 leadingContent = { Icon(Icons.Filled.DateRange, contentDescription = null) },
                 trailingContent = {
                     Row {
+                        if (session.status == SessionStatus.COMPLETED) {
+                            IconButton(onClick = { uiState.chronicle?.let { c -> onViewRecap(session.id, c.id) } }, modifier = Modifier.size(32.dp)) {
+                                Icon(Icons.Filled.Assessment, contentDescription = stringResource(R.string.recap_view), modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.tertiary)
+                            }
+                            IconButton(onClick = { onCloneSession(session) }, modifier = Modifier.size(32.dp)) {
+                                Icon(Icons.Filled.ContentCopy, contentDescription = stringResource(R.string.recap_clone), modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.secondary)
+                            }
+                        }
                         IconButton(onClick = { showEditDialog = true }, modifier = Modifier.size(32.dp)) {
                             Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.action_edit), modifier = Modifier.size(18.dp))
                         }

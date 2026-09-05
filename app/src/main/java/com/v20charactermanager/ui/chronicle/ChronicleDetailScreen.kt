@@ -1153,7 +1153,7 @@ fun NpcsTab(
         AlertDialog(onDismissRequest = { editingNpc = null }, title = { Text(stringResource(R.string.chronicle_npc_edit)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ChronicleImageRow(imagePath = imagePath, onImagePicked = { }, onImageRemoved = { imagePath = null }, label = stringResource(R.string.chronicle_npc_image))
+                    ChronicleImageRow(imagePath = imagePath, onImagePicked = { path -> imagePath = path }, onImageRemoved = { imagePath = null }, label = stringResource(R.string.chronicle_npc_image))
                     OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.chronicle_npc_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(value = role, onValueChange = { role = it }, label = { Text(stringResource(R.string.chronicle_npc_role)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.chronicle_secret_content)) }, modifier = Modifier.fillMaxWidth())
@@ -1228,7 +1228,7 @@ fun LocationsTab(chronicleId: String, locations: List<ChronicleLocation>, onCrea
         AlertDialog(onDismissRequest = { editingLocation = null }, title = { Text(stringResource(R.string.chronicle_location_edit)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ChronicleImageRow(imagePath = imagePath, onImagePicked = { }, onImageRemoved = { imagePath = null }, label = stringResource(R.string.chronicle_location_image))
+                    ChronicleImageRow(imagePath = imagePath, onImagePicked = { path -> imagePath = path }, onImageRemoved = { imagePath = null }, label = stringResource(R.string.chronicle_location_image))
                     OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.chronicle_location_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(value = typeId, onValueChange = { typeId = it }, label = { Text(stringResource(R.string.chronicle_location_type)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.chronicle_secret_content)) }, modifier = Modifier.fillMaxWidth())
@@ -1300,7 +1300,7 @@ fun FactionsTab(chronicleId: String, factions: List<Faction>, onCreateFaction: (
         AlertDialog(onDismissRequest = { editingFaction = null }, title = { Text(stringResource(R.string.chronicle_faction_edit)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ChronicleImageRow(imagePath = imagePath, onImagePicked = { }, onImageRemoved = { imagePath = null }, label = stringResource(R.string.chronicle_faction_image))
+                    ChronicleImageRow(imagePath = imagePath, onImagePicked = { path -> imagePath = path }, onImageRemoved = { imagePath = null }, label = stringResource(R.string.chronicle_faction_image))
                     OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.chronicle_faction_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.chronicle_secret_content)) }, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(value = narratorNotes, onValueChange = { narratorNotes = it }, label = { Text(stringResource(R.string.chronicle_npc_notes)) }, modifier = Modifier.fillMaxWidth())
@@ -1533,7 +1533,7 @@ fun EventsTab(chronicleId: String, events: List<ChronicleEvent>, onCreateEvent: 
         AlertDialog(onDismissRequest = { editingEvent = null }, title = { Text(stringResource(R.string.chronicle_event_edit)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ChronicleImageRow(imagePath = imagePath, onImagePicked = { }, onImageRemoved = { imagePath = null }, label = stringResource(R.string.chronicle_event_title))
+                    ChronicleImageRow(imagePath = imagePath, onImagePicked = { path -> imagePath = path }, onImageRemoved = { imagePath = null }, label = stringResource(R.string.chronicle_event_title))
                     OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.chronicle_event_title)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.chronicle_secret_content)) }, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(value = inGameTime, onValueChange = { inGameTime = it }, label = { Text(stringResource(R.string.chronicle_event_ingame)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -1548,7 +1548,7 @@ fun EventsTab(chronicleId: String, events: List<ChronicleEvent>, onCreateEvent: 
 @Composable
 fun ChronicleImageRow(
     imagePath: String?,
-    onImagePicked: (Uri) -> Unit,
+    onImagePicked: (String) -> Unit,
     onImageRemoved: () -> Unit,
     label: String
 ) {
@@ -1559,7 +1559,7 @@ fun ChronicleImageRow(
             val saved = ChronicleImageManager.saveImage(context, UUID.randomUUID().toString(), it)
             if (saved != null) {
                 currentPath = saved
-                onImagePicked(it)
+                onImagePicked(saved)
             }
         }
     }
