@@ -70,11 +70,13 @@ class LiveRoomViewModel(
                     }
                 )
 
+                val hostIp = discoveryManager.getLocalIpAddress()
+                Log.d(TAG, "Detected local IP: $hostIp")
+
                 wifiDirectManager.createGroup(
                     onSuccess = {
                         val port = server!!.start()
                         val roomId = UUID.randomUUID().toString().take(8)
-                        val hostIp = discoveryManager.getLocalIpAddress()
 
                         _uiState.update {
                             it.copy(
@@ -91,17 +93,14 @@ class LiveRoomViewModel(
                                 connectedPlayers = emptyList()
                             )
                         }
-                        // Start broadcasting for discovery
                         discoveryManager.startBroadcasting(roomName, masterName, chronicleId, port)
                         Log.d(TAG, "Room created: $roomName on $hostIp:$port")
                     },
                     onError = { error ->
-                        // Fallback: try without WiFi Direct group (same network)
                         Log.w(TAG, "WiFi Direct group failed, trying direct: $error")
                         try {
                             val port = server!!.start()
                             val roomId = UUID.randomUUID().toString().take(8)
-                            val hostIp = discoveryManager.getLocalIpAddress()
 
                             _uiState.update {
                                 it.copy(
@@ -119,7 +118,6 @@ class LiveRoomViewModel(
                                     error = null
                                 )
                             }
-                            // Start broadcasting for discovery
                             discoveryManager.startBroadcasting(roomName, masterName, chronicleId, port)
                             Log.d(TAG, "Room created (direct): $roomName on $hostIp:$port")
                         } catch (e: Exception) {

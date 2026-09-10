@@ -1,0 +1,7 @@
+v16: Fix IP detection - use ConnectivityManager for WiFi-specific IP
+
+- Added ConnectivityManager as Method 1 (most reliable on Android 10+)
+- Gets WiFi-specific link IP, not VPN/hotspot/tethering
+- Demoted WifiManager to Method 2, UDP trick to Method 3
+- NetworkInterface now prefers wlan/wifi/eth interface names
+- Removed aggressive emulator IP filtering that broke real 10.0.2.x networks

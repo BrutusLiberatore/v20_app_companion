@@ -198,24 +198,30 @@ class TableDiscoveryManager(private val context: Context? = null) {
     }
 
     fun getLocalIpAddress(): String {
-        // Method 1: UDP socket trick (works on all Android versions, no permissions)
+        // Method 1: ConnectivityManager (most reliable on Android 10+, gets WiFi-specific IP)
         try {
-            val udpSocket = DatagramSocket()
-            udpSocket.connect(InetAddress.getByName("8.8.8.8"), 53)
-            val ip = (udpSocket.localAddress as? java.net.Inet4Address)?.hostAddress
-            udpSocket.close()
-            if (!ip.isNullOrEmpty() && ip != "0.0.0.0") {
-                if (!isEmulatorIp(ip)) {
-                    Log.d(TAG, "IP from UDP socket trick: $ip")
-                    return ip
+            val appContext = context?.applicationContext
+            if (appContext != null) {
+                val cm = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+                if (cm != null) {
+                    val network = cm.activeNetwork
+                    val linkProperties = network?.let { cm.getLinkProperties(it) }
+                    val wifiIp = linkProperties?.linkAddresses
+                        ?.map { it.address }
+                        ?.filterIsInstance<java.net.Inet4Address>()
+                        ?.firstOrNull { !it.isLoopbackAddress }
+                        ?.hostAddress
+                    if (!wifiIp.isNullOrEmpty() && wifiIp != "0.0.0.0") {
+                        Log.d(TAG, "IP from ConnectivityManager (WiFi): $wifiIp")
+                        return wifiIp
+                    }
                 }
-                Log.d(TAG, "UDP socket trick returned emulator IP: $ip, trying other methods")
             }
         } catch (e: Exception) {
-            Log.w(TAG, "UDP socket trick failed: ${e.message}")
+            Log.w(TAG, "ConnectivityManager failed: ${e.message}")
         }
 
-        // Method 2: WifiManager
+        // Method 2: WifiManager (fallback for older devices)
         try {
             val appContext = context?.applicationContext
             if (appContext != null) {
@@ -233,7 +239,7 @@ class TableDiscoveryManager(private val context: Context? = null) {
                             ipInt shr 16 and 0xff,
                             ipInt shr 24 and 0xff
                         )
-                        if (ip != "0.0.0.0" && !isEmulatorIp(ip)) {
+                        if (ip != "0.0.0.0") {
                             Log.d(TAG, "IP from WifiManager: $ip")
                             return ip
                         }
@@ -244,7 +250,21 @@ class TableDiscoveryManager(private val context: Context? = null) {
             Log.w(TAG, "WifiManager failed: ${e.message}")
         }
 
-        // Method 3: NetworkInterface - prefer non-emulator IPs
+        // Method 3: UDP socket trick (works on all Android versions, no permissions)
+        try {
+            val udpSocket = DatagramSocket()
+            udpSocket.connect(InetAddress.getByName("8.8.8.8"), 53)
+            val ip = (udpSocket.localAddress as? java.net.Inet4Address)?.hostAddress
+            udpSocket.close()
+            if (!ip.isNullOrEmpty() && ip != "0.0.0.0") {
+                Log.d(TAG, "IP from UDP socket trick: $ip")
+                return ip
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "UDP socket trick failed: ${e.message}")
+        }
+
+        // Method 4: NetworkInterface - pick first valid private IP
         try {
             val candidates = mutableListOf<Pair<String, String>>()
             val interfaces = NetworkInterface.getNetworkInterfaces()
@@ -262,20 +282,24 @@ class TableDiscoveryManager(private val context: Context? = null) {
                     }
                 }
             }
-            val realIp = candidates.firstOrNull { !isEmulatorIp(it.first) }
-            if (realIp != null) {
-                Log.d(TAG, "IP from NetworkInterface '${realIp.second}': ${realIp.first}")
-                return realIp.first
+            val wifiCandidate = candidates.firstOrNull { 
+                it.second.contains("wlan", ignoreCase = true) || 
+                it.second.contains("wifi", ignoreCase = true) ||
+                it.second.contains("eth", ignoreCase = true)
+            }
+            if (wifiCandidate != null) {
+                Log.d(TAG, "IP from NetworkInterface '${wifiCandidate.second}': ${wifiCandidate.first}")
+                return wifiCandidate.first
             }
             if (candidates.isNotEmpty()) {
-                Log.d(TAG, "Only emulator IPs found: ${candidates.first().first}")
+                Log.d(TAG, "IP from NetworkInterface '${candidates.first().second}': ${candidates.first().first}")
                 return candidates.first().first
             }
         } catch (e: Exception) {
             Log.w(TAG, "NetworkInterface failed: ${e.message}")
         }
 
-        // Method 4: Gateway route scanning for emulator scenarios
+        // Method 5: Gateway route scanning
         try {
             val gatewayIp = readGatewayFromProcRoute()
             if (gatewayIp != null) {
@@ -294,7 +318,7 @@ class TableDiscoveryManager(private val context: Context? = null) {
         return "0.0.0.0"
     }
 
-    private fun isEmulatorIp(ip: String): Boolean {
+    fun isEmulatorIp(ip: String): Boolean {
         return ip.startsWith("10.0.2.") || ip.startsWith("10.0.3.") || ip == "10.0.2.15"
     }
 
