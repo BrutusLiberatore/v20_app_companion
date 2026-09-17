@@ -1,1 +1,1 @@
-Remove temp commit msg file
+v17: Move IP banner above table area for readability

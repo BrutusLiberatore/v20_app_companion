@@ -410,6 +410,58 @@ private fun VirtualTableView(
             .fillMaxSize()
             .background(Color(0xFF1A1A2E))
     ) {
+        // IP banner for master - outside table area so it's always readable
+        if (uiState.isMaster && uiState.room != null && uiState.room.host.isNotBlank()) {
+            var showIpBanner by remember { mutableStateOf(true) }
+            if (showIpBanner) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A4A)),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Language,
+                            contentDescription = null,
+                            tint = Gold,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.live_room_share_ip),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = "${uiState.room.host}:${uiState.room.port}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Gold,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        IconButton(
+                            onClick = { showIpBanner = false },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = stringResource(R.string.action_close),
+                                tint = Color.White.copy(alpha = 0.5f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // Table area
         Box(
             modifier = Modifier
@@ -419,59 +471,6 @@ private fun VirtualTableView(
                 .onGloballyPositioned { tableBoxSize = it.size },
             contentAlignment = Alignment.Center
         ) {
-            // IP banner for master - shows connection info for players
-            if (uiState.isMaster && uiState.room != null && uiState.room.host.isNotBlank()) {
-                var showIpBanner by remember { mutableStateOf(true) }
-                if (showIpBanner) {
-                    Card(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .padding(top = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A4A)),
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.Language,
-                                contentDescription = null,
-                                tint = Gold,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.live_room_share_ip),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.7f)
-                                )
-                                Text(
-                                    text = "${uiState.room.host}:${uiState.room.port}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Gold,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            IconButton(
-                                onClick = { showIpBanner = false },
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = stringResource(R.string.action_close),
-                                    tint = Color.White.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
             // Medieval round table asset
             Image(
                 painter = painterResource(id = R.drawable.assets_tavolo),
