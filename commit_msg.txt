@@ -1,1 +1,0 @@
-v20: Fix player visibility on master, fix presentFile crash - onConnected updates UI, broadcast on IO thread, ConcurrentHashMap
