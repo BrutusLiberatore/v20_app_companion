@@ -1,0 +1,1 @@
+v21: Fix chronicle assets loading for master file presentation

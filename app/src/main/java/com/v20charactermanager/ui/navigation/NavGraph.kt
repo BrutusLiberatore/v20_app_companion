@@ -1197,6 +1197,8 @@ fun V20NavGraph(
                 chronicleRepo.getChronicleById(chronicleId).collect { c ->
                     chronicleName = c?.name ?: ""
                 }
+            }
+            LaunchedEffect(chronicleId) {
                 liveRoomViewModel.loadChronicleAssets(chronicleId)
             }
 
