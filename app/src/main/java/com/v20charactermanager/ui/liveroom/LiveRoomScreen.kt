@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.widget.VideoView
 import android.widget.MediaController
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -71,6 +73,9 @@ fun LiveRoomScreen(
     uiState: LiveRoomState,
     startAsMaster: Boolean,
     chronicleName: String,
+    chronicleId: String = "",
+    audioViewModel: com.v20charactermanager.ui.chronicle.AudioViewModel? = null,
+    chronicleRepository: com.v20charactermanager.domain.repository.ChronicleRepository? = null,
     autoHost: String = "",
     autoPort: Int = 0,
     autoPlayerName: String = "",
@@ -106,9 +111,11 @@ fun LiveRoomScreen(
         }
     }
     if (uiState.isFileFullscreen && uiState.presentedFile != null) {
+        BackHandler { onToggleFullscreen() }
         FullscreenPresentation(
             file = uiState.presentedFile,
-            onDismiss = onDismissFile,
+            isMaster = uiState.isMaster,
+            onDismiss = { if (uiState.isMaster) onDismissFile() else onToggleFullscreen() },
             onToggleMinimize = onToggleFullscreen
         )
         return
@@ -170,6 +177,9 @@ fun LiveRoomScreen(
             else -> {
                 VirtualTableView(
                     uiState = uiState,
+                    chronicleId = chronicleId,
+                    audioViewModel = audioViewModel,
+                    chronicleRepository = chronicleRepository,
                     onPresentAsset = onPresentAsset,
                     onDismissFile = onDismissFile,
                     onToggleFullscreen = onToggleFullscreen,
@@ -386,6 +396,9 @@ private fun ConnectingOverlay(
 @Composable
 private fun VirtualTableView(
     uiState: LiveRoomState,
+    chronicleId: String = "",
+    audioViewModel: com.v20charactermanager.ui.chronicle.AudioViewModel? = null,
+    chronicleRepository: com.v20charactermanager.domain.repository.ChronicleRepository? = null,
     onPresentAsset: (String, String, String) -> Unit,
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit,
@@ -535,6 +548,9 @@ private fun VirtualTableView(
             if (uiState.isMaster) {
                 MasterBottomPanel(
                     uiState = uiState,
+                    chronicleId = chronicleId,
+                    audioViewModel = audioViewModel,
+                    chronicleRepository = chronicleRepository,
                     onPresentAsset = onPresentAsset,
                     onDismissFile = onDismissFile,
                     onToggleFullscreen = onToggleFullscreen
@@ -694,11 +710,19 @@ private fun FeltTable(modifier: Modifier = Modifier) {
 @Composable
 private fun MasterBottomPanel(
     uiState: LiveRoomState,
+    chronicleId: String = "",
+    audioViewModel: com.v20charactermanager.ui.chronicle.AudioViewModel? = null,
+    chronicleRepository: com.v20charactermanager.domain.repository.ChronicleRepository? = null,
     onPresentAsset: (String, String, String) -> Unit,
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit
 ) {
     var showFileSelector by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
+    var showAudioMixer by remember { mutableStateOf(false) }
+    var showChronicleInfo by remember { mutableStateOf(false) }
+    val audioUiState = audioViewModel?.uiState?.collectAsState()
+    val audioState = audioUiState?.value ?: com.v20charactermanager.ui.chronicle.AudioMixUiState()
 
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -715,6 +739,24 @@ private fun MasterBottomPanel(
                 color = Color.White.copy(alpha = 0.6f),
                 style = MaterialTheme.typography.bodySmall
             )
+            Spacer(modifier = Modifier.width(4.dp))
+            Box {
+                IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
+                }
+                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Audio Mixer") },
+                        leadingIcon = { Icon(Icons.Default.MusicNote, contentDescription = null) },
+                        onClick = { showMenu = false; showAudioMixer = true }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Cronaca") },
+                        leadingIcon = { Icon(Icons.Default.Book, contentDescription = null) },
+                        onClick = { showMenu = false; showChronicleInfo = true }
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -764,6 +806,31 @@ private fun MasterBottomPanel(
                 onPresentAsset(asset.id, asset.title, mimeType)
             },
             onDismiss = { showFileSelector = false }
+        )
+    }
+
+    if (showAudioMixer && audioViewModel != null) {
+        AudioMixerPopup(
+            audioState = audioState,
+            chronicleId = chronicleId,
+            onTogglePlay = { audioViewModel.togglePlay(it) },
+            onStop = { audioViewModel.stopTrack(it) },
+            onStopAll = { audioViewModel.stopAll() },
+            onSetVolume = { id, vol -> audioViewModel.setVolume(id, vol) },
+            onSetLooping = { id, loop -> audioViewModel.setLooping(id, loop) },
+            onActivatePreset = { audioViewModel.activatePreset(it) },
+            onSavePreset = { name -> audioViewModel.savePreset(chronicleId, name) },
+            onDeletePreset = { id -> audioViewModel.deletePreset(id, chronicleId) },
+            onDismiss = { showAudioMixer = false }
+        )
+    }
+
+    if (showChronicleInfo && chronicleRepository != null) {
+        ChronicleDeepBrowserPopup(
+            chronicleRepo = chronicleRepository,
+            chronicleId = chronicleId,
+            chronicleName = uiState.room?.name ?: "",
+            onDismiss = { showChronicleInfo = false }
         )
     }
 }
@@ -840,6 +907,447 @@ private fun ChronicleFileSelector(
         },
         dismissButton = null
     )
+}
+
+@Composable
+private fun AudioMixerPopup(
+    audioState: com.v20charactermanager.ui.chronicle.AudioMixUiState,
+    chronicleId: String = "",
+    onTogglePlay: (String) -> Unit,
+    onStop: (String) -> Unit,
+    onStopAll: () -> Unit,
+    onSetVolume: (String, Float) -> Unit,
+    onSetLooping: (String, Boolean) -> Unit,
+    onActivatePreset: (com.v20charactermanager.domain.model.AudioPreset) -> Unit,
+    onSavePreset: (String) -> Unit,
+    onDeletePreset: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var showSaveDialog by remember { mutableStateOf(false) }
+    var presetName by remember { mutableStateOf("") }
+    var selectedTab by remember { mutableIntStateOf(0) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.MusicNote, contentDescription = null, tint = Color(0xFFE91E63))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Audio Mixer")
+            }
+        },
+        text = {
+            Column(modifier = Modifier.heightIn(max = 450.dp)) {
+                TabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = Color(0xFF1A1A2E),
+                    contentColor = Color(0xFFE91E63)
+                ) {
+                    Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }) {
+                        Text("Tracce", modifier = Modifier.padding(12.dp), fontSize = 13.sp)
+                    }
+                    Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }) {
+                        Text("Preset", modifier = Modifier.padding(12.dp), fontSize = 13.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                when (selectedTab) {
+                    0 -> {
+                        if (audioState.tracks.isEmpty()) {
+                            Text(
+                                text = "Nessuna traccia audio.\nImporta audio nella sezione Audio della cronaca.",
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        } else {
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(audioState.tracks) { track ->
+                                    AudioTrackRow(
+                                        track = track,
+                                        onTogglePlay = { onTogglePlay(track.id) },
+                                        onStop = { onStop(track.id) },
+                                        onSetVolume = { vol -> onSetVolume(track.id, vol) },
+                                        onSetLooping = { loop -> onSetLooping(track.id, loop) }
+                                    )
+                                }
+                            }
+                        }
+                        if (audioState.tracks.any { it.isActive }) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(
+                                    onClick = { showSaveDialog = true },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFE91E63))
+                                ) {
+                                    Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Salva Preset", fontSize = 12.sp)
+                                }
+                                Button(
+                                    onClick = onStopAll,
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                                ) {
+                                    Icon(Icons.Default.Stop, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Ferma Tutto", fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                    1 -> {
+                        if (audioState.presets.isEmpty()) {
+                            Text(
+                                text = "Nessun preset salvato.\nSeleziona delle tracce attive e salva un preset.",
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        } else {
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(audioState.presets) { preset ->
+                                    PresetRow(
+                                        preset = preset,
+                                        onActivate = { onActivatePreset(preset) },
+                                        onDelete = { onDeletePreset(preset.id) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Chiudi") }
+        },
+        dismissButton = null
+    )
+
+    if (showSaveDialog) {
+        AlertDialog(
+            onDismissRequest = { showSaveDialog = false },
+            title = { Text("Salva Preset Audio") },
+            text = {
+                OutlinedTextField(
+                    value = presetName,
+                    onValueChange = { presetName = it },
+                    label = { Text("Nome Preset") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (presetName.isNotBlank()) {
+                        onSavePreset(presetName)
+                        presetName = ""
+                        showSaveDialog = false
+                    }
+                }) { Text("Salva") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSaveDialog = false; presetName = "" }) { Text("Annulla") }
+            }
+        )
+    }
+}
+
+@Composable
+private fun PresetRow(
+    preset: com.v20charactermanager.domain.model.AudioPreset,
+    onActivate: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A3E)),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Icon(Icons.Default.Tune, contentDescription = null, tint = Color(0xFFE91E63), modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(preset.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("${preset.tracks.size} tracce", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+            }
+            IconButton(onClick = onActivate, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.PlayArrow, contentDescription = "Attiva", tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
+            }
+            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Delete, contentDescription = "Elimina", tint = Color(0xFFFF5722), modifier = Modifier.size(18.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun AudioTrackRow(
+    track: com.v20charactermanager.domain.model.AudioTrack,
+    onTogglePlay: () -> Unit,
+    onStop: () -> Unit,
+    onSetVolume: (Float) -> Unit,
+    onSetLooping: (Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (track.isActive) Color(0xFF1B5E20).copy(alpha = 0.4f) else Color(0xFF2A2A3E)
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(modifier = Modifier.padding(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onTogglePlay, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        if (track.isActive) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = if (track.isActive) "Pausa" else "Play",
+                        tint = if (track.isActive) Color(0xFF4CAF50) else Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(track.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        track.category.name,
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 10.sp
+                    )
+                }
+                if (track.isActive) {
+                    IconButton(onClick = onStop, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Default.Stop, contentDescription = "Stop", tint = Color(0xFFFF5722), modifier = Modifier.size(16.dp))
+                    }
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, end = 8.dp)) {
+                Icon(Icons.Default.VolumeDown, contentDescription = null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(14.dp))
+                Slider(
+                    value = track.volume,
+                    onValueChange = onSetVolume,
+                    valueRange = 0f..1f,
+                    modifier = Modifier.weight(1f).height(20.dp),
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color(0xFFE91E63),
+                        activeTrackColor = Color(0xFFE91E63)
+                    )
+                )
+                Icon(Icons.Default.VolumeUp, contentDescription = null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(14.dp))
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp)) {
+                Checkbox(
+                    checked = track.isLooping,
+                    onCheckedChange = onSetLooping,
+                    modifier = Modifier.size(16.dp),
+                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFFE91E63))
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Loop", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChronicleDeepBrowserPopup(
+    chronicleRepo: com.v20charactermanager.domain.repository.ChronicleRepository,
+    chronicleId: String,
+    chronicleName: String,
+    onDismiss: () -> Unit
+) {
+    var selectedSection by remember { mutableIntStateOf(0) }
+    val sections = listOf("NPC", "Luoghi", "Note", "Scena", "Eventi", "Segreti")
+
+    val npcs by chronicleRepo.getNpcs(chronicleId).collectAsState(initial = emptyList())
+    val locations by chronicleRepo.getLocations(chronicleId).collectAsState(initial = emptyList())
+    val notes by chronicleRepo.getChronicleNotes(chronicleId).collectAsState(initial = emptyList())
+    val scenes by chronicleRepo.getScenes(chronicleId).collectAsState(initial = emptyList())
+    val events by chronicleRepo.getEvents(chronicleId).collectAsState(initial = emptyList())
+    val secrets by chronicleRepo.getSecrets(chronicleId).collectAsState(initial = emptyList())
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Book, contentDescription = null, tint = Gold)
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text("Cronaca", color = Gold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    if (chronicleName.isNotBlank()) {
+                        Text(chronicleName, color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                    }
+                }
+            }
+        },
+        text = {
+            Column(modifier = Modifier.heightIn(max = 450.dp)) {
+                ScrollableTabRow(
+                    selectedTabIndex = selectedSection,
+                    containerColor = Color(0xFF1A1A2E),
+                    contentColor = Gold,
+                    edgePadding = 4.dp
+                ) {
+                    sections.forEachIndexed { index, label ->
+                        Tab(
+                            selected = selectedSection == index,
+                            onClick = { selectedSection = index },
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Text(label, modifier = Modifier.padding(8.dp), fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                when (selectedSection) {
+                    0 -> {
+                        if (npcs.isEmpty()) {
+                            EmptySection("Nessun NPC presente")
+                        } else {
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(npcs) { npc ->
+                                    SimpleListItem(
+                                        title = npc.name,
+                                        subtitle = npc.clanId ?: npc.role,
+                                        icon = Icons.Default.Person,
+                                        iconTint = Color(0xFF9C27B0)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    1 -> {
+                        if (locations.isEmpty()) {
+                            EmptySection("Nessun luogo presente")
+                        } else {
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(locations) { loc ->
+                                    SimpleListItem(
+                                        title = loc.name,
+                                        subtitle = loc.description ?: "",
+                                        icon = Icons.Default.LocationOn,
+                                        iconTint = Color(0xFF4CAF50)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    2 -> {
+                        if (notes.isEmpty()) {
+                            EmptySection("Nessuna nota presente")
+                        } else {
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(notes) { note ->
+                                    SimpleListItem(
+                                        title = note.text.take(40),
+                                        subtitle = note.text.drop(40).take(80),
+                                        icon = Icons.Default.StickyNote2,
+                                        iconTint = Color(0xFFFFC107)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    3 -> {
+                        if (scenes.isEmpty()) {
+                            EmptySection("Nessuna scena presente")
+                        } else {
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(scenes) { scene ->
+                                    SimpleListItem(
+                                        title = scene.title,
+                                        subtitle = scene.description?.take(80) ?: "",
+                                        icon = Icons.Default.Theaters,
+                                        iconTint = Color(0xFFFF5722)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    4 -> {
+                        if (events.isEmpty()) {
+                            EmptySection("Nessun evento presente")
+                        } else {
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(events) { event ->
+                                    SimpleListItem(
+                                        title = event.title,
+                                        subtitle = event.description?.take(80) ?: "",
+                                        icon = Icons.Default.Event,
+                                        iconTint = Color(0xFF2196F3)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    5 -> {
+                        if (secrets.isEmpty()) {
+                            EmptySection("Nessun segreto presente")
+                        } else {
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(secrets) { secret ->
+                                    SimpleListItem(
+                                        title = secret.title,
+                                        subtitle = secret.content.take(80),
+                                        icon = Icons.Default.VisibilityOff,
+                                        iconTint = Color(0xFF607D8B)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Chiudi") }
+        },
+        dismissButton = null
+    )
+}
+
+@Composable
+private fun EmptySection(text: String) {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text, color = Color.White.copy(alpha = 0.4f), fontSize = 13.sp)
+    }
+}
+
+@Composable
+private fun SimpleListItem(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconTint: Color
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A3E)),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(10.dp)
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (subtitle.isNotBlank()) {
+                    Text(subtitle, color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -975,6 +1483,7 @@ private fun buildCircularSeats(
 @Composable
 private fun FullscreenPresentation(
     file: PresentedFile,
+    isMaster: Boolean = false,
     onDismiss: () -> Unit,
     onToggleMinimize: () -> Unit
 ) {
@@ -1068,9 +1577,12 @@ private fun FullscreenPresentation(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = onDismiss) {
-                Icon(Icons.Default.Close, contentDescription = "Chiudi", tint = Color.White)
+            if (isMaster) {
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "Chiudi presentazione", tint = Color.White)
+                }
             }
+            Spacer(modifier = Modifier.weight(1f))
             IconButton(onClick = onToggleMinimize) {
                 Icon(Icons.Default.FullscreenExit, contentDescription = "Riduci", tint = Color.White)
             }

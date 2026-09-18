@@ -45,6 +45,7 @@ class LiveRoomClient {
         onStatus?.invoke("Connessione TCP a $host:$port...")
         scope.launch {
             var connected = false
+            var disconnectNotified = false
             try {
                 Log.d(TAG, "Connecting to $host:$port as $playerName")
                 socket = Socket()
@@ -68,7 +69,11 @@ class LiveRoomClient {
                     try {
                         val message = json.decodeFromString<LiveRoomMessage>(line)
                         Log.d(TAG, "Received: ${message::class.simpleName}")
-                        onMessage?.invoke(message)
+                        if (message is LiveRoomMessage.Ping) {
+                            sendMessage(LiveRoomMessage.Pong)
+                        } else {
+                            onMessage?.invoke(message)
+                        }
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to parse: $line", e)
                     }
@@ -90,18 +95,17 @@ class LiveRoomClient {
                 if (!isDisconnecting) onError?.invoke("Indirizzo IP non valido: $host")
             } catch (e: IOException) {
                 Log.e(TAG, "IO error: $host:$port (connected=$connected)", e)
-                if (!isDisconnecting) {
-                    if (connected) {
-                        onDisconnected?.invoke()
-                    } else {
-                        onError?.invoke("Errore di rete: ${e.localizedMessage ?: "verifica la connessione"}")
-                    }
+                if (!isDisconnecting && connected && !disconnectNotified) {
+                    disconnectNotified = true
+                    onDisconnected?.invoke()
+                } else if (!isDisconnecting && !connected) {
+                    onError?.invoke("Errore di rete: ${e.localizedMessage ?: "verifica la connessione"}")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Connection error: $host:$port", e)
                 if (!isDisconnecting) onError?.invoke("Errore di connessione: ${e.localizedMessage ?: "sconosciuto"}")
             } finally {
-                if (!isDisconnecting && connected) {
+                if (!isDisconnecting && connected && !disconnectNotified) {
                     Log.d(TAG, "Notifying disconnection (connected was true)")
                     onDisconnected?.invoke()
                 }

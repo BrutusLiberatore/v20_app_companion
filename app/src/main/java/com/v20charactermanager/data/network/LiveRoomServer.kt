@@ -20,6 +20,8 @@ class LiveRoomServer(
     companion object {
         private const val TAG = "LiveRoomServer"
         const val TABLE_PORT = 39641
+        private const val CLIENT_READ_TIMEOUT_MS = 45_000
+        private const val KEEPALIVE_INTERVAL_MS = 20_000L
     }
 
     private var serverSocket: ServerSocket? = null
@@ -169,10 +171,25 @@ class LiveRoomServer(
 
                 onClientConnected?.invoke(clientId, joinMsg.playerName)
 
+                // Set read timeout for the message loop to detect dead clients
+                socket.soTimeout = CLIENT_READ_TIMEOUT_MS
+
                 // Listen for messages
                 Log.d(TAG, "Entering message loop for ${joinMsg.playerName} ($clientId)")
                 while (socket.isConnected && !socket.isClosed) {
-                    val line = reader.readLine()
+                    val line = try {
+                        reader.readLine()
+                    } catch (e: java.net.SocketTimeoutException) {
+                        // Read timeout — check if client is still alive
+                        Log.d(TAG, "Read timeout for ${joinMsg.playerName}, sending ping")
+                        try {
+                            sendToClient(writer, LiveRoomMessage.Ping)
+                        } catch (_: Exception) {
+                            Log.d(TAG, "Ping failed for ${joinMsg.playerName}, client is dead")
+                            break
+                        }
+                        continue
+                    }
                     if (line == null) {
                         Log.d(TAG, "Client ${joinMsg.playerName} read returned null (disconnected)")
                         break
@@ -180,7 +197,11 @@ class LiveRoomServer(
                     if (line.isBlank()) continue
                     try {
                         val message = json.decodeFromString<LiveRoomMessage>(line)
-                        onClientMessage?.invoke(clientId, message)
+                        if (message is LiveRoomMessage.Pong) {
+                            Log.d(TAG, "Pong from ${joinMsg.playerName}")
+                        } else {
+                            onClientMessage?.invoke(clientId, message)
+                        }
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to parse message: $line", e)
                     }
@@ -212,9 +233,23 @@ class LiveRoomServer(
     }
 
     fun broadcast(message: LiveRoomMessage, excludeId: String? = null) {
+        val deadIds = mutableListOf<String>()
         _connections.entries.toList().forEach { (id, conn) ->
             if (id != excludeId) {
-                sendToClient(conn.writer, message)
+                try {
+                    sendToClient(conn.writer, message)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Broadcast failed for $id, marking dead: ${e.message}")
+                    deadIds.add(id)
+                }
+            }
+        }
+        // Clean up dead connections
+        deadIds.forEach { id ->
+            val conn = _connections.remove(id)
+            if (conn != null) {
+                try { conn.socket.close() } catch (_: Exception) {}
+                Log.d(TAG, "Removed dead connection: ${conn.playerName} ($id)")
             }
         }
     }

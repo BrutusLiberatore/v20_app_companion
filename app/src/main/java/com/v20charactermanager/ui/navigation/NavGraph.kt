@@ -1202,10 +1202,23 @@ fun V20NavGraph(
                 liveRoomViewModel.loadChronicleAssets(chronicleId)
             }
 
+            val audioViewModel: com.v20charactermanager.ui.chronicle.AudioViewModel = viewModel(
+                factory = com.v20charactermanager.ui.chronicle.AudioViewModelFactory(
+                    appContainer.audioRepository,
+                    context.applicationContext
+                )
+            )
+            LaunchedEffect(chronicleId) {
+                audioViewModel.loadTracks(chronicleId)
+            }
+
             com.v20charactermanager.ui.liveroom.LiveRoomScreen(
                 uiState = liveRoomState,
                 startAsMaster = asMaster,
                 chronicleName = chronicleName,
+                chronicleId = chronicleId,
+                audioViewModel = audioViewModel,
+                chronicleRepository = appContainer.chronicleRepository,
                 autoHost = autoHost,
                 autoPort = autoPort,
                 autoPlayerName = autoPlayerName,
