@@ -1,6 +1,11 @@
 package com.v20charactermanager.ui.liveroom
 
+import android.graphics.Bitmap
+import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import android.os.ParcelFileDescriptor
+import android.widget.VideoView
+import android.widget.MediaController
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
@@ -46,6 +51,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import androidx.compose.ui.viewinterop.AndroidView
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
 import java.io.File
@@ -972,6 +978,8 @@ private fun FullscreenPresentation(
     onDismiss: () -> Unit,
     onToggleMinimize: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -987,48 +995,77 @@ private fun FullscreenPresentation(
                 )
             }
             file.mimeType == "application/pdf" -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        Icons.Default.PictureAsPdf,
-                        contentDescription = null,
-                        modifier = Modifier.size(120.dp),
-                        tint = Color.White
+                val bitmap = remember(file.data) {
+                    renderPdfFirstPage(file.data)
+                }
+                if (bitmap != null) {
+                    AsyncImage(
+                        model = bitmap,
+                        contentDescription = file.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(file.name, color = Color.White, style = MaterialTheme.typography.titleLarge)
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(120.dp), tint = Color.White)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(file.name, color = Color.White, style = MaterialTheme.typography.titleLarge)
+                        Text("Impossibile visualizzare il PDF", color = Color.White.copy(alpha = 0.5f))
+                    }
+                }
+            }
+            file.mimeType.startsWith("video/") -> {
+                val tempFile = remember(file.data) {
+                    try {
+                        val tmp = java.io.File.createTempFile("video_", "_${file.name}", context.cacheDir)
+                        tmp.writeBytes(file.data)
+                        tmp.deleteOnExit()
+                        tmp
+                    } catch (_: Exception) { null }
+                }
+                if (tempFile != null) {
+                    AndroidView(
+                        factory = { ctx ->
+                            VideoView(ctx).apply {
+                                setVideoURI(Uri.fromFile(tempFile))
+                                setMediaController(MediaController(ctx).apply { setAnchorView(this@apply) })
+                                setOnPreparedListener { it.isLooping = true; start() }
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.Videocam, contentDescription = null, modifier = Modifier.size(120.dp), tint = Color.White)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(file.name, color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    }
                 }
             }
             else -> {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
+                    modifier = Modifier.fillMaxSize().padding(32.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        Icons.Default.InsertDriveFile,
-                        contentDescription = null,
-                        modifier = Modifier.size(120.dp),
-                        tint = Color.White
-                    )
+                    Icon(Icons.Default.InsertDriveFile, contentDescription = null, modifier = Modifier.size(120.dp), tint = Color.White)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(file.name, color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    Text("Formato non visualizzabile direttamente", color = Color.White.copy(alpha = 0.5f))
                 }
             }
         }
 
-        // Controls overlay
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = onDismiss) {
@@ -1039,4 +1076,30 @@ private fun FullscreenPresentation(
             }
         }
     }
+}
+
+private fun renderPdfFirstPage(data: ByteArray): Bitmap? {
+    return try {
+        val tmpFile = java.io.File.createTempFile("pdf_preview", ".pdf")
+        tmpFile.writeBytes(data)
+        val pfd = ParcelFileDescriptor.open(tmpFile, ParcelFileDescriptor.MODE_READ_ONLY)
+        val renderer = PdfRenderer(pfd)
+        if (renderer.pageCount > 0) {
+            val page = renderer.openPage(0)
+            val scale = 2f
+            val bitmap = Bitmap.createBitmap((page.width * scale).toInt(), (page.height * scale).toInt(), Bitmap.Config.ARGB_8888)
+            bitmap.eraseColor(android.graphics.Color.WHITE)
+            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+            page.close()
+            renderer.close()
+            pfd.close()
+            tmpFile.delete()
+            bitmap
+        } else {
+            renderer.close()
+            pfd.close()
+            tmpFile.delete()
+            null
+        }
+    } catch (_: Exception) { null }
 }
