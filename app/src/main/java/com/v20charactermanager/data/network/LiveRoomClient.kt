@@ -25,20 +25,24 @@ class LiveRoomClient {
     @Volatile private var onMessage: ((LiveRoomMessage) -> Unit)? = null
     @Volatile private var onDisconnected: (() -> Unit)? = null
     @Volatile private var onError: ((String) -> Unit)? = null
+    @Volatile private var onStatus: ((String) -> Unit)? = null
     @Volatile private var isDisconnecting = false
 
     fun setCallbacks(
         onMessage: (LiveRoomMessage) -> Unit,
         onDisconnected: () -> Unit,
-        onError: ((String) -> Unit)? = null
+        onError: ((String) -> Unit)? = null,
+        onStatus: ((String) -> Unit)? = null
     ) {
         this.onMessage = onMessage
         this.onDisconnected = onDisconnected
         this.onError = onError
+        this.onStatus = onStatus
     }
 
     fun connect(host: String, port: Int, playerName: String, characterId: String?) {
         isDisconnecting = false
+        onStatus?.invoke("Connessione TCP a $host:$port...")
         scope.launch {
             var connected = false
             try {
@@ -50,10 +54,12 @@ class LiveRoomClient {
                 writer = BufferedWriter(OutputStreamWriter(socket!!.getOutputStream()))
                 writer!!.flush()
                 connected = true
+                onStatus?.invoke("TCP connesso, invio JOIN...")
                 Log.d(TAG, "TCP connected to $host:$port, sending JOIN")
 
                 val join = LiveRoomMessage.Join(playerName, characterId)
                 sendMessage(join)
+                onStatus?.invoke("JOIN inviato, in attesa di risposta...")
                 Log.d(TAG, "JOIN sent: $playerName (char=$characterId)")
 
                 while (socket?.isConnected == true && !socket!!.isClosed) {
@@ -109,7 +115,17 @@ class LiveRoomClient {
 
     fun sendMessage(message: LiveRoomMessage) {
         try {
-            val jsonStr = json.encodeToString(message)
+            val jsonStr = when (message) {
+                is LiveRoomMessage.Join -> json.encodeToString(LiveRoomMessage.Join.serializer(), message)
+                is LiveRoomMessage.Error -> json.encodeToString(LiveRoomMessage.Error.serializer(), message)
+                is LiveRoomMessage.StatUpdate -> json.encodeToString(LiveRoomMessage.StatUpdate.serializer(), message)
+                is LiveRoomMessage.DiceRoll -> json.encodeToString(LiveRoomMessage.DiceRoll.serializer(), message)
+                is LiveRoomMessage.PresentFile -> json.encodeToString(LiveRoomMessage.PresentFile.serializer(), message)
+                is LiveRoomMessage.DismissFile -> json.encodeToString(LiveRoomMessage.DismissFile.serializer(), message)
+                is LiveRoomMessage.FullscreenFile -> json.encodeToString(LiveRoomMessage.FullscreenFile.serializer(), message)
+                is LiveRoomMessage.RequestCharacter -> json.encodeToString(LiveRoomMessage.RequestCharacter.serializer(), message)
+                else -> json.encodeToString(message)
+            }
             writer?.write(jsonStr)
             writer?.newLine()
             writer?.flush()

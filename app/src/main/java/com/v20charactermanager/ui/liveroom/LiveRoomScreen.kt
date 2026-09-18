@@ -318,9 +318,10 @@ private fun ConnectingOverlay(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = stringResource(R.string.live_connecting),
+                    text = if (uiState.connectionStatus.isNotBlank()) uiState.connectionStatus else stringResource(R.string.live_connecting),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = alpha)
+                    color = Color.White.copy(alpha = alpha),
+                    textAlign = TextAlign.Center
                 )
             }
         }

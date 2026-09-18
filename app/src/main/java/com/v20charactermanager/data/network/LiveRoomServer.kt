@@ -119,7 +119,17 @@ class LiveRoomServer(
 
                 // Otherwise treat as JOIN
                 Log.d(TAG, "Attempting to parse JOIN from $clientAddr: ${firstLine.take(200)}")
-                val joinMsg = json.decodeFromString<LiveRoomMessage.Join>(firstLine)
+                val joinMsg = try {
+                    json.decodeFromString<LiveRoomMessage.Join>(firstLine)
+                } catch (parseEx: Exception) {
+                    Log.e(TAG, "Failed to parse JOIN from $clientAddr: ${firstLine.take(200)}", parseEx)
+                    val errResp = json.encodeToString(LiveRoomMessage.Error.serializer(), LiveRoomMessage.Error("JOIN parse error: ${parseEx.message}"))
+                    writer.write(errResp)
+                    writer.newLine()
+                    writer.flush()
+                    socket.close()
+                    return@launch
+                }
                 Log.d(TAG, "JOIN parsed: playerName=${joinMsg.playerName}, characterId=${joinMsg.characterId}")
 
                 val connection = ClientConnection(

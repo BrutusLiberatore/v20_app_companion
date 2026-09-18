@@ -206,13 +206,14 @@ class LiveRoomViewModel(
                 client!!.setCallbacks(
                     onMessage = { message ->
                         Log.d(TAG, "Client message: ${message::class.simpleName}")
+                        _uiState.update { it.copy(connectionStatus = "Ricevuto: ${message::class.simpleName}") }
                         handleClientMessage(message)
                     },
                     onDisconnected = {
                         Log.d(TAG, "Client disconnected callback")
                         _uiState.update { state ->
                             if (state.isConnected) {
-                                state.copy(isConnected = false, error = "Connessione persa")
+                                state.copy(isConnected = false, error = "Connessione persa", connectionStatus = "")
                             } else {
                                 state
                             }
@@ -220,7 +221,11 @@ class LiveRoomViewModel(
                     },
                     onError = { errorMsg ->
                         Log.e(TAG, "Client error: $errorMsg")
-                        _uiState.update { it.copy(error = errorMsg) }
+                        _uiState.update { it.copy(error = errorMsg, connectionStatus = "") }
+                    },
+                    onStatus = { status ->
+                        Log.d(TAG, "Client status: $status")
+                        _uiState.update { it.copy(connectionStatus = status) }
                     }
                 )
                 _uiState.update {

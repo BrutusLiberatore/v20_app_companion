@@ -32,7 +32,8 @@ data class LiveRoomState(
     val isFileFullscreen: Boolean = false,
     val isConnected: Boolean = false,
     val error: String? = null,
-    val chronicleAssets: List<MediaAsset> = emptyList()
+    val chronicleAssets: List<MediaAsset> = emptyList(),
+    val connectionStatus: String = ""
 )
 
 @Serializable
