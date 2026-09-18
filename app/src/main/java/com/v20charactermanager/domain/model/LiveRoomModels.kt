@@ -52,6 +52,7 @@ data class PresentedFile(
     override fun hashCode(): Int = id.hashCode()
 }
 
+@Serializable
 sealed class LiveRoomMessage {
     @Serializable
     data class Join(val playerName: String, val characterId: String? = null) : LiveRoomMessage()

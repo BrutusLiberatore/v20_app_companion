@@ -81,13 +81,14 @@ class LiveRoomServer(
             val clientAddr = socket.inetAddress?.hostAddress ?: "?"
             try {
                 Log.d(TAG, "New connection from $clientAddr")
+                socket.soTimeout = 10_000
                 val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
                 val writer = BufferedWriter(OutputStreamWriter(socket.getOutputStream()))
                 writer.flush()
 
                 // Read first line - could be QUERY or JOIN
                 val firstLine = reader.readLine() ?: run {
-                    Log.w(TAG, "Client $clientAddr sent no data, closing")
+                    Log.w(TAG, "Client $clientAddr sent no data within 10s, closing")
                     socket.close()
                     return@launch
                 }
@@ -199,11 +200,13 @@ class LiveRoomServer(
     fun sendToClient(writer: BufferedWriter, message: LiveRoomMessage) {
         try {
             val jsonStr = json.encodeToString(message)
+            Log.d(TAG, "sendToClient: ${jsonStr.take(300)}")
             writer.write(jsonStr)
             writer.newLine()
             writer.flush()
+            Log.d(TAG, "sendToClient flushed OK")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to send message", e)
+            Log.e(TAG, "Failed to send message: ${e.javaClass.simpleName}: ${e.message}", e)
         }
     }
 
