@@ -157,26 +157,38 @@ class LiveRoomViewModel(
         }
     }
 
-    fun presentFile(fileName: String, mimeType: String, data: ByteArray) {
+    fun presentAsset(assetId: String, fileName: String, mimeType: String) {
+        val asset = _uiState.value.chronicleAssets.find { it.id == assetId }
+        val bytes = try {
+            asset?.let { java.io.File(it.originalFilePath).readBytes() } ?: byteArrayOf()
+        } catch (_: Exception) { byteArrayOf() }
+
         val presented = PresentedFile(
             id = UUID.randomUUID().toString(),
             name = fileName,
             mimeType = mimeType,
-            data = data
+            assetId = assetId,
+            data = bytes
         )
         _uiState.update { it.copy(presentedFile = presented) }
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
-                server?.broadcast(LiveRoomMessage.PresentFile(fileName, mimeType, data))
+                server?.broadcast(LiveRoomMessage.PresentAsset(assetId, fileName, mimeType))
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to broadcast file", e)
+                Log.e(TAG, "Failed to broadcast PresentAsset", e)
             }
         }
     }
 
     fun dismissFile() {
         _uiState.update { it.copy(presentedFile = null, isFileFullscreen = false) }
-        server?.broadcast(LiveRoomMessage.DismissFile(""))
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                server?.broadcast(LiveRoomMessage.DismissAsset())
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to broadcast DismissAsset", e)
+            }
+        }
     }
 
     fun toggleFileFullscreen() {
@@ -349,16 +361,21 @@ class LiveRoomViewModel(
                     )
                 }
             }
-            is LiveRoomMessage.PresentFile -> {
+            is LiveRoomMessage.PresentAsset -> {
+                val asset = _uiState.value.chronicleAssets.find { it.id == message.assetId }
+                val bytes = try {
+                    asset?.let { java.io.File(it.originalFilePath).readBytes() } ?: byteArrayOf()
+                } catch (_: Exception) { byteArrayOf() }
                 val presented = PresentedFile(
                     id = UUID.randomUUID().toString(),
                     name = message.fileName,
                     mimeType = message.mimeType,
-                    data = message.data
+                    assetId = message.assetId,
+                    data = bytes
                 )
                 _uiState.update { it.copy(presentedFile = presented) }
             }
-            is LiveRoomMessage.DismissFile -> {
+            is LiveRoomMessage.DismissAsset -> {
                 _uiState.update { it.copy(presentedFile = null, isFileFullscreen = false) }
             }
             is LiveRoomMessage.FullscreenFile -> {

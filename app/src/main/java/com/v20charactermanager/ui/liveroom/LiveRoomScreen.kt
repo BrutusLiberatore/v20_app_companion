@@ -72,7 +72,7 @@ fun LiveRoomScreen(
     onCreateRoom: (String, String, String) -> Unit,
     onJoinRoom: (String, Int, String, String?) -> Unit,
     onRetryJoin: () -> Unit = {},
-    onPresentFile: (String, String, ByteArray) -> Unit,
+    onPresentAsset: (String, String, String) -> Unit,
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onDisconnect: () -> Unit,
@@ -164,7 +164,7 @@ fun LiveRoomScreen(
             else -> {
                 VirtualTableView(
                     uiState = uiState,
-                    onPresentFile = onPresentFile,
+                    onPresentAsset = onPresentAsset,
                     onDismissFile = onDismissFile,
                     onToggleFullscreen = onToggleFullscreen,
                     onSendStatUpdate = onSendStatUpdate,
@@ -380,23 +380,12 @@ private fun ConnectingOverlay(
 @Composable
 private fun VirtualTableView(
     uiState: LiveRoomState,
-    onPresentFile: (String, String, ByteArray) -> Unit,
+    onPresentAsset: (String, String, String) -> Unit,
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onSendStatUpdate: (String, String, Int?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        uri?.let {
-            val mimeType = context.contentResolver.getType(it) ?: "application/octet-stream"
-            val fileName = it.lastPathSegment ?: "file"
-            val bytes = context.contentResolver.openInputStream(it)?.readBytes() ?: return@rememberLauncherForActivityResult
-            onPresentFile(fileName, mimeType, bytes)
-        }
-    }
 
     val totalSeats = 8
     val masterAngle = -90f
@@ -540,8 +529,7 @@ private fun VirtualTableView(
             if (uiState.isMaster) {
                 MasterBottomPanel(
                     uiState = uiState,
-                    onPresentFile = onPresentFile,
-                    filePickerLauncher = filePickerLauncher,
+                    onPresentAsset = onPresentAsset,
                     onDismissFile = onDismissFile,
                     onToggleFullscreen = onToggleFullscreen
                 )
@@ -700,13 +688,11 @@ private fun FeltTable(modifier: Modifier = Modifier) {
 @Composable
 private fun MasterBottomPanel(
     uiState: LiveRoomState,
-    onPresentFile: (String, String, ByteArray) -> Unit,
-    filePickerLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>,
+    onPresentAsset: (String, String, String) -> Unit,
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit
 ) {
     var showFileSelector by remember { mutableStateOf(false) }
-    val localContext = LocalContext.current
 
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -751,7 +737,7 @@ private fun MasterBottomPanel(
             ) {
                 Icon(Icons.Default.PresentToAll, contentDescription = null, tint = Color(0xFF1A1A2E))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Presenta File", color = Color(0xFF1A1A2E), fontWeight = FontWeight.Bold)
+                Text("Presenta dalla Cronaca", color = Color(0xFF1A1A2E), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -761,25 +747,15 @@ private fun MasterBottomPanel(
             assets = uiState.chronicleAssets,
             onSelectAsset = { asset ->
                 showFileSelector = false
-                try {
-                    val file = java.io.File(asset.originalFilePath)
-                    if (file.exists()) {
-                        val bytes = file.readBytes()
-                        val mimeType = when {
-                            asset.type == MediaAssetType.DOCUMENT -> "application/pdf"
-                            asset.type == MediaAssetType.VIDEO -> "video/*"
-                            asset.originalFilePath.endsWith(".pdf") -> "application/pdf"
-                            asset.originalFilePath.endsWith(".gif") -> "image/gif"
-                            asset.originalFilePath.endsWith(".svg") -> "image/svg+xml"
-                            else -> "image/*"
-                        }
-                        onPresentFile(asset.title, mimeType, bytes)
-                    }
-                } catch (_: Exception) {}
-            },
-            onImportFromDevice = {
-                showFileSelector = false
-                filePickerLauncher.launch(arrayOf("image/*", "application/pdf", "video/*", "*/*"))
+                val mimeType = when {
+                    asset.type == MediaAssetType.DOCUMENT -> "application/pdf"
+                    asset.type == MediaAssetType.VIDEO -> "video/*"
+                    asset.originalFilePath.endsWith(".pdf") -> "application/pdf"
+                    asset.originalFilePath.endsWith(".gif") -> "image/gif"
+                    asset.originalFilePath.endsWith(".svg") -> "image/svg+xml"
+                    else -> "image/*"
+                }
+                onPresentAsset(asset.id, asset.title, mimeType)
             },
             onDismiss = { showFileSelector = false }
         )
@@ -790,7 +766,6 @@ private fun MasterBottomPanel(
 private fun ChronicleFileSelector(
     assets: List<MediaAsset>,
     onSelectAsset: (MediaAsset) -> Unit,
-    onImportFromDevice: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -800,7 +775,7 @@ private fun ChronicleFileSelector(
             Column {
                 if (assets.isEmpty()) {
                     Text(
-                        text = "Nessun file nella cronaca.\nImporta dalla memoria del dispositivo.",
+                        text = "Nessun file nella cronaca.\nImporta file nella sezione Media della cronaca.",
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -855,15 +830,9 @@ private fun ChronicleFileSelector(
             }
         },
         confirmButton = {
-            TextButton(onClick = onImportFromDevice) {
-                Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Importa da Dispositivo")
-            }
-        },
-        dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-        }
+        },
+        dismissButton = null
     )
 }
 

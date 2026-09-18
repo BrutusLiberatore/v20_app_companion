@@ -1217,8 +1217,8 @@ fun V20NavGraph(
                     liveRoomViewModel.joinRoom(host, port, name, charId)
                 },
                 onRetryJoin = { liveRoomViewModel.retryJoin() },
-                onPresentFile = { name, mime, data ->
-                    liveRoomViewModel.presentFile(name, mime, data)
+                onPresentAsset = { assetId, name, mime ->
+                    liveRoomViewModel.presentAsset(assetId, name, mime)
                 },
                 onDismissFile = { liveRoomViewModel.dismissFile() },
                 onToggleFullscreen = { liveRoomViewModel.toggleFullscreen() },

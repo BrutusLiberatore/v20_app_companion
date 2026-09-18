@@ -41,7 +41,8 @@ data class PresentedFile(
     val id: String,
     val name: String,
     val mimeType: String,
-    val data: ByteArray,
+    val assetId: String = "",
+    val data: ByteArray = byteArrayOf(),
     val presentedAt: Long = System.currentTimeMillis()
 ) {
     override fun equals(other: Any?): Boolean {
@@ -79,17 +80,10 @@ sealed class LiveRoomMessage {
     data class DiceRoll(val characterId: String, val playerName: String, val pool: String, val result: String, val dice: List<Int> = emptyList()) : LiveRoomMessage()
 
     @Serializable
-    data class PresentFile(val fileName: String, val mimeType: String, val data: ByteArray) : LiveRoomMessage() {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is PresentFile) return false
-            return fileName == other.fileName && mimeType == other.mimeType
-        }
-        override fun hashCode(): Int = fileName.hashCode() * 31 + mimeType.hashCode()
-    }
+    data class PresentAsset(val assetId: String, val fileName: String, val mimeType: String) : LiveRoomMessage()
 
     @Serializable
-    data class DismissFile(val fileName: String) : LiveRoomMessage()
+    data class DismissAsset(val dummy: String = "") : LiveRoomMessage()
 
     @Serializable
     data class FullscreenFile(val isFullscreen: Boolean) : LiveRoomMessage()
