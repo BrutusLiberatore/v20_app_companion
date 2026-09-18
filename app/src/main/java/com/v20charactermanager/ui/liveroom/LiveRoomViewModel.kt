@@ -62,6 +62,16 @@ class LiveRoomViewModel(
                     onMessage = { clientId, message -> handleServerMessage(clientId, message) },
                     onConnected = { id, name ->
                         Log.d(TAG, "Player connected: $name")
+                        _uiState.update { state ->
+                            if (state.connectedPlayers.none { it.id == id }) {
+                                state.copy(
+                                    connectedPlayers = state.connectedPlayers + ConnectedPlayer(
+                                        id = id,
+                                        name = name
+                                    )
+                                )
+                            } else state
+                        }
                     },
                     onDisconnected = { id, name ->
                         _uiState.update { state ->
@@ -155,7 +165,13 @@ class LiveRoomViewModel(
             data = data
         )
         _uiState.update { it.copy(presentedFile = presented) }
-        server?.broadcast(LiveRoomMessage.PresentFile(fileName, mimeType, data))
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                server?.broadcast(LiveRoomMessage.PresentFile(fileName, mimeType, data))
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to broadcast file", e)
+            }
+        }
     }
 
     fun dismissFile() {

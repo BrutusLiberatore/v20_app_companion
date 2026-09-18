@@ -10,6 +10,7 @@ import java.io.*
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class LiveRoomServer(
     private val roomName: String,
@@ -25,7 +26,7 @@ class LiveRoomServer(
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = false }
 
-    private val _connections = mutableMapOf<String, ClientConnection>()
+    private val _connections = ConcurrentHashMap<String, ClientConnection>()
     val connections: Map<String, ClientConnection> get() = _connections.toMap()
 
     private var onClientMessage: ((clientId: String, message: LiveRoomMessage) -> Unit)? = null
@@ -211,7 +212,7 @@ class LiveRoomServer(
     }
 
     fun broadcast(message: LiveRoomMessage, excludeId: String? = null) {
-        _connections.forEach { (id, conn) ->
+        _connections.entries.toList().forEach { (id, conn) ->
             if (id != excludeId) {
                 sendToClient(conn.writer, message)
             }
