@@ -42,7 +42,6 @@ fun StorytellerLiveScreen(
     onEventClick: (String, String) -> Unit,
     onMediaClick: () -> Unit,
     onQuickNpc: (String, CreatureType, String) -> Unit,
-    onLiveRoom: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showNewNoteDialog by remember { mutableStateOf(false) }
@@ -223,8 +222,7 @@ fun StorytellerLiveScreen(
                     onDiceClick = onDiceClick,
                     onNoteClick = { showNewNoteDialog = true },
                     onEventClick = { showNewEventDialog = true },
-                    onQuickNpc = onQuickNpc,
-                    onLiveRoom = onLiveRoom
+                    onQuickNpc = onQuickNpc
                 )
             }
         }

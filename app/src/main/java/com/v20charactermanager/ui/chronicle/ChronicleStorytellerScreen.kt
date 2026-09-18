@@ -187,7 +187,6 @@ fun ChronicleStorytellerScreen(
                             onCreateNpc(session.chronicleId, name, creatureType, role, null)
                         }
                     },
-                    onLiveRoom = onLiveRoom,
                     modifier = Modifier.padding(padding)
                 )
             }

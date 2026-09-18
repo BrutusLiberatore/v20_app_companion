@@ -19,7 +19,6 @@ fun QuickActionBar(
     onNoteClick: () -> Unit,
     onEventClick: () -> Unit,
     onQuickNpc: (String, CreatureType, String) -> Unit,
-    onLiveRoom: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showQuickNpcDialog by remember { mutableStateOf(false) }
@@ -77,19 +76,6 @@ fun QuickActionBar(
             },
             leadingIcon = {
                 Icon(Icons.Filled.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
-            },
-            modifier = Modifier.weight(1f)
-        )
-        AssistChip(
-            onClick = onLiveRoom,
-            label = {
-                Text(
-                    text = stringResource(R.string.live_room),
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            leadingIcon = {
-                Icon(Icons.Filled.Casino, contentDescription = null, modifier = Modifier.size(18.dp))
             },
             modifier = Modifier.weight(1f)
         )
