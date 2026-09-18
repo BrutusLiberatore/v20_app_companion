@@ -158,24 +158,25 @@ class LiveRoomViewModel(
     }
 
     fun presentAsset(assetId: String, fileName: String, mimeType: String) {
-        val asset = _uiState.value.chronicleAssets.find { it.id == assetId }
-        val bytes = try {
-            asset?.let { java.io.File(it.originalFilePath).readBytes() } ?: byteArrayOf()
-        } catch (_: Exception) { byteArrayOf() }
-
-        val presented = PresentedFile(
-            id = UUID.randomUUID().toString(),
-            name = fileName,
-            mimeType = mimeType,
-            assetId = assetId,
-            data = bytes
-        )
-        _uiState.update { it.copy(presentedFile = presented) }
+        val asset = _uiState.value.chronicleAssets.find { it.id == assetId } ?: return
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
-                server?.broadcast(LiveRoomMessage.PresentAsset(assetId, fileName, mimeType))
+                val file = java.io.File(asset.originalFilePath)
+                if (!file.exists()) return@launch
+                val bytes = file.readBytes()
+                val b64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+
+                val presented = PresentedFile(
+                    id = UUID.randomUUID().toString(),
+                    name = fileName,
+                    mimeType = mimeType,
+                    data = bytes
+                )
+                _uiState.update { it.copy(presentedFile = presented) }
+                server?.broadcast(LiveRoomMessage.PresentFile(fileName, mimeType, b64))
+                Log.d(TAG, "Presented asset: $fileName (${bytes.size} bytes, b64=${b64.length})")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to broadcast PresentAsset", e)
+                Log.e(TAG, "Failed to present asset", e)
             }
         }
     }
@@ -184,9 +185,9 @@ class LiveRoomViewModel(
         _uiState.update { it.copy(presentedFile = null, isFileFullscreen = false) }
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
-                server?.broadcast(LiveRoomMessage.DismissAsset())
+                server?.broadcast(LiveRoomMessage.DismissFile())
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to broadcast DismissAsset", e)
+                Log.e(TAG, "Failed to broadcast DismissFile", e)
             }
         }
     }
@@ -361,21 +362,19 @@ class LiveRoomViewModel(
                     )
                 }
             }
-            is LiveRoomMessage.PresentAsset -> {
-                val asset = _uiState.value.chronicleAssets.find { it.id == message.assetId }
+            is LiveRoomMessage.PresentFile -> {
                 val bytes = try {
-                    asset?.let { java.io.File(it.originalFilePath).readBytes() } ?: byteArrayOf()
+                    android.util.Base64.decode(message.base64Data, android.util.Base64.NO_WRAP)
                 } catch (_: Exception) { byteArrayOf() }
                 val presented = PresentedFile(
                     id = UUID.randomUUID().toString(),
                     name = message.fileName,
                     mimeType = message.mimeType,
-                    assetId = message.assetId,
                     data = bytes
                 )
                 _uiState.update { it.copy(presentedFile = presented) }
             }
-            is LiveRoomMessage.DismissAsset -> {
+            is LiveRoomMessage.DismissFile -> {
                 _uiState.update { it.copy(presentedFile = null, isFileFullscreen = false) }
             }
             is LiveRoomMessage.FullscreenFile -> {

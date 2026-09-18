@@ -41,7 +41,6 @@ data class PresentedFile(
     val id: String,
     val name: String,
     val mimeType: String,
-    val assetId: String = "",
     val data: ByteArray = byteArrayOf(),
     val presentedAt: Long = System.currentTimeMillis()
 ) {
@@ -80,10 +79,10 @@ sealed class LiveRoomMessage {
     data class DiceRoll(val characterId: String, val playerName: String, val pool: String, val result: String, val dice: List<Int> = emptyList()) : LiveRoomMessage()
 
     @Serializable
-    data class PresentAsset(val assetId: String, val fileName: String, val mimeType: String) : LiveRoomMessage()
+    data class PresentFile(val fileName: String, val mimeType: String, val base64Data: String) : LiveRoomMessage()
 
     @Serializable
-    data class DismissAsset(val dummy: String = "") : LiveRoomMessage()
+    data class DismissFile(val dummy: String = "") : LiveRoomMessage()
 
     @Serializable
     data class FullscreenFile(val isFullscreen: Boolean) : LiveRoomMessage()
