@@ -163,22 +163,83 @@ class LiveRoomViewModel(
             try {
                 val file = java.io.File(asset.originalFilePath)
                 if (!file.exists()) return@launch
-                val bytes = file.readBytes()
+
+                val isImage = mimeType.startsWith("image/") && !mimeType.contains("gif") && !mimeType.contains("svg")
+                val maxBytes = 4 * 1024 * 1024L // 4MB limit for Base64 transfer
+
+                val bytes = if (isImage && file.length() > maxBytes) {
+                    compressImage(file, maxBytes.toInt())
+                } else if (file.length() > maxBytes * 2) {
+                    Log.w(TAG, "File too large for TCP transfer: ${file.length()} bytes")
+                    _uiState.update { it.copy(error = "File troppo grande (${file.length() / 1024 / 1024}MB). Massimo 8MB.") }
+                    return@launch
+                } else {
+                    file.readBytes()
+                }
+
                 val b64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
 
-                val presented = PresentedFile(
-                    id = UUID.randomUUID().toString(),
-                    name = fileName,
-                    mimeType = mimeType,
-                    data = bytes
-                )
+                // Don't store raw bytes in state for large files to avoid OOM
+                val presented = if (bytes.size < 2 * 1024 * 1024) {
+                    PresentedFile(
+                        id = UUID.randomUUID().toString(),
+                        name = fileName,
+                        mimeType = mimeType,
+                        data = bytes
+                    )
+                } else {
+                    PresentedFile(
+                        id = UUID.randomUUID().toString(),
+                        name = fileName,
+                        mimeType = mimeType,
+                        data = byteArrayOf()
+                    )
+                }
                 _uiState.update { it.copy(presentedFile = presented) }
                 server?.broadcast(LiveRoomMessage.PresentFile(fileName, mimeType, b64))
                 Log.d(TAG, "Presented asset: $fileName (${bytes.size} bytes, b64=${b64.length})")
+            } catch (e: OutOfMemoryError) {
+                Log.e(TAG, "OOM presenting asset", e)
+                _uiState.update { it.copy(error = "File troppo grande per la memoria. Prova con un'immagine più piccola.") }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to present asset", e)
             }
         }
+    }
+
+    private fun compressImage(file: java.io.File, maxBytes: Int): ByteArray {
+        val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+            ?: return file.readBytes()
+
+        var quality = 85
+        var scaledBitmap = bitmap
+        var bytes: ByteArray
+
+        // Scale down if bitmap is very large
+        val maxDimension = 2048
+        if (bitmap.width > maxDimension || bitmap.height > maxDimension) {
+            val scale = maxDimension.toFloat() / maxOf(bitmap.width, bitmap.height)
+            scaledBitmap = android.graphics.Bitmap.createScaledBitmap(
+                bitmap,
+                (bitmap.width * scale).toInt(),
+                (bitmap.height * scale).toInt(),
+                true
+            )
+            if (scaledBitmap !== bitmap) bitmap.recycle()
+        }
+
+        do {
+            val stream = java.io.ByteArrayOutputStream()
+            scaledBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, stream)
+            bytes = stream.toByteArray()
+            quality -= 10
+        } while (bytes.size > maxBytes && quality > 10)
+
+        if (scaledBitmap !== bitmap) scaledBitmap.recycle()
+        bitmap.recycle()
+
+        Log.d(TAG, "Compressed image: ${file.length()} -> ${bytes.size} bytes (quality=$quality)")
+        return bytes
     }
 
     fun dismissFile() {
@@ -364,7 +425,15 @@ class LiveRoomViewModel(
             }
             is LiveRoomMessage.PresentFile -> {
                 val bytes = try {
-                    android.util.Base64.decode(message.base64Data, android.util.Base64.NO_WRAP)
+                    if (message.base64Data.length > 6 * 1024 * 1024) {
+                        Log.w(TAG, "Base64 payload too large: ${message.base64Data.length}")
+                        byteArrayOf()
+                    } else {
+                        android.util.Base64.decode(message.base64Data, android.util.Base64.NO_WRAP)
+                    }
+                } catch (e: OutOfMemoryError) {
+                    Log.e(TAG, "OOM decoding PresentFile", e)
+                    byteArrayOf()
                 } catch (_: Exception) { byteArrayOf() }
                 val presented = PresentedFile(
                     id = UUID.randomUUID().toString(),
