@@ -18,6 +18,7 @@ enum class SessionEventType {
     PLOT_STATUS_CHANGED,
     ROLL_PERFORMED,
     NOTE_CREATED,
+    RELATIONSHIP_CHANGED,
     MANUAL_EVENT
 }
 

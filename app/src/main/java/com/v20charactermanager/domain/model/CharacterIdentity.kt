@@ -19,5 +19,6 @@ data class CharacterIdentity(
     val demeanor: DemeanorId = DemeanorId.CONFORMIST,
     val sire: String = "",
     val haven: String = "",
-    val concept: String = ""
+    val concept: String = "",
+    val clanChoices: Map<String, String> = emptyMap()
 )

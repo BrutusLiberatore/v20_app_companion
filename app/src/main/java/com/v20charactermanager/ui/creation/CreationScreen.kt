@@ -35,7 +35,9 @@ fun CreationScreen(
     onNextStep: () -> Unit,
     onPreviousStep: () -> Unit,
     onSave: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onConfirmWarnings: () -> Unit,
+    onDismissWarnings: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -100,7 +102,8 @@ fun CreationScreen(
             when (uiState.currentStep) {
                 1 -> IdentityStep(
                     identity = uiState.character.identity,
-                    onIdentityChange = onIdentityChange
+                    onIdentityChange = onIdentityChange,
+                    onAttributesChange = onAttributeChange
                 )
                 2 -> AttributesStep(
                     attributes = uiState.character.attributes,
@@ -147,6 +150,42 @@ fun CreationScreen(
                     )
                 }
             }
+        }
+
+        // Warning popup for non-standard point allocation
+        uiState.pendingWarnings?.let { warnings ->
+            AlertDialog(
+                onDismissRequest = onDismissWarnings,
+                title = {
+                    Text(
+                        text = stringResource(R.string.creation_warning_title),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.creation_warning_message))
+                        warnings.forEach { warning ->
+                            Text(
+                                text = "• $warning",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = onConfirmWarnings) {
+                        Text(stringResource(R.string.creation_warning_continue))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onDismissWarnings) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
         }
     }
 }

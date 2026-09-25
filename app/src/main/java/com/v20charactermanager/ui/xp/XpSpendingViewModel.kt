@@ -21,7 +21,7 @@ data class XpTraitItem(
 )
 
 enum class TraitType {
-    ATTRIBUTE, ABILITY, DISCIPLINE, BACKGROUND, VIRTUE
+    ATTRIBUTE, ABILITY, DISCIPLINE, BACKGROUND, VIRTUE, HUMANITY, WILLPOWER
 }
 
 data class XpSpendingUiState(
@@ -81,6 +81,8 @@ class XpSpendingViewModel(
                 "Disciplines" -> item.traitType == TraitType.DISCIPLINE
                 "Backgrounds" -> item.traitType == TraitType.BACKGROUND
                 "Virtues" -> item.traitType == TraitType.VIRTUE
+                "Morality" -> item.traitType == TraitType.HUMANITY
+                "Willpower" -> item.traitType == TraitType.WILLPOWER
                 else -> item.category.equals(category, ignoreCase = true)
             }
         }
@@ -105,11 +107,18 @@ class XpSpendingViewModel(
                 }
                 TraitType.DISCIPLINE -> {
                     val discId = DisciplineId.entries.find { it.nameEn == item.name } ?: return@launch
-                    character.copy(
-                        disciplines = character.disciplines.map {
-                            if (it.id == discId) it.copy(value = item.currentValue + 1) else it
-                        }
-                    )
+                    val exists = character.disciplines.any { it.id == discId }
+                    if (exists) {
+                        character.copy(
+                            disciplines = character.disciplines.map {
+                                if (it.id == discId) it.copy(value = item.currentValue + 1) else it
+                            }
+                        )
+                    } else {
+                        character.copy(
+                            disciplines = character.disciplines + com.v20charactermanager.domain.model.DisciplineValue(id = discId, value = 1)
+                        )
+                    }
                 }
                 TraitType.BACKGROUND -> {
                     val bgId = BackgroundId.entries.find { it.nameEn == item.name } ?: return@launch
@@ -122,6 +131,16 @@ class XpSpendingViewModel(
                 TraitType.VIRTUE -> {
                     val virtueId = VirtueId.entries.find { it.nameEn == item.name } ?: return@launch
                     character.setVirtueValue(virtueId, item.currentValue + 1)
+                }
+                TraitType.HUMANITY -> {
+                    character.copy(
+                        moralPath = character.moralPath.copy(conscienceValue = character.moralPath.conscienceValue + 1)
+                    )
+                }
+                TraitType.WILLPOWER -> {
+                    character.copy(
+                        willpower = character.willpower.setPermanent(item.currentValue + 1)
+                    )
                 }
             }
 
@@ -151,9 +170,11 @@ class XpSpendingViewModel(
     private fun buildTraitList(character: Character): List<XpTraitItem> {
         val items = mutableListOf<XpTraitItem>()
         val clan = character.identity.clan
+        val generation = character.identity.generation
+        val maxTrait = com.v20charactermanager.domain.engine.GenerationRules.getMaxTrait(generation)
 
         character.attributes.forEach { attr ->
-            if (attr.value < 5) {
+            if (attr.value < maxTrait) {
                 val cost = XpCostCalculator.calculateAttributeCost(attr.value)
                 items.add(
                     XpTraitItem(
@@ -168,7 +189,7 @@ class XpSpendingViewModel(
         }
 
         character.abilities.forEach { abil ->
-            if (abil.value < 5) {
+            if (abil.value < maxTrait) {
                 val cost = XpCostCalculator.calculateAbilityCost(abil.value, abil.value == 0)
                 items.add(
                     XpTraitItem(
@@ -183,8 +204,9 @@ class XpSpendingViewModel(
         }
 
         character.disciplines.forEach { disc ->
-            if (disc.value < 5) {
-                val cost = XpCostCalculator.calculateDisciplineCost(clan, disc.value, false)
+            if (disc.value < maxTrait) {
+                val inClan = disc.id in clan.clanDisciplines
+                val cost = XpCostCalculator.calculateDisciplineCost(clan, disc.value, isNew = false, inClan = inClan)
                 items.add(
                     XpTraitItem(
                         name = disc.id.nameEn,
@@ -197,8 +219,23 @@ class XpSpendingViewModel(
             }
         }
 
+        // New disciplines not yet possessed (10 XP flat)
+        val possessedIds = character.disciplines.map { it.id }.toSet()
+        DisciplineId.entries.filter { it !in possessedIds }.forEach { disc ->
+            val cost = XpCostCalculator.calculateDisciplineCost(clan, 0, isNew = true)
+            items.add(
+                XpTraitItem(
+                    name = disc.nameEn,
+                    currentValue = 0,
+                    cost = cost,
+                    category = "Disciplines",
+                    traitType = TraitType.DISCIPLINE
+                )
+            )
+        }
+
         character.backgrounds.forEach { bg ->
-            if (bg.value < 5) {
+            if (bg.value < maxTrait) {
                 val cost = XpCostCalculator.calculateBackgroundCost(bg.value)
                 items.add(
                     XpTraitItem(
@@ -213,7 +250,7 @@ class XpSpendingViewModel(
         }
 
         character.virtues.forEach { virt ->
-            if (virt.value < 5) {
+            if (virt.value < maxTrait) {
                 val cost = XpCostCalculator.calculateVirtueCost(virt.value)
                 items.add(
                     XpTraitItem(
@@ -227,6 +264,36 @@ class XpSpendingViewModel(
             }
         }
 
+        // Humanity / Path
+        val currentHumanity = character.moralPath.humanity
+        if (currentHumanity < 10) {
+            val cost = XpCostCalculator.calculateHumanityCost(currentHumanity)
+            items.add(
+                XpTraitItem(
+                    name = "Humanity",
+                    currentValue = currentHumanity,
+                    cost = cost,
+                    category = "Morality",
+                    traitType = TraitType.HUMANITY
+                )
+            )
+        }
+
+        // Willpower (permanent)
+        val currentWillpower = character.willpower.permanent
+        if (currentWillpower < 10) {
+            val cost = XpCostCalculator.calculateWillpowerCost(currentWillpower)
+            items.add(
+                XpTraitItem(
+                    name = "Willpower",
+                    currentValue = currentWillpower,
+                    cost = cost,
+                    category = "Willpower",
+                    traitType = TraitType.WILLPOWER
+                )
+            )
+        }
+
         return items.sortedBy { it.category }
     }
 
@@ -234,7 +301,8 @@ class XpSpendingViewModel(
         val categories = listOf(
             "Physical", "Social", "Mental",
             "Talents", "Skills", "Knowledges",
-            "Disciplines", "Backgrounds", "Virtues"
+            "Disciplines", "Backgrounds", "Virtues",
+            "Morality", "Willpower"
         )
     }
 }

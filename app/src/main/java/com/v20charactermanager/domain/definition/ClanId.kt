@@ -4,137 +4,223 @@ enum class ClanId(
     val id: String,
     val nameIt: String,
     val nameEn: String,
-    val sect: String,
+    val defaultSect: SectId,
     val clanDisciplines: List<DisciplineId>,
-    val weaknessIt: String,
-    val weaknessEn: String
+    val weakness: ClanWeakness,
+    val requiredChoices: List<RequiredChoice>,
+    val automaticCreationEffects: List<AutomaticCreationEffect>,
+    val creationHints: CreationHints = CreationHints()
 ) {
     ASSAMITE(
         id = "clan.assamite",
         nameIt = "Assamiti",
         nameEn = "Assamite",
-        sect = "Indipendenti",
+        defaultSect = SectId.INDEPENDENT,
         clanDisciplines = listOf(DisciplineId.OBFUSCATE, DisciplineId.QUIETUS, DisciplineId.CELERITY),
-        weaknessIt = "Se bevi sangue di vampiro sei tentato dalla diablerie",
-        weaknessEn = "Drinking vampire blood tempts you toward diablerie"
+        weakness = ClanWeakness.KindredBloodCurse(),
+        requiredChoices = emptyList(),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.PHYSICAL, AttributeCategory.SOCIAL),
+            recommendedAbilityCategories = listOf(AbilityCategory.TALENTS, AbilityCategory.SKILLS)
+        )
     ),
     BRUAH(
         id = "clan.brujah",
         nameIt = "Brujah",
         nameEn = "Brujah",
-        sect = "Camarilla",
+        defaultSect = SectId.CAMARILLA,
         clanDisciplines = listOf(DisciplineId.PRESENCE, DisciplineId.POTENCE, DisciplineId.CELERITY),
-        weaknessIt = "Impulsivi: difficoltà +2 per resistere alla frenesia",
-        weaknessEn = "Impulsive: +2 difficulty to resist frenzy"
+        weakness = ClanWeakness.Frenzy(),
+        requiredChoices = emptyList(),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.PHYSICAL),
+            recommendedAbilityCategories = listOf(AbilityCategory.SKILLS, AbilityCategory.TALENTS)
+        )
     ),
     GANGREL(
         id = "clan.gangrel",
         nameIt = "Gangrel",
         nameEn = "Gangrel",
-        sect = "Camarilla",
-        clanDisciplines = listOf(DisciplineId.ANIMALISM, DisciplineId.PROTEAN, DisciplineId.RESILIENCE),
-        weaknessIt = "Ogni frenesia lascia un tratto animale finché non recuperi",
-        weaknessEn = "Each frenzy leaves an animal trait until recovered"
+        defaultSect = SectId.CAMARILLA,
+        clanDisciplines = listOf(DisciplineId.ANIMALISM, DisciplineId.PROTEAN, DisciplineId.FORTITUDE),
+        weakness = ClanWeakness.FrenzyAnimalTrait(),
+        requiredChoices = emptyList(),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.PHYSICAL),
+            recommendedAbilityCategories = listOf(AbilityCategory.TALENTS, AbilityCategory.SKILLS, AbilityCategory.KNOWLEDGES)
+        )
     ),
     GIOVANNI(
         id = "clan.giovanni",
         nameIt = "Giovanni",
         nameEn = "Giovanni",
-        sect = "Indipendenti",
+        defaultSect = SectId.INDEPENDENT,
         clanDisciplines = listOf(DisciplineId.DOMINATE, DisciplineId.NECROMANCY, DisciplineId.POTENCE),
-        weaknessIt = "Il morso infligge danni aggravati e non dà piacere alla preda",
-        weaknessEn = "The bite inflicts aggravated damage and gives no sustenance"
+        weakness = ClanWeakness.PainfulKiss(),
+        requiredChoices = emptyList(),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.SOCIAL, AttributeCategory.MENTAL, AttributeCategory.PHYSICAL),
+            recommendedAbilityCategories = listOf(AbilityCategory.KNOWLEDGES, AbilityCategory.TALENTS)
+        )
     ),
     LASOMBRA(
         id = "clan.lasombra",
         nameIt = "Lasombra",
         nameEn = "Lasombra",
-        sect = "Sabbat",
+        defaultSect = SectId.SABBAT,
         clanDisciplines = listOf(DisciplineId.DOMINATE, DisciplineId.OBTENEBRATION, DisciplineId.POTENCE),
-        weaknessIt = "Non produci riflesso in specchi né su superfici",
-        weaknessEn = "You cast no reflection in mirrors or on surfaces"
+        weakness = ClanWeakness.NoReflection(),
+        requiredChoices = emptyList(),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.MENTAL, AttributeCategory.SOCIAL),
+            noteIt = "Nessuna categoria fissa; le build tendono a essere specializzate.",
+            noteEn = "No fixed category bonus; builds tend to be specialized."
+        )
     ),
     MALKAVIAN(
         id = "clan.malkavian",
         nameIt = "Malkavian",
         nameEn = "Malkavian",
-        sect = "Camarilla",
-        clanDisciplines = listOf(DisciplineId.PRESENCE, DisciplineId.AUSPEX, DisciplineId.DEMENTATION),
-        weaknessIt = "Sono tutti afflitti da una forma di follia incurabile",
-        weaknessEn = "All are afflicted with an incurable form of madness"
+        defaultSect = SectId.CAMARILLA,
+        clanDisciplines = listOf(DisciplineId.AUSPEX, DisciplineId.DEMENTATION, DisciplineId.OBFUSCATE),
+        weakness = ClanWeakness.PermanentDerangement(),
+        requiredChoices = listOf(RequiredChoice.DerangementChoice()),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.MENTAL),
+            recommendedAbilityCategories = listOf(AbilityCategory.TALENTS, AbilityCategory.KNOWLEDGES)
+        )
     ),
     NOSFERATU(
         id = "clan.nosferatu",
         nameIt = "Nosferatu",
         nameEn = "Nosferatu",
-        sect = "Camarilla",
+        defaultSect = SectId.CAMARILLA,
         clanDisciplines = listOf(DisciplineId.ANIMALISM, DisciplineId.OBFUSCATE, DisciplineId.POTENCE),
-        weaknessIt = "Deformi: Aspetto 0, nessun tiro sociale basato sulla bellezza",
-        weaknessEn = "Deformed: Appearance 0, no social rolls based on looks"
+        weakness = ClanWeakness.AppearanceZero(),
+        requiredChoices = emptyList(),
+        automaticCreationEffects = listOf(
+            AutomaticCreationEffect(
+                operation = "set_and_lock",
+                traitId = "attribute.appearance",
+                value = 0,
+                refundCreationDots = false,
+                note = "Appearance is an exception to the normal rule that Attributes begin at 1."
+            )
+        ),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.PHYSICAL, AttributeCategory.MENTAL),
+            recommendedAbilityCategories = listOf(AbilityCategory.TALENTS, AbilityCategory.SKILLS, AbilityCategory.KNOWLEDGES)
+        )
     ),
     RAVNOS(
         id = "clan.ravnos",
         nameIt = "Ravnos",
         nameEn = "Ravnos",
-        sect = "Indipendenti",
+        defaultSect = SectId.INDEPENDENT,
         clanDisciplines = listOf(DisciplineId.ANIMALISM, DisciplineId.CHIMESTRY, DisciplineId.FORTITUDE),
-        weaknessIt = "Ognuno è schiavo di un vizio particolare del clan",
-        weaknessEn = "Each is slave to a particular clan vice"
+        weakness = ClanWeakness.ViceCompulsion(),
+        requiredChoices = listOf(RequiredChoice.ViceChoice()),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.PHYSICAL, AttributeCategory.SOCIAL),
+            recommendedAbilityCategories = listOf(AbilityCategory.TALENTS, AbilityCategory.SKILLS)
+        )
     ),
     FOLLOWERS_OF_SET(
         id = "clan.followersOfSet",
         nameIt = "Seguaci di Set",
         nameEn = "Followers of Set",
-        sect = "Indipendenti",
+        defaultSect = SectId.INDEPENDENT,
         clanDisciplines = listOf(DisciplineId.PRESENCE, DisciplineId.OBFUSCATE, DisciplineId.SERPENTIS),
-        weaknessIt = "Doppia vulnerabilità a luce solare e fuoco",
-        weaknessEn = "Double vulnerability to sunlight and fire"
+        weakness = ClanWeakness.LightSensitivity(),
+        requiredChoices = emptyList(),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.SOCIAL, AttributeCategory.MENTAL),
+            recommendedAbilityCategories = listOf(AbilityCategory.KNOWLEDGES, AbilityCategory.TALENTS)
+        )
     ),
     TOREADOR(
         id = "clan.toreador",
         nameIt = "Toreador",
         nameEn = "Toreador",
-        sect = "Camarilla",
+        defaultSect = SectId.CAMARILLA,
         clanDisciplines = listOf(DisciplineId.PRESENCE, DisciplineId.AUSPEX, DisciplineId.CELERITY),
-        weaknessIt = "Estasi: dinanzi alla bellezza rischi di restarne rapito",
-        weaknessEn = "Ecstasy: in the presence of beauty you risk being enraptured"
+        weakness = ClanWeakness.AestheticEntrancement(),
+        requiredChoices = emptyList(),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.SOCIAL),
+            noteIt = "La priorità delle abilità segue la focus artistica/sociale scelta.",
+            noteEn = "Ability priority follows the chosen artistic/social focus."
+        )
     ),
     TREMERE(
         id = "clan.tremere",
         nameIt = "Tremere",
         nameEn = "Tremere",
-        sect = "Camarilla",
+        defaultSect = SectId.CAMARILLA,
         clanDisciplines = listOf(DisciplineId.AUSPEX, DisciplineId.DOMINATE, DisciplineId.THAUMATURGY),
-        weaknessIt = "Legati da tre sorsi del sangue degli anziani del clan",
-        weaknessEn = "Bound by three draughts of blood from clan elders"
+        weakness = ClanWeakness.BloodBondSusceptibility(),
+        requiredChoices = emptyList(),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.MENTAL),
+            recommendedAbilityCategories = listOf(AbilityCategory.KNOWLEDGES)
+        )
     ),
     TZIMISCE(
         id = "clan.tzimisce",
         nameIt = "Tzimisce",
         nameEn = "Tzimisce",
-        sect = "Sabbat",
+        defaultSect = SectId.SABBAT,
         clanDisciplines = listOf(DisciplineId.ANIMALISM, DisciplineId.AUSPEX, DisciplineId.VICISSITUDE),
-        weaknessIt = "Devi dormire circondato da terra della tua patria",
-        weaknessEn = "You must sleep surrounded by soil from your homeland"
+        weakness = ClanWeakness.NativeSoilDependency(),
+        requiredChoices = listOf(RequiredChoice.NativeSoilChoice()),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.PHYSICAL, AttributeCategory.MENTAL),
+            recommendedAbilityCategories = listOf(AbilityCategory.KNOWLEDGES, AbilityCategory.SKILLS)
+        )
     ),
     VENTRUE(
         id = "clan.ventrue",
         nameIt = "Ventrue",
         nameEn = "Ventrue",
-        sect = "Camarilla",
-        clanDisciplines = listOf(DisciplineId.PRESENCE, DisciplineId.DOMINATE, DisciplineId.RESILIENCE),
-        weaknessIt = "Palato esigente: puoi nutrirti solo da un tipo di preda",
-        weaknessEn = "Discerning palate: you can only feed from one type of prey"
+        defaultSect = SectId.CAMARILLA,
+        clanDisciplines = listOf(DisciplineId.PRESENCE, DisciplineId.DOMINATE, DisciplineId.FORTITUDE),
+        weakness = ClanWeakness.FeedingRestriction(),
+        requiredChoices = listOf(RequiredChoice.FeedingRestrictionChoice()),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            recommendedAttributes = listOf(AttributeCategory.SOCIAL, AttributeCategory.MENTAL),
+            noteIt = "Qualsiasi categoria può essere primaria secondo l'expertise.",
+            noteEn = "Any category can be primary according to expertise."
+        )
     ),
     CAITIFF(
         id = "clan.caitiff",
         nameIt = "Caitiff",
         nameEn = "Caitiff",
-        sect = "",
+        defaultSect = SectId.CAMARILLA,
         clanDisciplines = emptyList(),
-        weaknessIt = "Senza clan: nessuno ti rispetta, costi PE più alti",
-        weaknessEn = "No clan: no one respects you, higher XP costs"
+        weakness = ClanWeakness.Clanless(),
+        requiredChoices = emptyList(),
+        automaticCreationEffects = emptyList(),
+        creationHints = CreationHints(
+            noteIt = "Nessuna preferenza di clan.",
+            noteEn = "No clan preference."
+        )
     );
+
+    val weaknessDescriptionIt: String get() = weakness.descriptionIt
+    val weaknessDescriptionEn: String get() = weakness.descriptionEn
 
     companion object {
         fun fromId(id: String): ClanId? =

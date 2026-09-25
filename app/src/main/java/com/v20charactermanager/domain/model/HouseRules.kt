@@ -20,7 +20,7 @@ data class HouseRules(
     val freebieDisciplineCost: Int = 7,
     val freebieBackgroundCost: Int = 1,
     val freebieVirtueCost: Int = 2,
-    val freebieHumanityCost: Int = 1,
+    val freebieHumanityCost: Int = 2,
     val freebieWillpowerCost: Int = 1,
     val startingBlood: Int = 10,
     val startingWillpower: Int = 3,

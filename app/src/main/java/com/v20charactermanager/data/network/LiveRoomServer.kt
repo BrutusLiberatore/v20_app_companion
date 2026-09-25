@@ -32,7 +32,7 @@ class LiveRoomServer(
     val connections: Map<String, ClientConnection> get() = _connections.toMap()
 
     private var onClientMessage: ((clientId: String, message: LiveRoomMessage) -> Unit)? = null
-    private var onClientConnected: ((clientId: String, playerName: String) -> Unit)? = null
+    private var onClientConnected: ((clientId: String, playerName: String, characterId: String?) -> Unit)? = null
     private var onClientDisconnected: ((clientId: String, playerName: String) -> Unit)? = null
 
     data class ClientConnection(
@@ -45,7 +45,7 @@ class LiveRoomServer(
 
     fun setCallbacks(
         onMessage: (String, LiveRoomMessage) -> Unit,
-        onConnected: (String, String) -> Unit,
+        onConnected: (String, String, String?) -> Unit,
         onDisconnected: (String, String) -> Unit
     ) {
         onClientMessage = onMessage
@@ -169,7 +169,7 @@ class LiveRoomServer(
                     excludeId = clientId
                 )
 
-                onClientConnected?.invoke(clientId, joinMsg.playerName)
+                onClientConnected?.invoke(clientId, joinMsg.playerName, joinMsg.characterId)
 
                 // Set read timeout for the message loop to detect dead clients
                 socket.soTimeout = CLIENT_READ_TIMEOUT_MS

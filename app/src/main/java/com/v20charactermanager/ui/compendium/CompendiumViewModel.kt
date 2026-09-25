@@ -61,11 +61,11 @@ class CompendiumViewModel(
                     id = clan.id,
                     nameIt = clan.nameIt,
                     nameEn = clan.nameEn,
-                    descriptionIt = clan.weaknessIt,
-                    descriptionEn = clan.weaknessEn,
+                    descriptionIt = clan.weaknessDescriptionIt,
+                    descriptionEn = clan.weaknessDescriptionEn,
                     category = CompendiumCategory.CLAN.name,
-                    extraInfoIt = "Setta: ${clan.sect}\nDiscipline: ${clan.clanDisciplines.joinToString { it.nameIt }}",
-                    extraInfoEn = "Sect: ${clan.sect}\nDisciplines: ${clan.clanDisciplines.joinToString { it.nameEn }}"
+                    extraInfoIt = "Setta: ${clan.defaultSect.nameIt}\nDiscipline: ${clan.clanDisciplines.joinToString { it.nameIt }}",
+                    extraInfoEn = "Sect: ${clan.defaultSect.nameEn}\nDisciplines: ${clan.clanDisciplines.joinToString { it.nameEn }}"
                 )
             )
         }
@@ -216,7 +216,6 @@ class CompendiumViewModel(
         DisciplineId.PRESENCE -> "Concede il potere di influenzare le emozioni altrui: amore, odio, terrore, adorazione. Può affascinare o terrorizzare intere folla." to "Grants the power to influence others' emotions: love, hatred, terror, adoration. It can charm or terrorize entire crowds."
         DisciplineId.PROTEAN -> "Permette di mutare il proprio corpo, assumendo forme animali, fondendosi con la terra, o generando artigli e denti d'acciaio." to "Allows the transformation of one's body, assuming animal forms, merging with the earth, or growing steel-like claws and fangs."
         DisciplineId.QUIETUS -> "Concede il potere di azzerare il proprio rapporto con il sangue, fermando il flusso vitale. Può anche uccidere con un morso silenzioso." to "Grants the power to zero out one's blood relationship, stopping the vital flow. It can also kill with a silent bite."
-        DisciplineId.RESILIENCE -> "Concede una resistenza fisica superiore alla norma. Il vampiro guarisce più rapidamente e sopporta danni che abbatterebbero altri." to "Grants physical resilience beyond the norm. The vampire heals more quickly and endures damage that would fell others."
         DisciplineId.SERPENTIS -> "Permette di trasformare gli occhi in serpenti, immobilizzare con lo sguardo, generare veleno e persino rigenerare il corpo." to "Allows transforming eyes into serpents, immobilizing with a gaze, generating venom, and even regenerating the body."
         DisciplineId.THAUMATURGY -> "La magia del sangue: permette di manipolare il flusso vitale, creare fuoco, controllare il clima e compiere prodigi through rituali complessi." to "Blood magic: allows manipulation of the vital flow, creating fire, controlling weather, and performing wonders through complex rituals."
         DisciplineId.VICISSITUDE -> "Permette di manipolare la carne propria e altrui, deformando, scolpendo e trasformando i corpi in maniera orrorifica o artistica." to "Allows the manipulation of one's own flesh and that of others, deforming, sculpting, and transforming bodies in horrific or artistic ways."

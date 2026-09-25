@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.v20charactermanager.R
@@ -22,7 +23,8 @@ import com.v20charactermanager.ui.components.V20IntField
 @Composable
 fun IdentityStep(
     identity: CharacterIdentity,
-    onIdentityChange: (CharacterIdentity) -> Unit
+    onIdentityChange: (CharacterIdentity) -> Unit,
+    onAttributesChange: ((AttributeId, Int) -> Unit)? = null
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -74,6 +76,7 @@ fun IdentityStep(
 
         // Clan dropdown
         var clanExpanded by remember { mutableStateOf(false) }
+        var showClanInfo by remember { mutableStateOf(false) }
         ExposedDropdownMenuBox(
             expanded = clanExpanded,
             onExpandedChange = { clanExpanded = it }
@@ -102,12 +105,25 @@ fun IdentityStep(
                         text = { Text(displayName) },
                         onClick = {
                             val defaultSect = SectId.defaultForClan(clan)
-                            onIdentityChange(identity.copy(clan = clan, sect = defaultSect))
+                            var updated = identity.copy(clan = clan, sect = defaultSect)
+                            if (clan == ClanId.NOSFERATU) {
+                                onAttributesChange?.invoke(AttributeId.APPEARANCE, 0)
+                            }
+                            onIdentityChange(updated)
                             clanExpanded = false
+                            showClanInfo = true
                         }
                     )
                 }
             }
+        }
+
+        // Clan info popup
+        if (showClanInfo) {
+            ClanInfoPopup(
+                clan = identity.clan,
+                onDismiss = { showClanInfo = false }
+            )
         }
 
         // Sect dropdown
@@ -138,6 +154,122 @@ fun IdentityStep(
                             sectExpanded = false
                         }
                     )
+                }
+            }
+        }
+
+        // Clan required choices
+        val clanRequiredChoices = identity.clan.requiredChoices
+        if (clanRequiredChoices.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.field_clan_choices),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            clanRequiredChoices.forEach { choice ->
+                when (choice) {
+                    is RequiredChoice.DerangementChoice -> {
+                        var derangementExpanded by remember { mutableStateOf(false) }
+                        val derangements = listOf(
+                            "Paranoia" to "Paranoia",
+                            "Schizofrenia" to "Schizophrenia",
+                            "Dissociazione" to "Dissociative Identity",
+                            "Ansia" to "Anxiety Disorder",
+                            "Fobie" to "Phobia",
+                            "Ossessioni" to "Obsessive-Compulsive",
+                            "Depressione" to "Clinical Depression",
+                            "Mania" to "Mania",
+                            "Deliri" to "Delusion",
+                            "Altro" to "Other"
+                        )
+                        ExposedDropdownMenuBox(
+                            expanded = derangementExpanded,
+                            onExpandedChange = { derangementExpanded = it }
+                        ) {
+                            OutlinedTextField(
+                                value = identity.clanChoices[choice.id] ?: "",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text(stringResource(R.string.field_derangement)) },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = derangementExpanded) },
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = derangementExpanded,
+                                onDismissRequest = { derangementExpanded = false }
+                            ) {
+                                derangements.forEach { (it, en) ->
+                                    DropdownMenuItem(
+                                        text = { Text(it) },
+                                        onClick = {
+                                            onIdentityChange(identity.copy(clanChoices = identity.clanChoices + (choice.id to it)))
+                                            derangementExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    is RequiredChoice.ViceChoice -> {
+                        var viceExpanded by remember { mutableStateOf(false) }
+                        val vices = listOf(
+                            "Bugia" to "lying",
+                            "Crudeltà" to "cruelty",
+                            "Furto" to "theft",
+                            "Invidia" to "envy",
+                            "Gola" to "gluttony",
+                            "Orgoglio" to "pride",
+                            "Accidia" to "sloth",
+                            "Avarizia" to "avarice",
+                            "Lussuria" to "lust",
+                            "Altro" to "other"
+                        )
+                        ExposedDropdownMenuBox(
+                            expanded = viceExpanded,
+                            onExpandedChange = { viceExpanded = it }
+                        ) {
+                            OutlinedTextField(
+                                value = identity.clanChoices[choice.id] ?: "",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text(stringResource(R.string.field_clan_vice)) },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = viceExpanded) },
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = viceExpanded,
+                                onDismissRequest = { viceExpanded = false }
+                            ) {
+                                vices.forEach { (it, en) ->
+                                    DropdownMenuItem(
+                                        text = { Text(it) },
+                                        onClick = {
+                                            onIdentityChange(identity.copy(clanChoices = identity.clanChoices + (choice.id to en)))
+                                            viceExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    is RequiredChoice.FeedingRestrictionChoice -> {
+                        OutlinedTextField(
+                            value = identity.clanChoices[choice.id] ?: "",
+                            onValueChange = { onIdentityChange(identity.copy(clanChoices = identity.clanChoices + (choice.id to it))) },
+                            label = { Text(stringResource(R.string.field_feeding_restriction)) },
+                            placeholder = { Text(stringResource(R.string.field_feeding_restriction_hint)) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    is RequiredChoice.NativeSoilChoice -> {
+                        OutlinedTextField(
+                            value = identity.clanChoices[choice.id] ?: "",
+                            onValueChange = { onIdentityChange(identity.copy(clanChoices = identity.clanChoices + (choice.id to it))) },
+                            label = { Text(stringResource(R.string.field_native_soil_origin)) },
+                            placeholder = { Text(stringResource(R.string.field_native_soil_hint)) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
@@ -737,4 +869,106 @@ fun FinalizationStep(
             }
         }
     }
+}
+
+@Composable
+fun ClanInfoPopup(
+    clan: ClanId,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = if (clan == ClanId.CAITIFF) stringResource(R.string.clan_no_clan) else clan.nameEn,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Sect
+                Row {
+                    Text(
+                        text = "${stringResource(R.string.field_sect)}: ",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(text = clan.defaultSect.nameEn)
+                }
+
+                // Disciplines
+                if (clan.clanDisciplines.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.field_disciplines),
+                        fontWeight = FontWeight.Bold
+                    )
+                    clan.clanDisciplines.forEach { disc ->
+                        Text(text = "  • ${disc.nameEn}", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                // Weakness
+                Divider()
+                Text(
+                    text = stringResource(R.string.field_weakness),
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = clan.weaknessDescriptionEn,
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                // Creation hints
+                if (clan.creationHints.hasHints) {
+                    Divider()
+                    Text(
+                        text = stringResource(R.string.creation_hints),
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (clan.creationHints.recommendedAttributes.isNotEmpty()) {
+                        Text(
+                            text = "${stringResource(R.string.hints_attributes)}: ${clan.creationHints.recommendedAttributes.joinToString { it.name }}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    if (clan.creationHints.recommendedAbilityCategories.isNotEmpty()) {
+                        Text(
+                            text = "${stringResource(R.string.hints_abilities)}: ${clan.creationHints.recommendedAbilityCategories.joinToString { it.name }}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    if (clan.creationHints.noteEn.isNotBlank()) {
+                        Text(
+                            text = clan.creationHints.noteEn,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
+                }
+
+                // Required choices
+                if (clan.requiredChoices.isNotEmpty()) {
+                    Divider()
+                    Text(
+                        text = stringResource(R.string.field_clan_choices),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    clan.requiredChoices.forEach { choice ->
+                        Text(
+                            text = "  • ${choice.promptEn}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.ok))
+            }
+        }
+    )
 }

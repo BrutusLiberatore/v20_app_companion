@@ -8,10 +8,10 @@ class XpCostCalculatorTest {
 
     @Test
     fun `attribute cost increases by cost per dot`() {
-        assertEquals(10, XpCostCalculator.calculateAttributeCost(1))
-        assertEquals(15, XpCostCalculator.calculateAttributeCost(2))
-        assertEquals(20, XpCostCalculator.calculateAttributeCost(3))
-        assertEquals(25, XpCostCalculator.calculateAttributeCost(4))
+        assertEquals(8, XpCostCalculator.calculateAttributeCost(1))
+        assertEquals(12, XpCostCalculator.calculateAttributeCost(2))
+        assertEquals(16, XpCostCalculator.calculateAttributeCost(3))
+        assertEquals(20, XpCostCalculator.calculateAttributeCost(4))
     }
 
     @Test
@@ -53,7 +53,13 @@ class XpCostCalculatorTest {
 
     @Test
     fun `standard new discipline cost`() {
-        assertEquals(7, XpCostCalculator.calculateDisciplineCost(ClanId.VENTRUE, 0, isNew = true))
+        assertEquals(10, XpCostCalculator.calculateDisciplineCost(ClanId.VENTRUE, 0, isNew = true))
+    }
+
+    @Test
+    fun `out of clan discipline increase costs more`() {
+        assertEquals(7, XpCostCalculator.calculateDisciplineCost(ClanId.VENTRUE, 1, isNew = false, inClan = false))
+        assertEquals(14, XpCostCalculator.calculateDisciplineCost(ClanId.VENTRUE, 2, isNew = false, inClan = false))
     }
 
     @Test

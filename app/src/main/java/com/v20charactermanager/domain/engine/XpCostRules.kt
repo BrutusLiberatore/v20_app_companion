@@ -14,37 +14,45 @@ data class XpCostRules(
         increaseMultiplier = 6
     ),
     val standardDisciplineCost: DisciplineXpCost = DisciplineXpCost(
-        newDisciplineCost = 7,
+        newDisciplineCost = 10,
         increaseMultiplier = 5
     ),
-    val attributeCost: Int = 5,
+    val outOfClanDisciplineCost: DisciplineXpCost = DisciplineXpCost(
+        newDisciplineCost = 10,
+        increaseMultiplier = 7
+    ),
+    val attributeCost: Int = 4,
     val abilityCost: Int = 2,
     val backgroundCost: Int = 1,
     val virtueCost: Int = 2,
-    val humanityCost: Int = 1,
+    val humanityCost: Int = 2,
     val willpowerCost: Int = 1,
     val newAbilityCost: Int = 3,
     val newAttributeCost: Int = 5
 ) {
-    fun getDisciplineCost(clan: ClanId): DisciplineXpCost {
-        return if (clan == ClanId.CAITIFF) caitiffDisciplineCost else standardDisciplineCost
+    fun getDisciplineCost(clan: ClanId, inClan: Boolean = true): DisciplineXpCost {
+        return when {
+            clan == ClanId.CAITIFF -> caitiffDisciplineCost
+            !inClan -> outOfClanDisciplineCost
+            else -> standardDisciplineCost
+        }
     }
 
     fun getNewDisciplineCost(clan: ClanId): Int =
         getDisciplineCost(clan).newDisciplineCost
 
-    fun getDisciplineIncreaseCost(clan: ClanId, currentLevel: Int): Int =
-        getDisciplineCost(clan).increaseMultiplier * currentLevel
+    fun getDisciplineIncreaseCost(clan: ClanId, currentLevel: Int, inClan: Boolean = true): Int =
+        getDisciplineCost(clan, inClan).increaseMultiplier * currentLevel
 }
 
 object XpCostCalculator {
     private val rules = XpCostRules()
 
-    fun calculateDisciplineCost(clan: ClanId, currentLevel: Int, isNew: Boolean): Int {
+    fun calculateDisciplineCost(clan: ClanId, currentLevel: Int, isNew: Boolean, inClan: Boolean = true): Int {
         return if (isNew) {
             rules.getNewDisciplineCost(clan)
         } else {
-            rules.getDisciplineIncreaseCost(clan, currentLevel)
+            rules.getDisciplineIncreaseCost(clan, currentLevel, inClan)
         }
     }
 
@@ -62,5 +70,13 @@ object XpCostCalculator {
 
     fun calculateVirtueCost(currentValue: Int): Int {
         return rules.virtueCost * (currentValue + 1)
+    }
+
+    fun calculateHumanityCost(currentValue: Int): Int {
+        return rules.humanityCost * (currentValue + 1)
+    }
+
+    fun calculateWillpowerCost(currentValue: Int): Int {
+        return rules.willpowerCost * (currentValue + 1)
     }
 }

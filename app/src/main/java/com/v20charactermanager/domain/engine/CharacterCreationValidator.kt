@@ -24,10 +24,18 @@ class CharacterCreationValidator {
 
     fun validateAttributes(character: Character): ValidationResult {
         val errors = mutableListOf<String>()
+        val isNosferatu = character.identity.clan == ClanId.NOSFERATU
+
+        if (isNosferatu && character.getAttributeValue(AttributeId.APPEARANCE) != 0) {
+            errors.add("Nosferatu must have Appearance 0")
+        }
 
         val categoryPoints = AttributeCategory.entries.map { category ->
             val attrs = character.attributes.filter { it.id.category == category }
-            category to attrs.sumOf { it.value - RuleSet.ATTRIBUTE_BASE }
+            category to attrs.sumOf { attr ->
+                val base = if (isNosferatu && attr.id == AttributeId.APPEARANCE) 0 else RuleSet.ATTRIBUTE_BASE
+                attr.value - base
+            }
         }
 
         val totalPoints = categoryPoints.sumOf { it.second }

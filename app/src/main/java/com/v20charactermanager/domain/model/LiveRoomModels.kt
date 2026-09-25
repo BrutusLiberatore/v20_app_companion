@@ -33,7 +33,8 @@ data class LiveRoomState(
     val isConnected: Boolean = false,
     val error: String? = null,
     val chronicleAssets: List<MediaAsset> = emptyList(),
-    val connectionStatus: String = ""
+    val connectionStatus: String = "",
+    val characterPortraits: Map<String, String> = emptyMap()
 )
 
 @Serializable
@@ -89,6 +90,9 @@ sealed class LiveRoomMessage {
 
     @Serializable
     data class Error(val message: String) : LiveRoomMessage()
+
+    @Serializable
+    data class PortraitUpdate(val characterId: String, val portraitUri: String) : LiveRoomMessage()
 
     @Serializable
     data class Welcome(val playerId: String, val roomName: String, val masterName: String, val players: List<PlayerInfo>) : LiveRoomMessage()

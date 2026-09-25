@@ -397,6 +397,7 @@ private fun EventCard(event: SessionEvent, dateFormat: SimpleDateFormat) {
         SessionEventType.PLOT_STATUS_CHANGED -> Icons.Default.AccountTree
         SessionEventType.ROLL_PERFORMED -> Icons.Default.Casino
         SessionEventType.NOTE_CREATED -> Icons.Default.Note
+        SessionEventType.RELATIONSHIP_CHANGED -> Icons.Default.Favorite
         SessionEventType.MANUAL_EVENT -> Icons.Default.Event
     }
 

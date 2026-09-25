@@ -92,7 +92,7 @@ class FreebiePointCalculatorTest {
         assertEquals(7, cost.disciplineCost)
         assertEquals(1, cost.backgroundCost)
         assertEquals(2, cost.virtueCost)
-        assertEquals(1, cost.humanityCost)
+        assertEquals(2, cost.humanityCost)
         assertEquals(1, cost.willpowerCost)
     }
 }

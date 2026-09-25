@@ -18,6 +18,7 @@ data class CreationUiState(
     val currentStep: Int = 1,
     val character: Character = Character(id = UUID.randomUUID().toString()),
     val validationResult: CharacterCreationValidator.ValidationResult? = null,
+    val pendingWarnings: List<String>? = null,
     val freebieReport: FreebiePointCalculator.FreebieReport? = null,
     val isSaving: Boolean = false,
     val error: String? = null
@@ -157,12 +158,54 @@ class CharacterCreationViewModel(
         if (result.isValid) {
             _uiState.value = state.copy(
                 currentStep = state.currentStep + 1,
-                validationResult = null
+                validationResult = null,
+                pendingWarnings = null
             )
             saveDraft()
         } else {
-            _uiState.value = state.copy(validationResult = result)
+            val warningPrefixes = listOf(
+                "Total attribute points",
+                "Attribute distribution",
+                "Category",
+                "Total ability points",
+                "Ability distribution",
+                "Discipline points",
+                "Background points",
+                "Virtue points"
+            )
+            val hardErrors = result.errors.filter { error ->
+                warningPrefixes.none { error.startsWith(it) }
+            }
+            val warnings = result.errors.filter { error ->
+                warningPrefixes.any { error.startsWith(it) }
+            }
+            if (hardErrors.isNotEmpty()) {
+                _uiState.value = state.copy(validationResult = result, pendingWarnings = null)
+            } else if (warnings.isNotEmpty()) {
+                _uiState.value = state.copy(validationResult = null, pendingWarnings = warnings)
+            } else {
+                _uiState.value = state.copy(
+                    currentStep = state.currentStep + 1,
+                    validationResult = null,
+                    pendingWarnings = null
+                )
+                saveDraft()
+            }
         }
+    }
+
+    fun confirmWarnings() {
+        val state = _uiState.value
+        _uiState.value = state.copy(
+            currentStep = state.currentStep + 1,
+            validationResult = null,
+            pendingWarnings = null
+        )
+        saveDraft()
+    }
+
+    fun dismissWarnings() {
+        _uiState.value = _uiState.value.copy(pendingWarnings = null)
     }
 
     fun previousStep() {

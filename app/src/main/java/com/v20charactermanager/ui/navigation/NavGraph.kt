@@ -4,9 +4,30 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.TableRestaurant
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -16,7 +37,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -24,6 +53,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.v20charactermanager.data.di.AppContainer
+import com.v20charactermanager.domain.model.LiveRoomState
 import com.v20charactermanager.util.LocaleHelper
 import com.v20charactermanager.domain.model.CharacterRandomizer
 import com.v20charactermanager.domain.model.ChronicleLocation
@@ -144,12 +174,23 @@ fun V20NavGraph(
         factory = HomeViewModelFactory(appContainer.characterRepository)
     )
 
-    NavHost(
-        navController = navController,
-        startDestination = Routes.HOME
-    ) {
-        composable(Routes.HOME) {
-            val uiState by homeViewModel.uiState.collectAsState()
+    // LiveRoomViewModel scoped to entire NavHost (survives navigation)
+    val liveRoomViewModel: com.v20charactermanager.ui.liveroom.LiveRoomViewModel = viewModel(
+        factory = com.v20charactermanager.ui.liveroom.LiveRoomViewModelFactory(
+            context.applicationContext as android.app.Application,
+            appContainer.mediaRepository,
+            appContainer.characterRepository
+        )
+    )
+    val liveRoomState by liveRoomViewModel.uiState.collectAsState()
+
+    Box {
+        NavHost(
+            navController = navController,
+            startDestination = Routes.HOME
+        ) {
+            composable(Routes.HOME) {
+                val uiState by homeViewModel.uiState.collectAsState()
 
             HomeScreen(
                 uiState = uiState,
@@ -244,6 +285,12 @@ fun V20NavGraph(
                 },
                 onBack = {
                     navController.popBackStack()
+                },
+                onConfirmWarnings = {
+                    viewModel.confirmWarnings()
+                },
+                onDismissWarnings = {
+                    viewModel.dismissWarnings()
                 }
             )
         }
@@ -485,11 +532,11 @@ fun V20NavGraph(
             selectedItem?.let { item ->
                 CompendiumDetailScreen(
                     item = item,
-                    onBack = {
-                        navController.popBackStack()
-                    }
-                )
-            }
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
         }
         composable(Routes.IMPORT_EXPORT) {
             val viewModel: ImportExportViewModel = viewModel(
@@ -1182,13 +1229,7 @@ fun V20NavGraph(
             val autoPort = backStackEntry.arguments?.getString("port")?.toIntOrNull() ?: 0
             val autoPlayerName = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("playerName") ?: "", "UTF-8")
             val autoCharacterId = backStackEntry.arguments?.getString("characterId") ?: ""
-            val context = LocalContext.current
-            val liveRoomViewModel: com.v20charactermanager.ui.liveroom.LiveRoomViewModel = viewModel(
-                factory = com.v20charactermanager.ui.liveroom.LiveRoomViewModelFactory(
-                    context.applicationContext as android.app.Application,
-                    appContainer.mediaRepository
-                )
-            )
+            
             val liveRoomState by liveRoomViewModel.uiState.collectAsState()
 
             val chronicleRepo = appContainer.chronicleRepository
@@ -1205,7 +1246,7 @@ fun V20NavGraph(
             val audioViewModel: com.v20charactermanager.ui.chronicle.AudioViewModel = viewModel(
                 factory = com.v20charactermanager.ui.chronicle.AudioViewModelFactory(
                     appContainer.audioRepository,
-                    context.applicationContext
+                    LocalContext.current.applicationContext
                 )
             )
             LaunchedEffect(chronicleId) {
@@ -1313,6 +1354,95 @@ fun V20NavGraph(
                 },
                 onBack = { navController.popBackStack() }
             )
+        }
+    }
+
+    // Persistent Live Room re-entry button
+    if (liveRoomState.isConnected && !liveRoomState.isFileFullscreen) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp, 80.dp) // Above bottom nav
+        ) {
+            LiveRoomEntryButton(
+                liveRoomState = liveRoomState,
+                navController = navController,
+                onNavigate = { route ->
+                    navController.navigate(route)
+                }
+            )
+        }
+    }
+}
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LiveRoomEntryButton(
+    liveRoomState: LiveRoomState,
+    navController: NavHostController,
+    onNavigate: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val role = if (liveRoomState.isMaster) "Master" else "Giocatore"
+    val roomName = liveRoomState.room?.name ?: "Stanza"
+    val scale by animateFloatAsState(if (liveRoomState.isConnected) 1f else 0f, label = "entryButtonScale")
+
+    Card(
+        modifier = modifier
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .padding(8.dp)
+            .shadow(4.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        onClick = {
+            val chronicleId = liveRoomState.room?.chronicleId ?: ""
+            val asMaster = liveRoomState.isMaster
+            val route = Routes.liveRoom(chronicleId, asMaster)
+            onNavigate(route)
+        }
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(if (liveRoomState.isMaster) Color(0xFFD4A847) else Color(0xFF2E7D32))
+                            .clip(CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Text(
+                            text = "Tavolo Live: $roomName",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1A1A2E),
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = role,
+                            color = Color(0xFF1A1A2E).copy(alpha = 0.6f),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = null,
+                    tint = Color(0xFF1A1A2E).copy(alpha = 0.5f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
 }

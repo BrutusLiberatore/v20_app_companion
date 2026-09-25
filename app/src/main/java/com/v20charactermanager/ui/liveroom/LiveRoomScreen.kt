@@ -15,6 +15,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -830,6 +832,11 @@ private fun MasterBottomPanel(
             chronicleRepo = chronicleRepository,
             chronicleId = chronicleId,
             chronicleName = uiState.room?.name ?: "",
+            assets = uiState.chronicleAssets,
+            onPresentAsset = { assetId, name, mime ->
+                showChronicleInfo = false
+                onPresentAsset(assetId, name, mime)
+            },
             onDismiss = { showChronicleInfo = false }
         )
     }
@@ -1158,10 +1165,12 @@ private fun ChronicleDeepBrowserPopup(
     chronicleRepo: com.v20charactermanager.domain.repository.ChronicleRepository,
     chronicleId: String,
     chronicleName: String,
+    assets: List<MediaAsset> = emptyList(),
+    onPresentAsset: ((String, String, String) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     var selectedSection by remember { mutableIntStateOf(0) }
-    val sections = listOf("NPC", "Luoghi", "Note", "Scena", "Eventi", "Segreti")
+    val sections = listOf("NPC", "Luoghi", "Note", "Scena", "Eventi", "Segreti", "File")
 
     val npcs by chronicleRepo.getNpcs(chronicleId).collectAsState(initial = emptyList())
     val locations by chronicleRepo.getLocations(chronicleId).collectAsState(initial = emptyList())
@@ -1298,6 +1307,74 @@ private fun ChronicleDeepBrowserPopup(
                                         icon = Icons.Default.VisibilityOff,
                                         iconTint = Color(0xFF607D8B)
                                     )
+                                }
+                            }
+                        }
+                    }
+                    6 -> {
+                        if (assets.isEmpty()) {
+                            EmptySection("Nessun file nella cronaca")
+                        } else {
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(assets) { asset ->
+                                    val mimeType = when {
+                                        asset.type == MediaAssetType.DOCUMENT -> "application/pdf"
+                                        asset.type == MediaAssetType.VIDEO -> "video/*"
+                                        asset.originalFilePath.endsWith(".pdf") -> "application/pdf"
+                                        asset.originalFilePath.endsWith(".gif") -> "image/gif"
+                                        asset.originalFilePath.endsWith(".svg") -> "image/svg+xml"
+                                        else -> "image/*"
+                                    }
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A3E)),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(10.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = when {
+                                                    asset.type == MediaAssetType.VIDEO -> Icons.Default.PlayCircle
+                                                    asset.type == MediaAssetType.DOCUMENT -> Icons.Default.PictureAsPdf
+                                                    else -> Icons.Default.Image
+                                                },
+                                                contentDescription = null,
+                                                tint = Gold,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    asset.title,
+                                                    color = Color.White,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 13.sp,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    mimeType,
+                                                    color = Color.White.copy(alpha = 0.5f),
+                                                    fontSize = 11.sp
+                                                )
+                                            }
+                                            if (onPresentAsset != null) {
+                                                IconButton(
+                                                    onClick = { onPresentAsset(asset.id, asset.title, mimeType) },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.PresentToAll,
+                                                        contentDescription = "Presenta",
+                                                        tint = Gold,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1472,7 +1549,9 @@ private fun buildCircularSeats(
                 rotation = angleDeg + 90f,
                 chairSize = 60.dp,
                 avatarSize = if (isMasterSeat) 40.dp else 34.dp,
-                portraitUri = player?.characterId
+                portraitUri = player?.characterId?.let { charId ->
+                    uiState.characterPortraits[charId]?.ifBlank { null }
+                }
             )
         )
     }
@@ -1489,6 +1568,33 @@ private fun FullscreenPresentation(
 ) {
     val context = LocalContext.current
 
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+
+    val transformState = rememberTransformableState { zoomChange, panChange, _ ->
+        val newScale = (scale * zoomChange).coerceIn(1f, 5f)
+        scale = newScale
+        if (newScale > 1f) {
+            offset = Offset(
+                x = (offset.x + panChange.x).coerceIn(
+                    -800f * (newScale - 1f),
+                    800f * (newScale - 1f)
+                ),
+                y = (offset.y + panChange.y).coerceIn(
+                    -800f * (newScale - 1f),
+                    800f * (newScale - 1f)
+                )
+            )
+        } else {
+            offset = Offset.Zero
+        }
+    }
+
+    BackHandler(enabled = scale > 1f) {
+        scale = 1f
+        offset = Offset.Zero
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1499,7 +1605,15 @@ private fun FullscreenPresentation(
                 AsyncImage(
                     model = file.data,
                     contentDescription = file.name,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .transformable(state = transformState)
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offset.x,
+                            translationY = offset.y
+                        ),
                     contentScale = ContentScale.Fit
                 )
             }
@@ -1511,7 +1625,15 @@ private fun FullscreenPresentation(
                     AsyncImage(
                         model = bitmap,
                         contentDescription = file.name,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .transformable(state = transformState)
+                            .graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale,
+                                translationX = offset.x,
+                                translationY = offset.y
+                            ),
                         contentScale = ContentScale.Fit
                     )
                 } else {

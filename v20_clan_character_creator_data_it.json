@@ -1,0 +1,715 @@
+{
+  "formatId": "v20-character-creator-reference",
+  "schemaVersion": 1,
+  "language": "it",
+  "scope": "Vampire: The Masquerade 20th Anniversary Edition Core + project addendum",
+  "importantModelingRule": "Clan and Sect are separate. Clan defines Disciplines/weakness/required choices; Sect/chronicle profile defines starting allocation overrides.",
+  "coreCreation": {
+    "id": "v20.standard",
+    "sourceScope": "V20 Core",
+    "attributes": {
+      "primary": 7,
+      "secondary": 5,
+      "tertiary": 3,
+      "basePerAttribute": 1
+    },
+    "abilities": {
+      "primary": 13,
+      "secondary": 9,
+      "tertiary": 5,
+      "maxDuringAllocation": 3
+    },
+    "advantages": {
+      "disciplinePoints": 3,
+      "backgroundPoints": 5,
+      "virtuePoints": 7,
+      "basePerVirtue": 1
+    },
+    "freebiePoints": 15,
+    "freebieCosts": {
+      "attribute": 5,
+      "ability": 2,
+      "discipline": 7,
+      "background": 1,
+      "virtue": 2,
+      "humanityOrPath": 2,
+      "willpower": 1
+    },
+    "disciplineSelection": {
+      "standardClanCharacter": "Initial Advantage dots must be allocated to the character's Clan Disciplines.",
+      "caitiff": "May choose any Disciplines allowed by the Storyteller/RuleSet.",
+      "freebieDots": "Discipline dots bought with freebies need not be Clan Disciplines."
+    },
+    "optionalRules": {
+      "moreInhumanVampires": {
+        "enabledByStoryteller": true,
+        "disciplinePoints": 4,
+        "backgroundPoints": 0,
+        "note": "V20 Core optional creation rule; it replaces the normal starting Background dots."
+      }
+    },
+    "meritsAndFlaws": {
+      "optional": true,
+      "maxPoints": 7
+    }
+  },
+  "projectCreationProfiles": {
+    "note": "Project/chronicle profiles are kept separate from V20 Core so the engine can distinguish source rules from configured variants.",
+    "profiles": [
+      {
+        "id": "creation.camarilla",
+        "disciplinePoints": 3,
+        "virtuePoints": 7,
+        "backgroundPoints": 5,
+        "provenance": "project_addendum"
+      },
+      {
+        "id": "creation.anarch",
+        "disciplinePoints": 3,
+        "virtuePoints": 7,
+        "backgroundPoints": 5,
+        "provenance": "project_addendum"
+      },
+      {
+        "id": "creation.independent",
+        "disciplinePoints": 3,
+        "virtuePoints": 7,
+        "backgroundPoints": 5,
+        "provenance": "project_addendum"
+      },
+      {
+        "id": "creation.sabbat",
+        "disciplinePoints": 4,
+        "virtuePoints": 5,
+        "backgroundPoints": 5,
+        "provenance": "project_addendum",
+        "warning": "This is a project/chronicle profile, not the universal V20 Core default. Keep configurable."
+      }
+    ]
+  },
+  "experienceRules": {
+    "newAbility": 3,
+    "newDiscipline": 10,
+    "newThaumaturgyOrNecromancyPath": 7,
+    "attributeMultiplierCurrentRating": 4,
+    "abilityMultiplierCurrentRating": 2,
+    "clanDisciplineMultiplierCurrentRating": 5,
+    "outOfClanDisciplineMultiplierCurrentRating": 7,
+    "caitiffDisciplineMultiplierCurrentRating": 6,
+    "secondaryThaumaturgyOrNecromancyPathMultiplierCurrentRating": 4,
+    "virtueMultiplierCurrentRating": 2,
+    "humanityOrPathMultiplierCurrentRating": 2,
+    "willpowerMultiplierCurrentRating": 1
+  },
+  "disciplineMetadata": {
+    "signatureIsNotGloballyUnique": true,
+    "signatureDisciplines": [
+      "quietus",
+      "serpentis",
+      "protean",
+      "necromancy",
+      "obtenebration",
+      "dementation",
+      "chimerstry",
+      "thaumaturgy",
+      "vicissitude"
+    ],
+    "bloodMagic": {
+      "thaumaturgy": {
+        "usesPaths": true,
+        "usesRituals": true
+      },
+      "necromancy": {
+        "usesPaths": true,
+        "usesRituals": true
+      }
+    }
+  },
+  "clans": [
+    {
+      "id": "assamite",
+      "nameIt": "Assamiti",
+      "nameEn": "Assamite",
+      "defaultSectId": "independent",
+      "clanDisciplines": [
+        "celerity",
+        "obfuscate",
+        "quietus"
+      ],
+      "signatureDisciplines": [
+        "quietus"
+      ],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "physical",
+          "social"
+        ],
+        "abilities": [
+          "talents",
+          "skills"
+        ],
+        "backgrounds": "Usually fewer extensive Backgrounds; Discipline specialization is common.",
+        "morality": "Humanity requires attention; Clan-specific Paths may be appropriate only when allowed by the chronicle."
+      },
+      "weakness": {
+        "type": "kindred_blood_curse",
+        "kindredBloodDamage": {
+          "damageType": "lethal",
+          "automaticLevelsPerBloodPoint": 1,
+          "soakable": false
+        },
+        "diablerie": {
+          "damageType": "aggravated",
+          "automaticLevelsPerVictimPermanentWillpower": 1,
+          "benefitsIfSurvives": false
+        }
+      },
+      "requiredChoices": [],
+      "automaticCreationEffects": []
+    },
+    {
+      "id": "brujah",
+      "nameIt": "Brujah",
+      "nameEn": "Brujah",
+      "defaultSectId": "camarilla",
+      "clanDisciplines": [
+        "celerity",
+        "potence",
+        "presence"
+      ],
+      "signatureDisciplines": [],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "physical"
+        ],
+        "abilities": [
+          "skills",
+          "talents"
+        ],
+        "backgrounds": [
+          "contacts",
+          "allies",
+          "herd"
+        ],
+        "note": "Mental and Social commonly follow Physical; Knowledges remain viable."
+      },
+      "weakness": {
+        "type": "frenzy",
+        "resistOrRideFrenzyDifficultyModifier": 2,
+        "canSpendWillpowerToAvoidFrenzy": false,
+        "canSpendWillpowerToEndFrenzy": true
+      },
+      "requiredChoices": [],
+      "automaticCreationEffects": []
+    },
+    {
+      "id": "followers_of_set",
+      "nameIt": "Seguaci di Set",
+      "nameEn": "Followers of Set",
+      "defaultSectId": "independent",
+      "clanDisciplines": [
+        "obfuscate",
+        "presence",
+        "serpentis"
+      ],
+      "signatureDisciplines": [
+        "serpentis"
+      ],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "social",
+          "mental"
+        ],
+        "abilities": [
+          "knowledges",
+          "talents"
+        ],
+        "backgrounds": [
+          "allies",
+          "contacts",
+          "influence",
+          "resources",
+          "retainers"
+        ]
+      },
+      "weakness": {
+        "type": "light_sensitivity",
+        "sunlightAdditionalHealthLevels": 2,
+        "brightLightDicePenalty": 1
+      },
+      "requiredChoices": [],
+      "automaticCreationEffects": []
+    },
+    {
+      "id": "gangrel",
+      "nameIt": "Gangrel",
+      "nameEn": "Gangrel",
+      "defaultSectId": "camarilla",
+      "clanDisciplines": [
+        "animalism",
+        "fortitude",
+        "protean"
+      ],
+      "signatureDisciplines": [
+        "protean"
+      ],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "physical"
+        ],
+        "abilities": [
+          "talents",
+          "skills",
+          "knowledges"
+        ],
+        "backgrounds": "Often fewer Backgrounds; significant Resources, Influence and Retainers are uncommon in the core archetype."
+      },
+      "weakness": {
+        "type": "frenzy_animal_trait",
+        "onEachFrenzy": "Gain a temporary animal physical or behavioral characteristic; Storyteller defines a meaningful effect.",
+        "mayBecomePermanent": true
+      },
+      "requiredChoices": [],
+      "automaticCreationEffects": []
+    },
+    {
+      "id": "giovanni",
+      "nameIt": "Giovanni",
+      "nameEn": "Giovanni",
+      "defaultSectId": "independent",
+      "clanDisciplines": [
+        "dominate",
+        "necromancy",
+        "potence"
+      ],
+      "signatureDisciplines": [
+        "necromancy"
+      ],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "social",
+          "mental",
+          "physical"
+        ],
+        "abilities": [
+          "knowledges",
+          "talents"
+        ],
+        "backgrounds": "Characters often emphasize wealth/influence Backgrounds or concentrate on Disciplines rather than staying evenly distributed."
+      },
+      "weakness": {
+        "type": "painful_kiss",
+        "appliesTo": "mortal_vessels",
+        "healthDamagePerBloodPointTaken": 2
+      },
+      "requiredChoices": [],
+      "automaticCreationEffects": [],
+      "disciplineSetup": {
+        "necromancy": {
+          "usesPaths": true,
+          "usesRituals": true,
+          "requiresPrimaryPath": true,
+          "primaryPathAutoIncreasesWithNecromancy": true,
+          "usualPrimaryPath": "sepulchre_path",
+          "minimumPrimaryPathBeforeSecondPath": 3,
+          "primaryPathMustBeMasteredBeforeThirdPath": true
+        }
+      }
+    },
+    {
+      "id": "lasombra",
+      "nameIt": "Lasombra",
+      "nameEn": "Lasombra",
+      "defaultSectId": "sabbat",
+      "clanDisciplines": [
+        "dominate",
+        "obtenebration",
+        "potence"
+      ],
+      "signatureDisciplines": [
+        "obtenebration"
+      ],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "mental",
+          "social"
+        ],
+        "abilities": "No fixed category bonus; builds tend to be specialized.",
+        "backgrounds": "Often diversified across several Backgrounds at modest starting ratings."
+      },
+      "weakness": {
+        "type": "no_reflection",
+        "affectedSurfaces": [
+          "mirrors",
+          "water",
+          "polished_reflective_surfaces",
+          "rear_view_mirrors"
+        ],
+        "note": "Do not automatically extend this V20 Core rule to all digital cameras/recordings unless the Chronicle RuleSet says so."
+      },
+      "requiredChoices": [],
+      "automaticCreationEffects": []
+    },
+    {
+      "id": "malkavian",
+      "nameIt": "Malkavian",
+      "nameEn": "Malkavian",
+      "defaultSectId": "camarilla",
+      "clanDisciplines": [
+        "auspex",
+        "dementation",
+        "obfuscate"
+      ],
+      "signatureDisciplines": [
+        "dementation"
+      ],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "mental"
+        ],
+        "abilities": [
+          "talents",
+          "knowledges"
+        ],
+        "backgrounds": "Highly variable; should follow concept."
+      },
+      "weakness": {
+        "type": "permanent_derangement",
+        "incurableOriginalDerangement": true,
+        "canSpendWillpowerToAmeliorateForScene": true,
+        "canAcquireOtherDerangements": true
+      },
+      "requiredChoices": [
+        {
+          "id": "malkavian_derangement",
+          "type": "derangement",
+          "required": true,
+          "lockedAsClanWeakness": true
+        }
+      ],
+      "automaticCreationEffects": []
+    },
+    {
+      "id": "nosferatu",
+      "nameIt": "Nosferatu",
+      "nameEn": "Nosferatu",
+      "defaultSectId": "camarilla",
+      "clanDisciplines": [
+        "animalism",
+        "obfuscate",
+        "potence"
+      ],
+      "signatureDisciplines": [],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "physical",
+          "mental"
+        ],
+        "abilities": [
+          "talents",
+          "skills",
+          "knowledges"
+        ],
+        "backgrounds": [
+          "allies",
+          "contacts",
+          "mentor",
+          "influence"
+        ]
+      },
+      "weakness": {
+        "type": "appearance_zero",
+        "attributeId": "appearance",
+        "forcedValue": 0,
+        "maxValue": 0,
+        "canImprove": false
+      },
+      "requiredChoices": [],
+      "automaticCreationEffects": [
+        {
+          "operation": "set_and_lock",
+          "traitId": "attribute.appearance",
+          "value": 0,
+          "refundCreationDots": false,
+          "note": "Appearance is an exception to the normal rule that Attributes begin at 1."
+        }
+      ]
+    },
+    {
+      "id": "ravnos",
+      "nameIt": "Ravnos",
+      "nameEn": "Ravnos",
+      "defaultSectId": "independent",
+      "clanDisciplines": [
+        "animalism",
+        "chimerstry",
+        "fortitude"
+      ],
+      "signatureDisciplines": [
+        "chimerstry"
+      ],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "physical",
+          "social"
+        ],
+        "abilities": [
+          "talents",
+          "skills"
+        ],
+        "backgrounds": [
+          "resources",
+          "domain",
+          "allies",
+          "contacts"
+        ]
+      },
+      "weakness": {
+        "type": "vice_compulsion",
+        "resistTrait": "self_control_or_instinct",
+        "difficulty": 6
+      },
+      "requiredChoices": [
+        {
+          "id": "ravnos_vice",
+          "type": "free_text_or_enum",
+          "required": true,
+          "examples": [
+            "lying",
+            "cruelty",
+            "theft"
+          ]
+        }
+      ],
+      "automaticCreationEffects": []
+    },
+    {
+      "id": "toreador",
+      "nameIt": "Toreador",
+      "nameEn": "Toreador",
+      "defaultSectId": "camarilla",
+      "clanDisciplines": [
+        "auspex",
+        "celerity",
+        "presence"
+      ],
+      "signatureDisciplines": [],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "social"
+        ],
+        "abilities": "Ability priority follows the chosen artistic/social focus.",
+        "backgrounds": [
+          "allies",
+          "contacts",
+          "resources",
+          "domain",
+          "haven",
+          "mentor",
+          "retainers"
+        ],
+        "morality": "Virtues, Humanity/Path and Willpower are useful investments because the Clan weakness can remove agency in dangerous scenes."
+      },
+      "weakness": {
+        "type": "aesthetic_entrancement",
+        "trigger": "something genuinely remarkable/beautiful",
+        "resistTrait": "self_control_or_instinct",
+        "difficulty": 6,
+        "onFailure": "entranced_for_scene_or_until_stimulus_ends",
+        "rerollIfWounded": true
+      },
+      "requiredChoices": [],
+      "automaticCreationEffects": []
+    },
+    {
+      "id": "tremere",
+      "nameIt": "Tremere",
+      "nameEn": "Tremere",
+      "defaultSectId": "camarilla",
+      "clanDisciplines": [
+        "auspex",
+        "dominate",
+        "thaumaturgy"
+      ],
+      "signatureDisciplines": [
+        "thaumaturgy"
+      ],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "mental"
+        ],
+        "abilities": [
+          "knowledges"
+        ],
+        "backgrounds": [
+          "mentor",
+          "status",
+          "retainers"
+        ],
+        "morality": "High Courage/Willpower is common but not mandatory."
+      },
+      "weakness": {
+        "type": "blood_bond_susceptibility",
+        "drinksToFullBond": 2,
+        "firstDrinkCountsAsStage": 2
+      },
+      "requiredChoices": [],
+      "automaticCreationEffects": [],
+      "disciplineSetup": {
+        "thaumaturgy": {
+          "usesPaths": true,
+          "usesRituals": true,
+          "requiresPrimaryPath": true,
+          "onFirstDot": {
+            "primaryPathDots": 1,
+            "levelOneRituals": 1
+          },
+          "onThaumaturgyIncrease": "Increase primary path by one until path cap; later allocation follows RuleSet."
+        }
+      }
+    },
+    {
+      "id": "tzimisce",
+      "nameIt": "Tzimisce",
+      "nameEn": "Tzimisce",
+      "defaultSectId": "sabbat",
+      "clanDisciplines": [
+        "animalism",
+        "auspex",
+        "vicissitude"
+      ],
+      "signatureDisciplines": [
+        "vicissitude"
+      ],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "physical",
+          "mental"
+        ],
+        "abilities": [
+          "knowledges",
+          "skills"
+        ],
+        "backgrounds": [
+          "mentor",
+          "allies",
+          "domain",
+          "retainers"
+        ],
+        "morality": "Paths of Enlightenment are common in the archetype but remain a separate morality-system choice."
+      },
+      "weakness": {
+        "type": "native_soil_dependency",
+        "minimumNativeSoil": "at least two handfuls",
+        "onNightWithoutSoil": "halve all dice pools cumulatively, minimum 1 die",
+        "recovery": "rest a full day with native soil"
+      },
+      "requiredChoices": [
+        {
+          "id": "native_soil_origin",
+          "type": "free_text",
+          "required": true,
+          "description": "Place important to the character's mortal life/Embrace from which the soil originates."
+        }
+      ],
+      "automaticCreationEffects": []
+    },
+    {
+      "id": "ventrue",
+      "nameIt": "Ventrue",
+      "nameEn": "Ventrue",
+      "defaultSectId": "camarilla",
+      "clanDisciplines": [
+        "dominate",
+        "fortitude",
+        "presence"
+      ],
+      "signatureDisciplines": [],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": [
+          "social",
+          "mental"
+        ],
+        "abilities": "Any category can be primary according to expertise.",
+        "backgrounds": [
+          "resources",
+          "status",
+          "herd",
+          "domain",
+          "haven"
+        ]
+      },
+      "weakness": {
+        "type": "feeding_restriction",
+        "restrictionAppliesTo": "mortal_blood",
+        "otherMortalOrAnimalBloodGrantsBloodPool": false,
+        "vampiricBloodException": true,
+        "choicePermanent": true
+      },
+      "requiredChoices": [
+        {
+          "id": "ventrue_feeding_restriction",
+          "type": "free_text_or_tagged_rule",
+          "required": true,
+          "permanent": true
+        }
+      ],
+      "automaticCreationEffects": []
+    },
+    {
+      "id": "caitiff",
+      "nameIt": "Caitiff / Senza Clan",
+      "nameEn": "Caitiff / Clanless",
+      "defaultSectId": null,
+      "aliasesBySect": {
+        "sabbat": "Pander"
+      },
+      "clanDisciplines": [],
+      "signatureDisciplines": [],
+      "creationPointBonus": null,
+      "creationHints": {
+        "attributes": "No clan preference.",
+        "abilities": "No clan preference.",
+        "backgrounds": "No core-clan preference; chronicle/supplement restrictions should be separate rule modules."
+      },
+      "weakness": {
+        "type": "clanless",
+        "coreNote": "No inherited Clan Disciplines or Clan weakness in the V20 Core presentation; social consequences and supplemental rules should be modular."
+      },
+      "requiredChoices": [],
+      "automaticCreationEffects": [],
+      "disciplineRules": {
+        "initialSelection": "unrestricted_subject_to_storyteller",
+        "newDisciplineXp": 10,
+        "increaseMultiplierCurrentRating": 6
+      },
+      "projectIntegration": {
+        "sabbatPander": {
+          "creationProfileId": "creation.sabbat",
+          "displayName": "Pander"
+        }
+      }
+    }
+  ],
+  "implementationWarnings": [
+    "Do not add automatic Attribute/Ability bonus dots just because a Clan description recommends a priority. Those are character-creation suggestions, not bonuses.",
+    "Nosferatu Appearance 0 is a genuine mechanical override and an exception to the normal Attribute base of 1.",
+    "Keep V20 Core optional 'More Inhuman Vampires' (4 Disciplines / 0 Backgrounds) distinct from the project's Sabbat profile (4 Disciplines / 5 Virtues / 5 Backgrounds).",
+    "Use freebie cost Humanity/Path = 2 in the V20 Core RuleSet; the older project spec value 1 should be corrected or versioned as a house rule.",
+    "Do not infer Sect permanently from Clan; store clanId and sectId separately.",
+    "Do not treat 'signature Discipline' as globally exclusive; bloodlines/variants may share it."
+  ]
+}

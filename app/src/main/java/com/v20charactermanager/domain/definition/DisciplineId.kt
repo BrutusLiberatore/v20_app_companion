@@ -19,7 +19,6 @@ enum class DisciplineId(
     PRESENCE("discipline.presence", "Ascendente", "Presence"),
     PROTEAN("discipline.protean", "Proteide", "Protean"),
     QUIETUS("discipline.quietus", "Quietus", "Quietus"),
-    RESILIENCE("discipline.resilience", "Robustezza", "Resilience"),
     SERPENTIS("discipline.serpentis", "Serpentis", "Serpentis"),
     THAUMATURGY("discipline.thaumaturgy", "Taumaturgia", "Thaumaturgy"),
     VICISSITUDE("discipline.vicissitude", "Vicissitudine", "Vicissitude");

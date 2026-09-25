@@ -29,14 +29,14 @@ object RuleSet {
     const val BACKGROUND_MAX = 5
     const val VIRTUE_MAX = 5
 
-    // Freebie costs (configurable)
+    // Freebie costs (configurable) — V20 Core, pp. 79-86
     data class FreebieCost(
         val attributeCost: Int = 5,
         val abilityCost: Int = 2,
         val disciplineCost: Int = 7,
         val backgroundCost: Int = 1,
         val virtueCost: Int = 2,
-        val humanityCost: Int = 1,
+        val humanityCost: Int = 2,
         val willpowerCost: Int = 1
     )
 

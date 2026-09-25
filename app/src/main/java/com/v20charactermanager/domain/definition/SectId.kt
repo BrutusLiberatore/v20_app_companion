@@ -14,16 +14,6 @@ enum class SectId(
         fun fromId(id: String): SectId? =
             entries.find { it.id == id }
 
-        fun defaultForClan(clan: ClanId): SectId {
-            return when (clan) {
-                ClanId.LASOMBRA, ClanId.TZIMISCE -> SABBAT
-                ClanId.BRUAH, ClanId.MALKAVIAN, ClanId.NOSFERATU,
-                ClanId.TOREADOR, ClanId.TREMERE, ClanId.VENTRUE,
-                ClanId.GANGREL -> CAMARILLA
-                ClanId.ASSAMITE, ClanId.GIOVANNI, ClanId.RAVNOS,
-                ClanId.FOLLOWERS_OF_SET -> INDEPENDENT
-                ClanId.CAITIFF -> CAMARILLA
-            }
-        }
+        fun defaultForClan(clan: ClanId): SectId = clan.defaultSect
     }
 }

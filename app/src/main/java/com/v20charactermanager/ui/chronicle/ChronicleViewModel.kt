@@ -308,6 +308,13 @@ class ChronicleViewModel(
         viewModelScope.launch {
             val rel = Relationship(id = UUID.randomUUID().toString(), chronicleId = chronicleId, fromEntityId = fromId, fromEntityType = fromType, toEntityId = toId, toEntityType = toType, typeId = typeId)
             chronicleRepository.insertRelationship(rel)
+            emitAutoEvent(
+                chronicleId = chronicleId,
+                type = SessionEventType.RELATIONSHIP_CHANGED,
+                title = "Nuova relazione",
+                description = "$fromId → $toId",
+                entityRefs = listOf(rel.id)
+            )
         }
     }
     fun deleteRelationship(id: String) { viewModelScope.launch { chronicleRepository.deleteRelationship(id) } }
@@ -319,7 +326,21 @@ class ChronicleViewModel(
             chronicleRepository.insertPlotArc(plot)
         }
     }
-    fun updatePlotArc(plotArc: PlotArc) { viewModelScope.launch { chronicleRepository.updatePlotArc(plotArc) } }
+    fun updatePlotArc(plotArc: PlotArc) {
+        viewModelScope.launch {
+            val oldPlot = _detailUiState.value.plotArcs.find { it.id == plotArc.id }
+            chronicleRepository.updatePlotArc(plotArc)
+            if (oldPlot != null && oldPlot.status != plotArc.status) {
+                emitAutoEvent(
+                    chronicleId = plotArc.chronicleId,
+                    type = SessionEventType.PLOT_STATUS_CHANGED,
+                    title = "Trama: ${plotArc.title}",
+                    description = "${oldPlot.status} → ${plotArc.status}",
+                    entityRefs = listOf(plotArc.id)
+                )
+            }
+        }
+    }
     fun deletePlotArc(id: String) { viewModelScope.launch { chronicleRepository.deletePlotArc(id) } }
 
     // Scenes
@@ -329,7 +350,34 @@ class ChronicleViewModel(
             chronicleRepository.insertScene(scene)
         }
     }
-    fun updateScene(scene: ChronicleScene) { viewModelScope.launch { chronicleRepository.updateScene(scene) } }
+    fun updateScene(scene: ChronicleScene) {
+        viewModelScope.launch {
+            val oldScene = _detailUiState.value.scenes.find { it.id == scene.id }
+            chronicleRepository.updateScene(scene)
+            if (oldScene != null && oldScene.npcIds != scene.npcIds) {
+                val added = scene.npcIds - oldScene.npcIds.toSet()
+                val removed = oldScene.npcIds - scene.npcIds.toSet()
+                added.forEach { npcId ->
+                    emitAutoEvent(
+                        chronicleId = scene.chronicleId,
+                        type = SessionEventType.NPC_ADDED_TO_SCENE,
+                        title = "NPC aggiunto alla scena: ${scene.title}",
+                        sceneId = scene.id,
+                        entityRefs = listOf(npcId)
+                    )
+                }
+                removed.forEach { npcId ->
+                    emitAutoEvent(
+                        chronicleId = scene.chronicleId,
+                        type = SessionEventType.NPC_REMOVED_FROM_SCENE,
+                        title = "NPC rimosso dalla scena: ${scene.title}",
+                        sceneId = scene.id,
+                        entityRefs = listOf(npcId)
+                    )
+                }
+            }
+        }
+    }
     fun deleteScene(id: String) { viewModelScope.launch { chronicleRepository.deleteScene(id) } }
 
     // Secrets
@@ -349,7 +397,22 @@ class ChronicleViewModel(
             chronicleRepository.insertClue(clue)
         }
     }
-    fun updateClue(clue: Clue) { viewModelScope.launch { chronicleRepository.updateClue(clue) } }
+    fun updateClue(clue: Clue) {
+        viewModelScope.launch {
+            val oldClue = _detailUiState.value.clues.find { it.id == clue.id }
+            chronicleRepository.updateClue(clue)
+            if (oldClue != null && oldClue.status != clue.status &&
+                clue.status in listOf(ClueStatus.DISCOVERED, ClueStatus.SHARED)
+            ) {
+                emitAutoEvent(
+                    chronicleId = clue.chronicleId,
+                    type = SessionEventType.CLUE_REVEALED,
+                    title = "Indizio rivelato: ${clue.title}",
+                    entityRefs = listOf(clue.id)
+                )
+            }
+        }
+    }
     fun deleteClue(id: String) { viewModelScope.launch { chronicleRepository.deleteClue(id) } }
 
     // Events
@@ -486,6 +549,13 @@ class ChronicleViewModel(
                 modifiedAt = System.currentTimeMillis()
             )
             chronicleRepository.insertQuickNote(note)
+            emitAutoEvent(
+                chronicleId = chronicleId,
+                type = SessionEventType.NOTE_CREATED,
+                title = "Nota creata",
+                description = text.take(80),
+                entityRefs = listOf(note.id)
+            )
         }
     }
 
@@ -508,6 +578,14 @@ class ChronicleViewModel(
             val newBlood = if (delta > 0) character.bloodPool.refill(delta) else character.bloodPool.spend(-delta)
             val updated = character.copy(bloodPool = newBlood)
             characterRepository.updateCharacter(updated)
+            val cId = _detailUiState.value.chronicle?.id ?: return@launch
+            emitAutoEvent(
+                chronicleId = cId,
+                type = SessionEventType.CHARACTER_BLOOD_CHANGED,
+                title = "Sangue: ${character.identity.name}",
+                description = if (delta > 0) "+$delta PD" else "$delta PD",
+                entityRefs = listOf(characterId)
+            )
         }
     }
 
@@ -517,6 +595,14 @@ class ChronicleViewModel(
             val newWillpower = if (delta > 0) character.willpower.recover(delta) else character.willpower.spend(-delta)
             val updated = character.copy(willpower = newWillpower)
             characterRepository.updateCharacter(updated)
+            val cId = _detailUiState.value.chronicle?.id ?: return@launch
+            emitAutoEvent(
+                chronicleId = cId,
+                type = SessionEventType.CHARACTER_WILLPOWER_CHANGED,
+                title = "Volontà: ${character.identity.name}",
+                description = if (delta > 0) "+$delta punti" else "$delta punti",
+                entityRefs = listOf(characterId)
+            )
         }
     }
 
@@ -532,6 +618,14 @@ class ChronicleViewModel(
             }
             val updated = character.copy(health = newHealth)
             characterRepository.updateCharacter(updated)
+            val cId = _detailUiState.value.chronicle?.id ?: return@launch
+            emitAutoEvent(
+                chronicleId = cId,
+                type = SessionEventType.CHARACTER_HEALTH_CHANGED,
+                title = "Salute: ${character.identity.name}",
+                description = if (delta > 0) "Curato" else "Ferito",
+                entityRefs = listOf(characterId)
+            )
         }
     }
 
@@ -550,6 +644,33 @@ class ChronicleViewModel(
             )
             chronicleRepository.insertSessionEvent(event)
         }
+    }
+
+    private suspend fun emitAutoEvent(
+        chronicleId: String,
+        type: SessionEventType,
+        title: String,
+        description: String = "",
+        sceneId: String? = null,
+        entityRefs: List<String> = emptyList()
+    ) {
+        val activeSession = _detailUiState.value.activeSession
+        if (activeSession?.chronicleId != chronicleId) return
+        chronicleRepository.insertSessionEvent(
+            SessionEvent(
+                id = UUID.randomUUID().toString(),
+                chronicleId = chronicleId,
+                sessionId = activeSession.id,
+                sceneId = sceneId ?: activeSession.activeSceneId,
+                timestamp = System.currentTimeMillis(),
+                type = type,
+                title = title,
+                description = description.ifEmpty { null },
+                entityRefs = entityRefs,
+                visibility = Visibility.GM_ONLY,
+                origin = "AUTO"
+            )
+        )
     }
 }
 

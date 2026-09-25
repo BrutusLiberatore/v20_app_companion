@@ -21,7 +21,8 @@ import java.util.UUID
 
 class LiveRoomViewModel(
     private val application: Application,
-    private val mediaRepository: MediaRepository
+    private val mediaRepository: MediaRepository,
+    private val characterRepository: com.v20charactermanager.domain.repository.CharacterRepository? = null
 ) : ViewModel() {
 
     companion object {
@@ -60,17 +61,39 @@ class LiveRoomViewModel(
                 server = LiveRoomServer(roomName, masterName, chronicleId)
                 server!!.setCallbacks(
                     onMessage = { clientId, message -> handleServerMessage(clientId, message) },
-                    onConnected = { id, name ->
-                        Log.d(TAG, "Player connected: $name")
+                    onConnected = { id, name, charId ->
+                        Log.d(TAG, "Player connected: $name (charId=$charId)")
                         _uiState.update { state ->
                             if (state.connectedPlayers.none { it.id == id }) {
                                 state.copy(
                                     connectedPlayers = state.connectedPlayers + ConnectedPlayer(
                                         id = id,
-                                        name = name
+                                        name = name,
+                                        characterId = charId
                                     )
                                 )
                             } else state
+                        }
+                        // Resolve character portrait from DB
+                        if (charId != null && characterRepository != null) {
+                            viewModelScope.launch {
+                                try {
+                                    characterRepository.getCharacterByIdOnce(charId)?.let { char ->
+                                        val uri = char.portraitUri ?: ""
+                                        _uiState.update { state ->
+                                            state.copy(
+                                                characterPortraits = state.characterPortraits + (charId to uri)
+                                            )
+                                        }
+                                        // Broadcast to all clients
+                                        if (uri.isNotEmpty()) {
+                                            server?.broadcast(LiveRoomMessage.PortraitUpdate(charId, uri))
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w(TAG, "Failed to load portrait for $charId", e)
+                                }
+                            }
                         }
                     },
                     onDisconnected = { id, name ->
@@ -404,6 +427,23 @@ class LiveRoomViewModel(
                         error = null
                     )
                 }
+                // Client only loads own portrait (other players' chars not in local DB)
+                val localCharId = _uiState.value.localPlayer?.characterId
+                if (localCharId != null && characterRepository != null) {
+                    viewModelScope.launch {
+                        try {
+                            characterRepository.getCharacterByIdOnce(localCharId)?.let { char ->
+                                _uiState.update { state ->
+                                    state.copy(
+                                        characterPortraits = state.characterPortraits + (localCharId to (char.portraitUri ?: ""))
+                                    )
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to load local portrait", e)
+                        }
+                    }
+                }
             }
             is LiveRoomMessage.PlayerJoined -> {
                 _uiState.update { state ->
@@ -420,6 +460,13 @@ class LiveRoomViewModel(
                 _uiState.update { state ->
                     state.copy(
                         connectedPlayers = state.connectedPlayers.filter { it.id != message.playerId }
+                    )
+                }
+            }
+            is LiveRoomMessage.PortraitUpdate -> {
+                _uiState.update { state ->
+                    state.copy(
+                        characterPortraits = state.characterPortraits + (message.characterId to message.portraitUri)
                     )
                 }
             }
@@ -497,12 +544,13 @@ class LiveRoomViewModel(
 
 class LiveRoomViewModelFactory(
     private val application: Application,
-    private val mediaRepository: MediaRepository
+    private val mediaRepository: MediaRepository,
+    private val characterRepository: com.v20charactermanager.domain.repository.CharacterRepository? = null
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LiveRoomViewModel::class.java)) {
-            return LiveRoomViewModel(application, mediaRepository) as T
+            return LiveRoomViewModel(application, mediaRepository, characterRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
