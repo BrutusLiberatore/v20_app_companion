@@ -25,63 +25,108 @@ class FreebiePointCalculatorTest {
     }
 
     @Test
-    fun `initial character has 0 used points`() {
+    fun `creation gives 0 freebie points and standard allocation costs nothing`() {
         val report = calculator.calculate(character)
+        assertEquals(0, report.initialPoints)
         assertEquals(0, report.usedPoints)
-        assertEquals(15, report.remainingPoints)
+        assertEquals(0, report.remainingPoints)
     }
 
     @Test
-    fun `adding attribute points costs 5 per dot`() {
-        val updated = character.setAttributeValue(AttributeId.STRENGTH, 2)
+    fun `attribute dots within creation total are free`() {
+        val updated = character
+            .setAttributeValue(AttributeId.STRENGTH, 4)
+            .setAttributeValue(AttributeId.DEXTERITY, 4)
+            .setAttributeValue(AttributeId.STAMINA, 2)
         val report = calculator.calculate(updated)
-        assertEquals(5, report.usedPoints)
-        assertEquals(10, report.remainingPoints)
+        assertEquals(0, report.usedPoints)
     }
 
     @Test
-    fun `adding ability points costs 2 per dot`() {
-        val updated = character.setAbilityValue(AbilityId.ATHLETICS, 1)
+    fun `attribute dots beyond creation total cost 5 each`() {
+        var updated = character
+        AttributeId.entries.forEach { updated = updated.setAttributeValue(it, 3) }
+        // 9 attributes x 2 dots above base = 18, creation allows 15 -> 3 extra dots
+        val report = calculator.calculate(updated)
+        assertEquals(15, report.usedPoints)
+        assertEquals(-15, report.remainingPoints)
+    }
+
+    @Test
+    fun `ability dots beyond creation total cost 2 each`() {
+        var updated = character
+        AbilityId.entries.take(28).forEach { updated = updated.setAbilityValue(it, 1) }
+        // 28 points, creation allows 27 -> 1 extra dot
         val report = calculator.calculate(updated)
         assertEquals(2, report.usedPoints)
-        assertEquals(13, report.remainingPoints)
     }
 
     @Test
-    fun `can afford attribute increase`() {
-        assertTrue(calculator.canAfford(character, "attribute", 1))
-    }
-
-    @Test
-    fun `cannot afford too many points`() {
-        var char = character
-        repeat(3) { char = char.setAttributeValue(AttributeId.STRENGTH, it + 2) }
-        val report = calculator.calculate(char)
-        assertFalse(calculator.canAfford(char, "discipline", 1))
-    }
-
-    @Test
-    fun `discipline costs 7 per dot`() {
-        val updated = character.addDiscipline(DisciplineId.POTENCE, 1)
+    fun `discipline dots beyond creation total cost 7 each`() {
+        val updated = character.addDiscipline(DisciplineId.POTENCE, 4)
+        // 4 dots, creation includes 3 -> 1 extra dot
         val report = calculator.calculate(updated)
         assertEquals(7, report.usedPoints)
-        assertEquals(8, report.remainingPoints)
     }
 
     @Test
-    fun `background costs 1 per dot`() {
-        val updated = character.addBackground(BackgroundId.RESOURCES, 1)
+    fun `background dots beyond creation total cost 1 each`() {
+        val updated = character
+            .addBackground(BackgroundId.entries.first(), 5)
+            .addBackground(BackgroundId.entries[1], 1)
+        // 6 dots, creation includes 5 -> 1 extra dot
         val report = calculator.calculate(updated)
         assertEquals(1, report.usedPoints)
-        assertEquals(14, report.remainingPoints)
     }
 
     @Test
-    fun `virtue above base costs 2 per dot`() {
-        val updated = character.setVirtueValue(VirtueId.COURAGE, 2)
+    fun `virtue dots beyond creation total cost 2 each`() {
+        val updated = character
+            .setVirtueValue(VirtueId.CONSCIENCE, 3)
+            .setVirtueValue(VirtueId.SELF_CONTROL, 2)
+            .setVirtueValue(VirtueId.COURAGE, 3)
+        // 8 dots, creation includes 7 -> 1 extra dot
         val report = calculator.calculate(updated)
         assertEquals(2, report.usedPoints)
-        assertEquals(13, report.remainingPoints)
+    }
+
+    @Test
+    fun `merits cost freebie points`() {
+        val updated = character.addMerit(
+            MeritValue(id = "merit.ambidextrous", name = "Ambidextrous", cost = 2, description = "")
+        )
+        val report = calculator.calculate(updated)
+        assertEquals(2, report.usedPoints)
+        assertEquals(-2, report.remainingPoints)
+    }
+
+    @Test
+    fun `flaws refund freebie points`() {
+        val updated = character.addFlaw(
+            FlawValue(id = "flaw.addiction", name = "Addiction", value = 2, description = "")
+        )
+        val report = calculator.calculate(updated)
+        assertEquals(-2, report.usedPoints)
+        assertEquals(2, report.remainingPoints)
+    }
+
+    @Test
+    fun `merits paid by flaws balance to zero`() {
+        val updated = character
+            .addMerit(MeritValue(id = "merit.empathy", name = "Empathy", cost = 3, description = ""))
+            .addFlaw(FlawValue(id = "flaw.lame", name = "Lame", value = 3, description = ""))
+        val report = calculator.calculate(updated)
+        assertEquals(0, report.usedPoints)
+        assertEquals(0, report.remainingPoints)
+    }
+
+    @Test
+    fun `can afford within remaining freebie points`() {
+        val updated = character.addFlaw(
+            FlawValue(id = "flaw.addiction", name = "Addiction", value = 2, description = "")
+        )
+        assertTrue(calculator.canAfford(updated, "background", 1))
+        assertFalse(calculator.canAfford(updated, "discipline", 1))
     }
 
     @Test

@@ -80,7 +80,8 @@
     <string name="field_clan">Clan</string>
     <string name="field_sect">Sect</string>
     <string name="field_generation">Generation</string>
-    <string name="field_generation_range">Generation (3-13)</string>
+    <string name="field_generation_range">Generation (3-15)</string>
+    <string name="field_generation_thin_blood">14-15: Thin-Blooded (edge case)</string>
     <string name="field_nature">Nature</string>
     <string name="field_demeanor">Demeanor</string>
     <string name="field_sire">Sire</string>
@@ -146,6 +147,8 @@
     <string name="discipline_points_remaining">Discipline dots: %1$d/%2$d</string>
     <string name="background_points_remaining">Background dots: %1$d/%2$d</string>
     <string name="virtue_points_remaining">Virtue dots: %1$d/%2$d</string>
+    <string name="creation_merit_points">Merit points: %1$d/%2$d</string>
+    <string name="creation_flaw_points">Flaw points: %1$d/%2$d</string>
 
     <!-- Finalization -->
     <string name="finalization_title">Finalization</string>
@@ -839,6 +842,10 @@
     <string name="live_waiting_master">Waiting for Master to present…</string>
     <string name="live_minimize">Minimize</string>
     <string name="live_join">Join</string>
+    <string name="live_close_table">Close Table</string>
+    <string name="live_close_table_title">Close the table?</string>
+    <string name="live_close_table_message">All players will be disconnected and the table will be closed permanently.</string>
+    <string name="live_room_closed_by_master">The table was closed by the Master.</string>
 
     <!-- Crash Logs -->
     <string name="crash_logs">Crash Logs</string>

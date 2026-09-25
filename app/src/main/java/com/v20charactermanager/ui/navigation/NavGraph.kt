@@ -239,6 +239,14 @@ fun V20NavGraph(
                 viewModel.goToStep(step)
             }
 
+            LaunchedEffect(uiState.saved) {
+                if (uiState.saved) {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                }
+            }
+
             CreationScreen(
                 uiState = uiState,
                 onIdentityChange = { identity ->
@@ -271,6 +279,18 @@ fun V20NavGraph(
                 onVirtueChange = { virtueId, value ->
                     viewModel.updateVirtue(virtueId, value)
                 },
+                onMeritAdd = { merit ->
+                    viewModel.addMerit(merit)
+                },
+                onMeritRemove = { meritId ->
+                    viewModel.removeMerit(meritId)
+                },
+                onFlawAdd = { flaw ->
+                    viewModel.addFlaw(flaw)
+                },
+                onFlawRemove = { flawId ->
+                    viewModel.removeFlaw(flawId)
+                },
                 onNextStep = {
                     viewModel.nextStep()
                 },
@@ -279,9 +299,6 @@ fun V20NavGraph(
                 },
                 onSave = {
                     viewModel.saveCharacter()
-                    navController.navigate(Routes.HOME) {
-                        popUpTo(Routes.HOME) { inclusive = true }
-                    }
                 },
                 onBack = {
                     navController.popBackStack()
@@ -1277,6 +1294,12 @@ fun V20NavGraph(
                 onDismissFile = { liveRoomViewModel.dismissFile() },
                 onToggleFullscreen = { liveRoomViewModel.toggleFullscreen() },
                 onDisconnect = { liveRoomViewModel.disconnect() },
+                onCloseRoom = {
+                    liveRoomViewModel.closeRoom()
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                },
                 onBack = { navController.popBackStack() },
                 onClearError = { liveRoomViewModel.clearError() },
                 onSendStatUpdate = { charId, field, value ->

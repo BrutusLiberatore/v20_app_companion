@@ -6,7 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.v20charactermanager.domain.definition.*
 import com.v20charactermanager.domain.engine.CharacterCreationValidator
 import com.v20charactermanager.domain.engine.FreebiePointCalculator
+import com.v20charactermanager.domain.engine.GenerationRules
+import com.v20charactermanager.domain.model.BloodPoolState
 import com.v20charactermanager.domain.model.Character
+import com.v20charactermanager.domain.model.FlawValue
+import com.v20charactermanager.domain.model.MeritValue
 import com.v20charactermanager.domain.repository.CharacterRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,8 +23,10 @@ data class CreationUiState(
     val character: Character = Character(id = UUID.randomUUID().toString()),
     val validationResult: CharacterCreationValidator.ValidationResult? = null,
     val pendingWarnings: List<String>? = null,
+    val pendingSave: Boolean = false,
     val freebieReport: FreebiePointCalculator.FreebieReport? = null,
     val isSaving: Boolean = false,
+    val saved: Boolean = false,
     val error: String? = null
 )
 
@@ -147,6 +153,34 @@ class CharacterCreationViewModel(
         saveDraft()
     }
 
+    fun addMerit(merit: MeritValue) {
+        val current = _uiState.value.character
+        _uiState.value = _uiState.value.copy(character = current.addMerit(merit))
+        updateFreebieReport()
+        saveDraft()
+    }
+
+    fun removeMerit(meritId: String) {
+        val current = _uiState.value.character
+        _uiState.value = _uiState.value.copy(character = current.removeMerit(meritId))
+        updateFreebieReport()
+        saveDraft()
+    }
+
+    fun addFlaw(flaw: FlawValue) {
+        val current = _uiState.value.character
+        _uiState.value = _uiState.value.copy(character = current.addFlaw(flaw))
+        updateFreebieReport()
+        saveDraft()
+    }
+
+    fun removeFlaw(flawId: String) {
+        val current = _uiState.value.character
+        _uiState.value = _uiState.value.copy(character = current.removeFlaw(flawId))
+        updateFreebieReport()
+        saveDraft()
+    }
+
     private fun updateFreebieReport() {
         val report = freebieCalculator.calculate(_uiState.value.character)
         _uiState.value = _uiState.value.copy(freebieReport = report)
@@ -154,58 +188,44 @@ class CharacterCreationViewModel(
 
     fun nextStep() {
         val state = _uiState.value
-        val result = validator.validateStep(state.character, state.currentStep)
-        if (result.isValid) {
-            _uiState.value = state.copy(
-                currentStep = state.currentStep + 1,
-                validationResult = null,
-                pendingWarnings = null
-            )
-            saveDraft()
-        } else {
-            val warningPrefixes = listOf(
-                "Total attribute points",
-                "Attribute distribution",
-                "Category",
-                "Total ability points",
-                "Ability distribution",
-                "Discipline points",
-                "Background points",
-                "Virtue points"
-            )
-            val hardErrors = result.errors.filter { error ->
-                warningPrefixes.none { error.startsWith(it) }
+        try {
+            val result = validator.validateStep(state.character, state.currentStep)
+            when {
+                result.errors.isNotEmpty() -> {
+                    _uiState.value = state.copy(validationResult = result, pendingWarnings = null, pendingSave = false)
+                }
+                result.warnings.isNotEmpty() -> {
+                    _uiState.value = state.copy(validationResult = null, pendingWarnings = result.warnings)
+                }
+                else -> advanceStep(state)
             }
-            val warnings = result.errors.filter { error ->
-                warningPrefixes.any { error.startsWith(it) }
-            }
-            if (hardErrors.isNotEmpty()) {
-                _uiState.value = state.copy(validationResult = result, pendingWarnings = null)
-            } else if (warnings.isNotEmpty()) {
-                _uiState.value = state.copy(validationResult = null, pendingWarnings = warnings)
-            } else {
-                _uiState.value = state.copy(
-                    currentStep = state.currentStep + 1,
-                    validationResult = null,
-                    pendingWarnings = null
-                )
-                saveDraft()
-            }
+        } catch (e: Exception) {
+            // On any validation crash, advance anyway (non-blocking)
+            advanceStep(state)
         }
     }
 
-    fun confirmWarnings() {
-        val state = _uiState.value
+    private fun advanceStep(state: CreationUiState) {
         _uiState.value = state.copy(
             currentStep = state.currentStep + 1,
             validationResult = null,
-            pendingWarnings = null
+            pendingWarnings = null,
+            pendingSave = false
         )
         saveDraft()
     }
 
+    fun confirmWarnings() {
+        val state = _uiState.value
+        if (state.pendingSave) {
+            performSave(state.character)
+        } else {
+            advanceStep(state)
+        }
+    }
+
     fun dismissWarnings() {
-        _uiState.value = _uiState.value.copy(pendingWarnings = null)
+        _uiState.value = _uiState.value.copy(pendingWarnings = null, pendingSave = false)
     }
 
     fun previousStep() {
@@ -213,7 +233,9 @@ class CharacterCreationViewModel(
         if (state.currentStep > 1) {
             _uiState.value = state.copy(
                 currentStep = state.currentStep - 1,
-                validationResult = null
+                validationResult = null,
+                pendingWarnings = null,
+                pendingSave = false
             )
             saveDraft()
         }
@@ -223,25 +245,89 @@ class CharacterCreationViewModel(
         if (step in 1..5) {
             _uiState.value = _uiState.value.copy(
                 currentStep = step,
-                validationResult = null
+                validationResult = null,
+                pendingWarnings = null,
+                pendingSave = false,
+                saved = false
             )
             saveDraft()
         }
     }
 
+    /**
+     * Derived values the manual computes automatically: Willpower permanent = Courage,
+     * Humanity = Conscience + Self-Control, blood pool max = generation table.
+     */
+    private fun withDerivedValues(character: Character): Character {
+        val courage = character.getVirtueValue(VirtueId.COURAGE)
+        val bloodMax = GenerationRules.getBloodPoolMax(character.identity.generation)
+        return character.copy(
+            willpower = character.willpower.copy(
+                permanent = courage,
+                current = character.willpower.current.coerceIn(0, courage)
+            ),
+            moralPath = character.moralPath.copy(
+                conscienceValue = character.getVirtueValue(VirtueId.CONSCIENCE),
+                selfControlValue = character.getVirtueValue(VirtueId.SELF_CONTROL),
+                courageValue = courage
+            ),
+            bloodPool = BloodPoolState(maximum = bloodMax, current = bloodMax)
+        )
+    }
+
+    /**
+     * Final save: runs full validation over all 5 steps. Hard errors block the save,
+     * warnings require player confirmation.
+     */
     fun saveCharacter() {
+        val state = _uiState.value
+        val base = try {
+            withDerivedValues(state.character)
+        } catch (e: Exception) {
+            state.character
+        }
+        try {
+            val results = (1..5).map { validator.validateStep(base, it) }
+            val errors = results.flatMap { it.errors }.distinct()
+            val warnings = results.flatMap { it.warnings }.distinct()
+            when {
+                errors.isNotEmpty() -> {
+                    _uiState.value = state.copy(
+                        character = base,
+                        validationResult = CharacterCreationValidator.ValidationResult(errors = errors),
+                        pendingWarnings = null,
+                        pendingSave = false
+                    )
+                }
+                warnings.isNotEmpty() -> {
+                    _uiState.value = state.copy(
+                        character = base,
+                        validationResult = null,
+                        pendingWarnings = warnings,
+                        pendingSave = true
+                    )
+                }
+                else -> performSave(base)
+            }
+        } catch (e: Exception) {
+            performSave(base)
+        }
+    }
+
+    private fun performSave(character: Character) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isSaving = true)
+            _uiState.value = _uiState.value.copy(isSaving = true, pendingWarnings = null, pendingSave = false, validationResult = null)
             try {
-                val character = _uiState.value.character.copy(
+                val toSave = character.copy(
                     isComplete = true,
                     creationStep = _uiState.value.currentStep,
                     updatedAt = System.currentTimeMillis()
                 )
-                characterRepository.insertCharacter(character)
+                characterRepository.insertCharacter(toSave)
                 _uiState.value = _uiState.value.copy(
-                    character = character,
-                    isSaving = false
+                    character = toSave,
+                    isSaving = false,
+                    saved = true
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(

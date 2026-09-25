@@ -105,4 +105,7 @@ sealed class LiveRoomMessage {
 
     @Serializable
     object Pong : LiveRoomMessage()
+
+    @Serializable
+    object RoomClosed : LiveRoomMessage()
 }

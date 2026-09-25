@@ -5,25 +5,38 @@ import com.v20charactermanager.domain.model.Character
 
 class CharacterCreationValidator {
 
+    /**
+     * Severity split:
+     * - [errors] are hard rules from the V20 manual and block progression/save.
+     * - [warnings] are non-standard point allocations and can be overridden by the player.
+     */
     data class ValidationResult(
-        val isValid: Boolean,
-        val errors: List<String> = emptyList()
-    )
+        val errors: List<String> = emptyList(),
+        val warnings: List<String> = emptyList()
+    ) {
+        val isValid: Boolean get() = errors.isEmpty()
+    }
 
     fun validateIdentity(character: Character): ValidationResult {
         val errors = mutableListOf<String>()
         if (character.identity.name.isBlank()) errors.add("Name is required")
-        if (character.identity.clan == ClanId.CAITIFF && character.identity.sire.isNotBlank()) {
-            // Caitiff can have a sire but it's unusual
-        }
         if (!GenerationRules.isValidGeneration(character.identity.generation)) {
-            errors.add("Generation must be between 3 and 13")
+            errors.add("Generation must be between 3 and 15")
         }
-        return ValidationResult(errors.isEmpty(), errors)
+        character.identity.clan.requiredChoices.forEach { choice ->
+            if (choice.required) {
+                val answer = character.identity.clanChoices[choice.id]?.trim()
+                if (answer.isNullOrEmpty()) {
+                    errors.add("Missing required choice: ${choice.promptEn}")
+                }
+            }
+        }
+        return ValidationResult(errors = errors)
     }
 
     fun validateAttributes(character: Character): ValidationResult {
         val errors = mutableListOf<String>()
+        val warnings = mutableListOf<String>()
         val isNosferatu = character.identity.clan == ClanId.NOSFERATU
 
         if (isNosferatu && character.getAttributeValue(AttributeId.APPEARANCE) != 0) {
@@ -41,32 +54,32 @@ class CharacterCreationValidator {
         val totalPoints = categoryPoints.sumOf { it.second }
         val expectedTotal = RuleSet.ATTRIBUTE_PRIMARY + RuleSet.ATTRIBUTE_SECONDARY + RuleSet.ATTRIBUTE_TERTIARY
         if (totalPoints != expectedTotal) {
-            errors.add("Total attribute points: $totalPoints, expected $expectedTotal")
+            warnings.add("Total attribute points: $totalPoints, expected $expectedTotal")
         }
 
         categoryPoints.forEach { (category, points) ->
             if (points < 1) {
-                errors.add("Category $category must have at least 1 point")
+                warnings.add("Category $category must have at least 1 point")
             }
             if (points > 13) {
-                errors.add("Category $category has too many points: $points (max 13)")
+                warnings.add("Category $category has too many points: $points (max 13)")
             }
         }
 
         val sorted = categoryPoints.map { it.second }.sorted()
         if (sorted != listOf(RuleSet.ATTRIBUTE_TERTIARY, RuleSet.ATTRIBUTE_SECONDARY, RuleSet.ATTRIBUTE_PRIMARY)) {
-            errors.add("Attribute distribution must be a 7/5/3 split across categories")
+            warnings.add("Attribute distribution must be a 7/5/3 split across categories")
         }
 
-        return ValidationResult(errors.isEmpty(), errors)
+        return ValidationResult(errors = errors, warnings = warnings)
     }
 
     fun validateAbilities(character: Character): ValidationResult {
-        val errors = mutableListOf<String>()
+        val warnings = mutableListOf<String>()
 
         character.abilities.forEach { ability ->
             if (ability.value > RuleSet.ABILITY_MAX_CREATION) {
-                errors.add("Ability ${ability.id.nameEn} exceeds max creation value of ${RuleSet.ABILITY_MAX_CREATION}")
+                warnings.add("Ability ${ability.id.nameEn} exceeds max creation value of ${RuleSet.ABILITY_MAX_CREATION}")
             }
         }
 
@@ -78,42 +91,43 @@ class CharacterCreationValidator {
         val totalPoints = categoryPoints.sumOf { it.second }
         val expectedTotal = RuleSet.ABILITY_PRIMARY + RuleSet.ABILITY_SECONDARY + RuleSet.ABILITY_TERTIARY
         if (totalPoints != expectedTotal) {
-            errors.add("Total ability points: $totalPoints, expected $expectedTotal")
+            warnings.add("Total ability points: $totalPoints, expected $expectedTotal")
         }
 
         categoryPoints.forEach { (category, points) ->
             if (points < 1) {
-                errors.add("Category $category must have at least 1 point")
+                warnings.add("Category $category must have at least 1 point")
             }
         }
 
         val sorted = categoryPoints.map { it.second }.sorted()
         if (sorted != listOf(RuleSet.ABILITY_TERTIARY, RuleSet.ABILITY_SECONDARY, RuleSet.ABILITY_PRIMARY)) {
-            errors.add("Ability distribution must be a 13/9/5 split across categories")
+            warnings.add("Ability distribution must be a 13/9/5 split across categories")
         }
 
-        return ValidationResult(errors.isEmpty(), errors)
+        return ValidationResult(warnings = warnings)
     }
 
     fun validateAdvantages(character: Character): ValidationResult {
         val errors = mutableListOf<String>()
+        val warnings = mutableListOf<String>()
 
         val creationProfile = CreationProfile.forSect(character.identity.sect)
 
         val disciplinePoints = character.disciplines.sumOf { it.value }
         if (disciplinePoints != creationProfile.disciplinePoints) {
-            errors.add("Discipline points: $disciplinePoints, expected ${creationProfile.disciplinePoints}")
+            warnings.add("Discipline points: $disciplinePoints, expected ${creationProfile.disciplinePoints}")
         }
 
         val backgroundPoints = character.backgrounds.sumOf { it.value }
         if (backgroundPoints != creationProfile.backgroundPoints) {
-            errors.add("Background points: $backgroundPoints, expected ${creationProfile.backgroundPoints}")
+            warnings.add("Background points: $backgroundPoints, expected ${creationProfile.backgroundPoints}")
         }
 
         val virtuePoints = character.virtues.sumOf { it.value - RuleSet.VIRTUE_BASE }
         val expectedVirtueExtra = creationProfile.virtuePoints - (character.virtues.size * RuleSet.VIRTUE_BASE)
         if (virtuePoints != expectedVirtueExtra) {
-            errors.add("Virtue points distribution is incorrect (have $virtuePoints extra, need $expectedVirtueExtra)")
+            warnings.add("Virtue points distribution is incorrect (have $virtuePoints extra, need $expectedVirtueExtra)")
         }
 
         val clanDisciplines = character.identity.clan.clanDisciplines
@@ -125,11 +139,21 @@ class CharacterCreationValidator {
             }
         }
 
-        return ValidationResult(errors.isEmpty(), errors)
+        val meritPoints = character.merits.sumOf { it.cost }
+        if (meritPoints > RuleSet.MERIT_MAX_CREATION) {
+            errors.add("Merits exceed the ${RuleSet.MERIT_MAX_CREATION} point limit: $meritPoints")
+        }
+        val flawPoints = character.flaws.sumOf { it.value }
+        if (flawPoints > RuleSet.FLAW_MAX_CREATION) {
+            errors.add("Flaws exceed the ${RuleSet.FLAW_MAX_CREATION} point limit: $flawPoints")
+        }
+
+        return ValidationResult(errors = errors, warnings = warnings)
     }
 
     fun validateFinalization(character: Character): ValidationResult {
         val errors = mutableListOf<String>()
+        val warnings = mutableListOf<String>()
 
         val expectedHumanity = HumanityCalculator.calculate(character)
         if (character.moralPath.humanity != expectedHumanity) {
@@ -141,7 +165,12 @@ class CharacterCreationValidator {
             errors.add("Willpower should be $expectedWillpower, is ${character.willpower.permanent}")
         }
 
-        return ValidationResult(errors.isEmpty(), errors)
+        val freebieReport = FreebiePointCalculator().calculate(character)
+        if (freebieReport.remainingPoints < 0) {
+            warnings.add("Freebie points exceeded: used ${freebieReport.usedPoints} of ${freebieReport.initialPoints}")
+        }
+
+        return ValidationResult(errors = errors, warnings = warnings)
     }
 
     fun validateStep(character: Character, step: Int): ValidationResult {
@@ -151,7 +180,7 @@ class CharacterCreationValidator {
             3 -> validateAbilities(character)
             4 -> validateAdvantages(character)
             5 -> validateFinalization(character)
-            else -> ValidationResult(true)
+            else -> ValidationResult()
         }
     }
 }

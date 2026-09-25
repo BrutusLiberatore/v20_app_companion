@@ -21,7 +21,7 @@ class FreebiePointCalculator(
 
     fun calculate(character: Character): FreebieReport {
         val used = calculateUsedPoints(character)
-        val initial = RuleSet.FREEBIE_POINTS
+        val initial = RuleSet.FREEBIE_CREATION_POINTS
         return FreebieReport(
             initialPoints = initial,
             usedPoints = used,
@@ -36,39 +36,39 @@ class FreebiePointCalculator(
         )
     }
 
+    /**
+     * Creation allocations (7/5/3 attributes, 13/9/5 abilities, clan discipline dots,
+     * 5 backgrounds, 7 virtue points) are included in the creation steps and are free.
+     * Only spending beyond those totals counts, plus Merits (paid) and Flaws (refunded),
+     * as per the V20 manual.
+     */
     fun calculateUsedPoints(character: Character): Int {
         var total = 0
+        val profile = CreationProfile.forSect(character.identity.sect)
+        val isNosferatu = character.identity.clan == ClanId.NOSFERATU
 
-        // Attribute points above base (1)
-        total += character.attributes.sumOf { attr ->
-            if (attr.value > RuleSet.ATTRIBUTE_BASE) {
-                (attr.value - RuleSet.ATTRIBUTE_BASE) * freebieCost.attributeCost
-            } else 0
+        val expectedAttributes = RuleSet.ATTRIBUTE_PRIMARY + RuleSet.ATTRIBUTE_SECONDARY + RuleSet.ATTRIBUTE_TERTIARY
+        val attributePoints = character.attributes.sumOf { attr ->
+            val base = if (isNosferatu && attr.id == AttributeId.APPEARANCE) 0 else RuleSet.ATTRIBUTE_BASE
+            (attr.value - base).coerceAtLeast(0)
         }
+        total += (attributePoints - expectedAttributes).coerceAtLeast(0) * freebieCost.attributeCost
 
-        // Ability points above base (0)
-        total += character.abilities.sumOf { abil ->
-            if (abil.value > RuleSet.ABILITY_BASE) {
-                (abil.value - RuleSet.ABILITY_BASE) * freebieCost.abilityCost
-            } else 0
-        }
+        val expectedAbilities = RuleSet.ABILITY_PRIMARY + RuleSet.ABILITY_SECONDARY + RuleSet.ABILITY_TERTIARY
+        val abilityPoints = character.abilities.sumOf { (it.value - RuleSet.ABILITY_BASE).coerceAtLeast(0) }
+        total += (abilityPoints - expectedAbilities).coerceAtLeast(0) * freebieCost.abilityCost
 
-        // Discipline points
-        total += character.disciplines.sumOf { disc ->
-            disc.value * freebieCost.disciplineCost
-        }
+        total += (character.disciplines.sumOf { it.value } - profile.disciplinePoints)
+            .coerceAtLeast(0) * freebieCost.disciplineCost
 
-        // Background points
-        total += character.backgrounds.sumOf { bg ->
-            bg.value * freebieCost.backgroundCost
-        }
+        total += (character.backgrounds.sumOf { it.value } - RuleSet.BACKGROUND_INITIAL)
+            .coerceAtLeast(0) * freebieCost.backgroundCost
 
-        // Virtue points above base (1)
-        total += character.virtues.sumOf { virt ->
-            if (virt.value > RuleSet.VIRTUE_BASE) {
-                (virt.value - RuleSet.VIRTUE_BASE) * freebieCost.virtueCost
-            } else 0
-        }
+        val virtuePoints = character.virtues.sumOf { it.value }
+        total += (virtuePoints - profile.virtuePoints).coerceAtLeast(0) * freebieCost.virtueCost
+
+        total += character.merits.sumOf { it.cost }
+        total -= character.flaws.sumOf { it.value }
 
         return total
     }

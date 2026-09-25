@@ -89,6 +89,7 @@ fun LiveRoomScreen(
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onDisconnect: () -> Unit,
+    onCloseRoom: () -> Unit,
     onBack: () -> Unit,
     onClearError: () -> Unit,
     onSendStatUpdate: (String, String, Int?) -> Unit,
@@ -186,6 +187,7 @@ fun LiveRoomScreen(
                     onDismissFile = onDismissFile,
                     onToggleFullscreen = onToggleFullscreen,
                     onSendStatUpdate = onSendStatUpdate,
+                    onCloseRoom = onCloseRoom,
                     modifier = modifier.padding(padding)
                 )
             }
@@ -405,6 +407,7 @@ private fun VirtualTableView(
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onSendStatUpdate: (String, String, Int?) -> Unit,
+    onCloseRoom: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
 
@@ -555,7 +558,8 @@ private fun VirtualTableView(
                     chronicleRepository = chronicleRepository,
                     onPresentAsset = onPresentAsset,
                     onDismissFile = onDismissFile,
-                    onToggleFullscreen = onToggleFullscreen
+                    onToggleFullscreen = onToggleFullscreen,
+                    onCloseRoom = onCloseRoom
                 )
             } else {
                 PlayerBottomPanel(
@@ -717,12 +721,14 @@ private fun MasterBottomPanel(
     chronicleRepository: com.v20charactermanager.domain.repository.ChronicleRepository? = null,
     onPresentAsset: (String, String, String) -> Unit,
     onDismissFile: () -> Unit,
-    onToggleFullscreen: () -> Unit
+    onToggleFullscreen: () -> Unit,
+    onCloseRoom: () -> Unit = {}
 ) {
     var showFileSelector by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var showAudioMixer by remember { mutableStateOf(false) }
     var showChronicleInfo by remember { mutableStateOf(false) }
+    var showCloseTable by remember { mutableStateOf(false) }
     val audioUiState = audioViewModel?.uiState?.collectAsState()
     val audioState = audioUiState?.value ?: com.v20charactermanager.ui.chronicle.AudioMixUiState()
 
@@ -756,6 +762,17 @@ private fun MasterBottomPanel(
                         text = { Text("Cronaca") },
                         leadingIcon = { Icon(Icons.Default.Book, contentDescription = null) },
                         onClick = { showMenu = false; showChronicleInfo = true }
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                stringResource(R.string.live_close_table),
+                                color = Color(0xFFCF6679),
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        leadingIcon = { Icon(Icons.Default.PowerSettingsNew, contentDescription = null, tint = Color(0xFFCF6679)) },
+                        onClick = { showMenu = false; showCloseTable = true }
                     )
                 }
             }
@@ -808,6 +825,25 @@ private fun MasterBottomPanel(
                 onPresentAsset(asset.id, asset.title, mimeType)
             },
             onDismiss = { showFileSelector = false }
+        )
+    }
+
+    if (showCloseTable) {
+        AlertDialog(
+            onDismissRequest = { showCloseTable = false },
+            containerColor = Color(0xFF2A2A4A),
+            title = { Text(stringResource(R.string.live_close_table_title), color = Color.White, fontWeight = FontWeight.Bold) },
+            text = { Text(stringResource(R.string.live_close_table_message), color = Color.White.copy(alpha = 0.8f)) },
+            confirmButton = {
+                TextButton(onClick = { showCloseTable = false; onCloseRoom() }) {
+                    Text(stringResource(R.string.live_close_table), color = Color(0xFFCF6679), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCloseTable = false }) {
+                    Text(stringResource(R.string.action_cancel), color = Gold)
+                }
+            }
         )
     }
 

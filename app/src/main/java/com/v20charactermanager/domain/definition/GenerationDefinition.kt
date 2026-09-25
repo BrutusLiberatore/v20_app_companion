@@ -21,14 +21,17 @@ data class GenerationDefinition(
             GenerationDefinition(10, 5, 13, 1),
             GenerationDefinition(11, 5, 12, 1),
             GenerationDefinition(12, 5, 11, 1),
-            GenerationDefinition(13, 5, 10, 1)
+            GenerationDefinition(13, 5, 10, 1),
+            // Thin-Blooded edge cases: no canon table, fallbacks apply (blood pool 10, 1/turn)
+            GenerationDefinition(14, 5, -1, -1),
+            GenerationDefinition(15, 5, -1, -1)
         )
 
         fun forGeneration(generation: Int): GenerationDefinition? =
             definitions.find { it.generation == generation }
 
         fun isValidGeneration(generation: Int): Boolean =
-            generation in 3..13
+            generation in 3..15
 
         fun isBloodPoolDefined(generation: Int): Boolean =
             generation in 4..13

@@ -14,7 +14,14 @@ object RuleSet {
     const val BACKGROUND_INITIAL = 5
     const val VIRTUE_INITIAL = 7
 
+    // V20 Core gives no freebie points during character creation;
+    // freebies are earned/used after creation (house rules may grant some).
     const val FREEBIE_POINTS = 15
+    const val FREEBIE_CREATION_POINTS = 0
+
+    // V20 Core: max 7 points of Merits and max 7 points of Flaws at creation
+    const val MERIT_MAX_CREATION = 7
+    const val FLAW_MAX_CREATION = 7
 
     // Base values
     const val ATTRIBUTE_BASE = 1

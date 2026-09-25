@@ -502,6 +502,22 @@ class LiveRoomViewModel(
             is LiveRoomMessage.DiceRoll -> {
                 // Handle dice roll from other players
             }
+            is LiveRoomMessage.RoomClosed -> {
+                _uiState.update { state ->
+                    state.copy(
+                        isConnected = false,
+                        room = null,
+                        localPlayer = null,
+                        connectedPlayers = emptyList(),
+                        presentedFile = null,
+                        isFileFullscreen = false,
+                        connectionStatus = "",
+                        error = application.getString(com.v20charactermanager.R.string.live_room_closed_by_master)
+                    )
+                }
+                client?.disconnect()
+                client = null
+            }
             else -> {}
         }
     }
@@ -521,6 +537,19 @@ class LiveRoomViewModel(
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    fun closeRoom() {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                server?.broadcast(LiveRoomMessage.RoomClosed)
+                Log.d(TAG, "RoomClosed broadcast sent")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to broadcast RoomClosed", e)
+            }
+            kotlinx.coroutines.delay(400)
+            disconnect()
+        }
     }
 
     fun disconnect() {

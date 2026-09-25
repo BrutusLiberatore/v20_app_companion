@@ -277,10 +277,19 @@ fun IdentityStep(
         // Generation
         V20IntField(
             value = identity.generation,
-            onValueChange = { if (it in 3..13) onIdentityChange(identity.copy(generation = it)) },
+            onValueChange = { if (it in 3..15) onIdentityChange(identity.copy(generation = it)) },
             label = stringResource(R.string.field_generation_range),
             modifier = Modifier.fillMaxWidth()
         )
+
+        if (identity.generation >= 14) {
+            Text(
+                text = stringResource(R.string.field_generation_thin_blood),
+                style = MaterialTheme.typography.bodySmall,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
 
         // Nature dropdown
         var natureExpanded by remember { mutableStateOf(false) }
@@ -630,10 +639,16 @@ fun AdvantagesStep(
     onBackgroundAdd: (BackgroundId, Int) -> Unit,
     onBackgroundUpdate: (BackgroundId, Int) -> Unit,
     onBackgroundRemove: (BackgroundId) -> Unit,
-    onVirtueChange: (VirtueId, Int) -> Unit
+    onVirtueChange: (VirtueId, Int) -> Unit,
+    onMeritAdd: (com.v20charactermanager.domain.model.MeritValue) -> Unit,
+    onMeritRemove: (String) -> Unit,
+    onFlawAdd: (com.v20charactermanager.domain.model.FlawValue) -> Unit,
+    onFlawRemove: (String) -> Unit
 ) {
     var showDisciplineDropdown by remember { mutableStateOf(false) }
     var showBackgroundDropdown by remember { mutableStateOf(false) }
+    var showAddMerit by remember { mutableStateOf(false) }
+    var showAddFlaw by remember { mutableStateOf(false) }
 
     val creationProfile = com.v20charactermanager.domain.engine.CreationProfile.forSect(character.identity.sect)
 
@@ -812,6 +827,87 @@ fun AdvantagesStep(
                     }
                 }
             }
+        }
+
+        // Merits & Flaws (V20: max 7 points each at creation)
+        val meritPoints = character.merits.sumOf { it.cost }
+        val flawPoints = character.flaws.sumOf { it.value }
+
+        Text(
+            text = stringResource(R.string.sheet_merits_flaws),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
+            text = stringResource(R.string.creation_merit_points, meritPoints, RuleSet.MERIT_MAX_CREATION),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (meritPoints <= RuleSet.MERIT_MAX_CREATION)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.error
+        )
+
+        Text(
+            text = stringResource(R.string.creation_flaw_points, flawPoints, RuleSet.FLAW_MAX_CREATION),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (flawPoints <= RuleSet.FLAW_MAX_CREATION)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.error
+        )
+
+        character.merits.forEach { merit ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "${merit.name} (${merit.cost})")
+                TextButton(onClick = { onMeritRemove(merit.id) }) {
+                    Text(stringResource(R.string.action_remove))
+                }
+            }
+        }
+
+        OutlinedButton(onClick = { showAddMerit = true }) {
+            Text(stringResource(R.string.sheet_add_merit))
+        }
+
+        character.flaws.forEach { flaw ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "${flaw.name} (${flaw.value})")
+                TextButton(onClick = { onFlawRemove(flaw.id) }) {
+                    Text(stringResource(R.string.action_remove))
+                }
+            }
+        }
+
+        OutlinedButton(onClick = { showAddFlaw = true }) {
+            Text(stringResource(R.string.sheet_add_flaw))
+        }
+
+        if (showAddMerit) {
+            com.v20charactermanager.ui.sheet.AddMeritDialog(
+                onDismiss = { showAddMerit = false },
+                onMeritSelected = {
+                    onMeritAdd(it)
+                    showAddMerit = false
+                }
+            )
+        }
+
+        if (showAddFlaw) {
+            com.v20charactermanager.ui.sheet.AddFlawDialog(
+                onDismiss = { showAddFlaw = false },
+                onFlawSelected = {
+                    onFlawAdd(it)
+                    showAddFlaw = false
+                }
+            )
         }
     }
 }

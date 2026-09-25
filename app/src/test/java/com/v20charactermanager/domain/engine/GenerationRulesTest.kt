@@ -37,11 +37,21 @@ class GenerationRulesTest {
     }
 
     @Test
-    fun `valid generations are 3-13`() {
+    fun `valid generations are 3-15`() {
         assertTrue(GenerationRules.isValidGeneration(3))
         assertTrue(GenerationRules.isValidGeneration(13))
+        assertTrue(GenerationRules.isValidGeneration(14))
+        assertTrue(GenerationRules.isValidGeneration(15))
         assertFalse(GenerationRules.isValidGeneration(2))
-        assertFalse(GenerationRules.isValidGeneration(14))
+        assertFalse(GenerationRules.isValidGeneration(16))
+    }
+
+    @Test
+    fun `thin-blooded generations use fallback blood pool`() {
+        assertEquals(10, GenerationRules.getBloodPoolMax(14))
+        assertEquals(10, GenerationRules.getBloodPoolMax(15))
+        assertEquals(1, GenerationRules.getBloodPerTurn(14))
+        assertEquals(5, GenerationRules.getMaxTrait(15))
     }
 
     @Test

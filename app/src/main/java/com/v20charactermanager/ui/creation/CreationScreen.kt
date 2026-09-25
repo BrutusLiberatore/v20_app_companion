@@ -7,10 +7,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.v20charactermanager.R
 import com.v20charactermanager.ui.components.V20BloodButton
 import com.v20charactermanager.ui.components.V20IvoryButton
@@ -32,6 +34,10 @@ fun CreationScreen(
     onBackgroundUpdate: (BackgroundId, Int) -> Unit,
     onBackgroundRemove: (BackgroundId) -> Unit,
     onVirtueChange: (VirtueId, Int) -> Unit,
+    onMeritAdd: (com.v20charactermanager.domain.model.MeritValue) -> Unit,
+    onMeritRemove: (String) -> Unit,
+    onFlawAdd: (com.v20charactermanager.domain.model.FlawValue) -> Unit,
+    onFlawRemove: (String) -> Unit,
     onNextStep: () -> Unit,
     onPreviousStep: () -> Unit,
     onSave: () -> Unit,
@@ -61,6 +67,51 @@ fun CreationScreen(
             )
         }
     ) { padding ->
+        // Warning dialog for non-standard point allocation (outside scrollable content)
+        uiState.pendingWarnings?.let { warnings ->
+            Dialog(onDismissRequest = onDismissWarnings) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        Text(
+                            text = stringResource(R.string.creation_warning_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = stringResource(R.string.creation_warning_message),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        warnings.forEach { warning ->
+                            Text(
+                                text = "• $warning",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(onClick = onDismissWarnings) {
+                                Text(stringResource(R.string.action_cancel))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(onClick = onConfirmWarnings) {
+                                Text(stringResource(R.string.creation_warning_continue))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -121,7 +172,11 @@ fun CreationScreen(
                     onBackgroundAdd = onBackgroundAdd,
                     onBackgroundUpdate = onBackgroundUpdate,
                     onBackgroundRemove = onBackgroundRemove,
-                    onVirtueChange = onVirtueChange
+                    onVirtueChange = onVirtueChange,
+                    onMeritAdd = onMeritAdd,
+                    onMeritRemove = onMeritRemove,
+                    onFlawAdd = onFlawAdd,
+                    onFlawRemove = onFlawRemove
                 )
                 5 -> FinalizationStep(
                     character = uiState.character,
@@ -132,60 +187,33 @@ fun CreationScreen(
             // Navigation buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (uiState.currentStep > 1) {
-                    V20IvoryButton(text = stringResource(R.string.action_previous), onClick = onPreviousStep)
+                    V20IvoryButton(
+                        text = stringResource(R.string.action_previous),
+                        onClick = onPreviousStep,
+                        modifier = Modifier.weight(1f)
+                    )
                 } else {
-                    Spacer(modifier = Modifier.width(1.dp))
+                    Spacer(modifier = Modifier.weight(1f))
                 }
 
                 if (uiState.currentStep < 5) {
-                    V20BloodButton(text = stringResource(R.string.action_next), onClick = onNextStep)
+                    V20BloodButton(
+                        text = stringResource(R.string.action_next),
+                        onClick = onNextStep,
+                        modifier = Modifier.weight(1f)
+                    )
                 } else {
                     V20BloodButton(
                         text = if (uiState.isSaving) stringResource(R.string.creation_saving) else stringResource(R.string.creation_save),
                         onClick = onSave,
+                        modifier = Modifier.weight(1f),
                         enabled = !uiState.isSaving
                     )
                 }
             }
-        }
-
-        // Warning popup for non-standard point allocation
-        uiState.pendingWarnings?.let { warnings ->
-            AlertDialog(
-                onDismissRequest = onDismissWarnings,
-                title = {
-                    Text(
-                        text = stringResource(R.string.creation_warning_title),
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(R.string.creation_warning_message))
-                        warnings.forEach { warning ->
-                            Text(
-                                text = "• $warning",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = onConfirmWarnings) {
-                        Text(stringResource(R.string.creation_warning_continue))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = onDismissWarnings) {
-                        Text(stringResource(R.string.action_cancel))
-                    }
-                }
-            )
         }
     }
 }

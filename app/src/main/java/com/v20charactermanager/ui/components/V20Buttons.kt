@@ -474,8 +474,9 @@ fun V20ProgressLine(
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(totalSteps) { index ->
-            val isActive = index <= currentStep
-            val isCurrent = index == currentStep
+            val stepNumber = index + 1
+            val isActive = stepNumber <= currentStep
+            val isCurrent = stepNumber == currentStep
             val color = when {
                 isCurrent -> ProgressDiamondActive
                 isActive -> ProgressDiamond

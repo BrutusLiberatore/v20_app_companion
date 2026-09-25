@@ -80,7 +80,8 @@
     <string name="field_clan">Clan</string>
     <string name="field_sect">Setta</string>
     <string name="field_generation">Generazione</string>
-    <string name="field_generation_range">Generazione (3-13)</string>
+    <string name="field_generation_range">Generazione (3-15)</string>
+    <string name="field_generation_thin_blood">14-15: Sangue Sottile (caso limite)</string>
     <string name="field_nature">Natura</string>
     <string name="field_demeanor">Carattere</string>
     <string name="field_sire">Sire</string>
@@ -146,6 +147,8 @@
     <string name="discipline_points_remaining">Punti disciplina: %1$d/%2$d</string>
     <string name="background_points_remaining">Punti background: %1$d/%2$d</string>
     <string name="virtue_points_remaining">Punti virtù: %1$d/%2$d</string>
+    <string name="creation_merit_points">Punti Pregio: %1$d/%2$d</string>
+    <string name="creation_flaw_points">Punti Difetto: %1$d/%2$d</string>
 
     <!-- Finalization -->
     <string name="finalization_title">Finalizzazione</string>
@@ -839,6 +842,10 @@
     <string name="live_waiting_master">In attesa che il Master presenti…</string>
     <string name="live_minimize">Riduci</string>
     <string name="live_join">Unisciti</string>
+    <string name="live_close_table">Chiudi Tavolo</string>
+    <string name="live_close_table_title">Chiudere il tavolo?</string>
+    <string name="live_close_table_message">Tutti i giocatori verranno disconnessi e il tavolo verrà chiuso definitivamente.</string>
+    <string name="live_room_closed_by_master">Il tavolo è stato chiuso dal Master.</string>
 
     <!-- Crash Logs -->
     <string name="crash_logs">Log di Crash</string>
