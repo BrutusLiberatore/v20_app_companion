@@ -105,9 +105,10 @@ fun IdentityStep(
                         text = { Text(displayName) },
                         onClick = {
                             val defaultSect = SectId.defaultForClan(clan)
-                            var updated = identity.copy(clan = clan, sect = defaultSect)
-                            if (clan == ClanId.NOSFERATU) {
-                                onAttributesChange?.invoke(AttributeId.APPEARANCE, 0)
+                            val updated = identity.copy(clan = clan, sect = defaultSect)
+                            when {
+                                clan == ClanId.NOSFERATU -> onAttributesChange?.invoke(AttributeId.APPEARANCE, 0)
+                                identity.clan == ClanId.NOSFERATU -> onAttributesChange?.invoke(AttributeId.APPEARANCE, 1)
                             }
                             onIdentityChange(updated)
                             clanExpanded = false
@@ -485,7 +486,13 @@ fun AttributeRow(
             (1..5).forEach { dot ->
                 RadioButton(
                     selected = dot <= value,
-                    onClick = { onValueChange(if (dot == value) dot - 1 else dot) },
+                    onClick = {
+                        if (dot == value) {
+                            if (value > 1) onValueChange(value - 1)
+                        } else if (value > 0) {
+                            onValueChange(dot)
+                        }
+                    },
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -621,7 +628,13 @@ fun AbilityRow(
             (0..5).forEach { dot ->
                 RadioButton(
                     selected = dot <= value && value > 0,
-                    onClick = { onValueChange(if (dot == value) dot - 1 else dot) },
+                    onClick = {
+                        if (dot == value) {
+                            if (value > 0) onValueChange(value - 1)
+                        } else {
+                            onValueChange(dot)
+                        }
+                    },
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -701,7 +714,13 @@ fun AdvantagesStep(
                     (1..5).forEach { dot ->
                         RadioButton(
                             selected = dot <= disc.value,
-                            onClick = { onDisciplineUpdate(disc.id, if (dot == disc.value) dot - 1 else dot) },
+                            onClick = {
+                                if (dot == disc.value) {
+                                    if (disc.value > 1) onDisciplineUpdate(disc.id, disc.value - 1)
+                                } else {
+                                    onDisciplineUpdate(disc.id, dot)
+                                }
+                            },
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -761,7 +780,13 @@ fun AdvantagesStep(
                     (1..5).forEach { dot ->
                         RadioButton(
                             selected = dot <= bg.value,
-                            onClick = { onBackgroundUpdate(bg.id, if (dot == bg.value) dot - 1 else dot) },
+                            onClick = {
+                                if (dot == bg.value) {
+                                    if (bg.value > 1) onBackgroundUpdate(bg.id, bg.value - 1)
+                                } else {
+                                    onBackgroundUpdate(bg.id, dot)
+                                }
+                            },
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -821,7 +846,13 @@ fun AdvantagesStep(
                     (1..5).forEach { dot ->
                         RadioButton(
                             selected = dot <= virtue.value,
-                            onClick = { onVirtueChange(virtue.id, if (dot == virtue.value) dot - 1 else dot) },
+                            onClick = {
+                                if (dot == virtue.value) {
+                                    if (virtue.value > 1) onVirtueChange(virtue.id, virtue.value - 1)
+                                } else {
+                                    onVirtueChange(virtue.id, dot)
+                                }
+                            },
                             modifier = Modifier.size(24.dp)
                         )
                     }

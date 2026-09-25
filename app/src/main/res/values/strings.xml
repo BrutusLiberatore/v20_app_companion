@@ -846,6 +846,18 @@
     <string name="live_close_table_title">Close the table?</string>
     <string name="live_close_table_message">All players will be disconnected and the table will be closed permanently.</string>
     <string name="live_room_closed_by_master">The table was closed by the Master.</string>
+    <string name="live_customize_table">Customize Table</string>
+    <string name="live_style_section_table">Table</string>
+    <string name="live_style_section_chairs">Chairs</string>
+    <string name="live_style_hint">Tap a preview to apply it to the table in real time.</string>
+    <string name="style_pack_medievale">Medieval</string>
+    <string name="style_pack_giardino">Garden</string>
+    <string name="style_pack_mare">Sea</string>
+    <string name="style_pack_nonna">Grandma</string>
+    <string name="style_pack_poker">Poker</string>
+    <string name="live_open_sheet">Open character sheet</string>
+    <string name="sheet_loading">Loading character sheet…</string>
+    <string name="sheet_unavailable">Character sheet not available.</string>
 
     <!-- Crash Logs -->
     <string name="crash_logs">Crash Logs</string>

@@ -10,6 +10,7 @@ data class AbilityValue(
     val specialty: String? = null
 ) {
     init {
-        require(value in 0..5) { "Ability value must be between 0 and 5" }
+        // Up to 10: the highest generation max trait (elders, XP-trained).
+        require(value in 0..10) { "Ability value must be between 0 and 10" }
     }
 }

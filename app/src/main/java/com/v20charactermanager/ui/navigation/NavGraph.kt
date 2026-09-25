@@ -6,17 +6,23 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -42,8 +48,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,6 +63,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.v20charactermanager.R
 import com.v20charactermanager.data.di.AppContainer
 import com.v20charactermanager.domain.model.LiveRoomState
 import com.v20charactermanager.util.LocaleHelper
@@ -109,6 +121,7 @@ import com.v20charactermanager.ui.sheet.SheetScreen
 import com.v20charactermanager.ui.xp.XpSpendingScreen
 import com.v20charactermanager.ui.xp.XpSpendingViewModel
 import com.v20charactermanager.ui.xp.XpSpendingViewModelFactory
+import kotlin.math.roundToInt
 
 object Routes {
     const val HOME = "home"
@@ -320,88 +333,135 @@ fun V20NavGraph(
                 factory = EditCharacterViewModelFactory(appContainer.characterRepository)
             )
             val uiState by editViewModel.uiState.collectAsState()
+            val sharedCharacters by liveRoomViewModel.sharedCharacters.collectAsState()
+            var sheetUnavailable by remember { mutableStateOf(false) }
 
             LaunchedEffect(characterId) {
                 editViewModel.loadCharacter(characterId)
+                if (liveRoomViewModel.uiState.value.isMaster) {
+                    liveRoomViewModel.requestSharedCharacter(characterId)
+                }
+                kotlinx.coroutines.delay(5000)
+                if (editViewModel.uiState.value.character == null &&
+                    liveRoomViewModel.sharedCharacters.value[characterId] == null
+                ) {
+                    sheetUnavailable = true
+                }
             }
 
-            uiState.character?.let { character ->
+            val localCharacter = uiState.character
+            val displayCharacter = localCharacter ?: sharedCharacters[characterId]
+            val isLocalChar = localCharacter != null
+
+            when {
+                displayCharacter != null -> {
                 SheetScreen(
-                    character = character,
+                    character = displayCharacter,
                     onBack = {
                         navController.popBackStack()
                     },
                     onNavigateToSession = {
-                        navController.navigate(Routes.session(characterId))
+                        if (isLocalChar) navController.navigate(Routes.session(characterId))
                     },
                     onNotesChange = { notes ->
-                        editViewModel.updateNotes(notes)
+                        if (isLocalChar) editViewModel.updateNotes(notes)
                     },
                     onNavigateToDice = { pool ->
                         navController.navigate(Routes.dice(pool))
                     },
-                    isEditing = uiState.isEditing,
-                    onToggleEdit = { editViewModel.startEditing() },
-                    onSave = { editViewModel.save() },
-                    onCancelEdit = { editViewModel.cancelEditing() },
+                    isEditing = isLocalChar && uiState.isEditing,
+                    onToggleEdit = { if (isLocalChar) editViewModel.startEditing() },
+                    onSave = { if (isLocalChar) editViewModel.save() },
+                    onCancelEdit = { if (isLocalChar) editViewModel.cancelEditing() },
                     onAttributeChange = { attributeId, value ->
-                        editViewModel.updateAttribute(attributeId, value)
+                        if (isLocalChar) editViewModel.updateAttribute(attributeId, value)
                     },
                     onAbilityChange = { abilityId, value ->
-                        editViewModel.updateAbility(abilityId, value)
+                        if (isLocalChar) editViewModel.updateAbility(abilityId, value)
                     },
                     onDisciplineValueChange = { disciplineId, value ->
-                        editViewModel.updateDisciplineValue(disciplineId, value)
+                        if (isLocalChar) editViewModel.updateDisciplineValue(disciplineId, value)
                     },
                     onDisciplineRemove = { disciplineId ->
-                        editViewModel.removeDiscipline(disciplineId)
+                        if (isLocalChar) editViewModel.removeDiscipline(disciplineId)
                     },
                     onBackgroundValueChange = { backgroundId, value ->
-                        editViewModel.updateBackgroundValue(backgroundId, value)
+                        if (isLocalChar) editViewModel.updateBackgroundValue(backgroundId, value)
                     },
                     onBackgroundRemove = { backgroundId ->
-                        editViewModel.removeBackground(backgroundId)
+                        if (isLocalChar) editViewModel.removeBackground(backgroundId)
                     },
                     onVirtueChange = { virtueId, value ->
-                        editViewModel.updateVirtue(virtueId, value)
+                        if (isLocalChar) editViewModel.updateVirtue(virtueId, value)
                     },
                     onPortraitChange = { portraitUri ->
-                        editViewModel.updatePortrait(portraitUri)
+                        if (isLocalChar) editViewModel.updatePortrait(portraitUri)
                     },
                     onMeritAdd = { merit ->
-                        editViewModel.addMerit(merit)
+                        if (isLocalChar) editViewModel.addMerit(merit)
                     },
                     onMeritRemove = { meritId ->
-                        editViewModel.removeMerit(meritId)
+                        if (isLocalChar) editViewModel.removeMerit(meritId)
                     },
                     onMeritClone = { merit ->
-                        editViewModel.cloneMerit(merit)
+                        if (isLocalChar) editViewModel.cloneMerit(merit)
                     },
                     onFlawAdd = { flaw ->
-                        editViewModel.addFlaw(flaw)
+                        if (isLocalChar) editViewModel.addFlaw(flaw)
                     },
                     onFlawRemove = { flawId ->
-                        editViewModel.removeFlaw(flawId)
+                        if (isLocalChar) editViewModel.removeFlaw(flawId)
                     },
                     onFlawClone = { flaw ->
-                        editViewModel.cloneFlaw(flaw)
+                        if (isLocalChar) editViewModel.cloneFlaw(flaw)
                     },
                     onEquipmentAdd = { item ->
-                        editViewModel.addEquipment(item)
+                        if (isLocalChar) editViewModel.addEquipment(item)
                     },
                     onEquipmentUpdate = { item ->
-                        editViewModel.updateEquipment(item)
+                        if (isLocalChar) editViewModel.updateEquipment(item)
                     },
                     onEquipmentRemove = { itemId ->
-                        editViewModel.removeEquipment(itemId)
+                        if (isLocalChar) editViewModel.removeEquipment(itemId)
                     },
                     onEquipmentClone = { item ->
-                        editViewModel.cloneEquipment(item)
+                        if (isLocalChar) editViewModel.cloneEquipment(item)
                     },
                     onNavigateToXpSpending = {
-                        navController.navigate(Routes.xpSpending(characterId))
+                        if (isLocalChar) navController.navigate(Routes.xpSpending(characterId))
                     }
                 )
+                }
+                sheetUnavailable -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF1A1A2E)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(R.string.sheet_unavailable),
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+                else -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF1A1A2E)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(color = Color(0xFFD4A847))
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.sheet_loading),
+                                color = Color.White.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                }
             }
         }
         composable(
@@ -1300,6 +1360,12 @@ fun V20NavGraph(
                         popUpTo(Routes.HOME) { inclusive = true }
                     }
                 },
+                onTableStyleChange = { table, chair ->
+                    liveRoomViewModel.setTableStyle(table, chair)
+                },
+                onOpenSheet = { charId ->
+                    navController.navigate(Routes.sheet(charId))
+                },
                 onBack = { navController.popBackStack() },
                 onClearError = { liveRoomViewModel.clearError() },
                 onSendStatUpdate = { charId, field, value ->
@@ -1399,7 +1465,20 @@ fun V20NavGraph(
 }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+// Faceted octagon: the quick-return chip looks like a cut gemstone.
+private val CrystalShape = GenericShape { size, _ ->
+    val cut = minOf(size.width, size.height) * 0.30f
+    moveTo(cut, 0f)
+    lineTo(size.width - cut, 0f)
+    lineTo(size.width, cut)
+    lineTo(size.width, size.height - cut)
+    lineTo(size.width - cut, size.height)
+    lineTo(cut, size.height)
+    lineTo(0f, size.height - cut)
+    lineTo(0f, cut)
+    close()
+}
+
 @Composable
 private fun LiveRoomEntryButton(
     liveRoomState: LiveRoomState,
@@ -1407,65 +1486,66 @@ private fun LiveRoomEntryButton(
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val role = if (liveRoomState.isMaster) "Master" else "Giocatore"
-    val roomName = liveRoomState.room?.name ?: "Stanza"
     val scale by animateFloatAsState(if (liveRoomState.isConnected) 1f else 0f, label = "entryButtonScale")
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
 
-    Card(
+    val density = LocalDensity.current.density
+    val configuration = LocalConfiguration.current
+    val screenW = configuration.screenWidthDp * density
+    val screenH = configuration.screenHeightDp * density
+
+    val isMaster = liveRoomState.isMaster
+    val facetTint = if (isMaster) Color(0xFFD4A847) else Color(0xFF66BB6A)
+
+    Box(
         modifier = modifier
+            .offset { IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt()) }
             .graphicsLayer { scaleX = scale; scaleY = scale }
-            .padding(8.dp)
-            .shadow(4.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        onClick = {
-            val chronicleId = liveRoomState.room?.chronicleId ?: ""
-            val asMaster = liveRoomState.isMaster
-            val route = Routes.liveRoom(chronicleId, asMaster)
-            onNavigate(route)
-        }
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .background(if (liveRoomState.isMaster) Color(0xFFD4A847) else Color(0xFF2E7D32))
-                            .clip(CircleShape)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column(horizontalAlignment = Alignment.Start) {
-                        Text(
-                            text = "Tavolo Live: $roomName",
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1A1A2E),
-                            fontSize = 14.sp
-                        )
-                        Text(
-                            text = role,
-                            color = Color(0xFF1A1A2E).copy(alpha = 0.6f),
-                            fontSize = 12.sp
+                .pointerInput(screenW, screenH) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        val next = dragOffset + dragAmount
+                        dragOffset = Offset(
+                            next.x.coerceIn(-screenW + 140 * density, 8 * density),
+                            next.y.coerceIn(-screenH + 160 * density, 64 * density)
                         )
                     }
                 }
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = null,
-                    tint = Color(0xFF1A1A2E).copy(alpha = 0.5f),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+                .shadow(6.dp, CrystalShape)
+                .clip(CrystalShape)
+                .background(Color(0xCC1A1A2E))
+                .border(1.dp, facetTint.copy(alpha = 0.6f), CrystalShape)
+                .clickable {
+                    val chronicleId = liveRoomState.room?.chronicleId ?: ""
+                    onNavigate(Routes.liveRoom(chronicleId, isMaster))
+                }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.TableRestaurant,
+                contentDescription = null,
+                tint = facetTint,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = stringResource(R.string.live_room),
+                color = Color(0xFFF2EEE1),
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                maxLines = 1
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = null,
+                tint = Color(0xFFF2EEE1).copy(alpha = 0.7f),
+                modifier = Modifier.size(14.dp)
+            )
         }
     }
 }

@@ -9,6 +9,7 @@ data class VirtueValue(
     val value: Int = 1
 ) {
     init {
-        require(value in 1..5) { "Virtue value must be between 1 and 5" }
+        // Up to 10: the highest generation max trait (elders, XP-trained).
+        require(value in 1..10) { "Virtue value must be between 1 and 10" }
     }
 }

@@ -1,6 +1,7 @@
 package com.v20charactermanager.domain.model
 
 import com.v20charactermanager.domain.definition.*
+import com.v20charactermanager.domain.engine.GenerationRules
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -53,18 +54,23 @@ data class Character(
     fun getVirtueValue(virtueId: VirtueId): Int =
         virtues.find { it.id == virtueId }?.value ?: 1
 
+    /** Generation-based trait cap (5 for mortals, more for elders). */
+    private fun maxTrait(): Int = GenerationRules.getMaxTrait(identity.generation)
+
     fun setAttributeValue(attributeId: AttributeId, value: Int): Character {
-        require(value in 1..5) { "Attribute value must be between 1 and 5" }
+        // Nosferatu have Appearance 0 (manual); every other attribute has a minimum of 1.
+        val min = if (attributeId == AttributeId.APPEARANCE) 0 else 1
+        val clamped = value.coerceIn(min, maxTrait())
         val updated = attributes.map {
-            if (it.id == attributeId) it.copy(value = value) else it
+            if (it.id == attributeId) it.copy(value = clamped) else it
         }
         return copy(attributes = updated)
     }
 
     fun setAbilityValue(abilityId: AbilityId, value: Int): Character {
-        require(value in 0..5) { "Ability value must be between 0 and 5" }
+        val clamped = value.coerceIn(0, maxTrait())
         val updated = abilities.map {
-            if (it.id == abilityId) it.copy(value = value) else it
+            if (it.id == abilityId) it.copy(value = clamped) else it
         }
         return copy(abilities = updated)
     }
@@ -88,9 +94,9 @@ data class Character(
     }
 
     fun setVirtueValue(virtueId: VirtueId, value: Int): Character {
-        require(value in 1..5) { "Virtue value must be between 1 and 5" }
+        val clamped = value.coerceIn(1, maxTrait())
         val updated = virtues.map {
-            if (it.id == virtueId) it.copy(value = value) else it
+            if (it.id == virtueId) it.copy(value = clamped) else it
         }
         val conscienceValue = updated.find { it.id == VirtueId.CONSCIENCE }?.value ?: 0
         val selfControlValue = updated.find { it.id == VirtueId.SELF_CONTROL }?.value ?: 0

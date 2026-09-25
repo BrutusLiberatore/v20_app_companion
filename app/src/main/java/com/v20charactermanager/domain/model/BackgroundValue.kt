@@ -10,6 +10,7 @@ data class BackgroundValue(
     val notes: String? = null
 ) {
     init {
-        require(value in 1..5) { "Background value must be between 1 and 5" }
+        // Up to 10: the highest generation max trait (elders, XP-trained).
+        require(value in 1..10) { "Background value must be between 1 and 10" }
     }
 }

@@ -29,8 +29,20 @@ class LiveRoomViewModel(
         private const val TAG = "LiveRoomViewModel"
     }
 
-    private val _uiState = MutableStateFlow(LiveRoomState())
+    private val stylePrefs = application.getSharedPreferences("live_room_style", android.content.Context.MODE_PRIVATE)
+
+    private val _uiState = MutableStateFlow(
+        LiveRoomState(
+            tablePack = stylePrefs.getString("table", "medievale") ?: "medievale",
+            chairPack = stylePrefs.getString("chair", "medievale") ?: "medievale"
+        )
+    )
     val uiState: StateFlow<LiveRoomState> = _uiState.asStateFlow()
+
+    // Full character sheets shared by players (master only; shown read-only)
+    private val _sharedCharacters = MutableStateFlow<Map<String, Character>>(emptyMap())
+    val sharedCharacters: StateFlow<Map<String, Character>> = _sharedCharacters.asStateFlow()
+    private val requestedSheets = mutableSetOf<String>()
 
     private var server: LiveRoomServer? = null
     private var client: LiveRoomClient? = null
@@ -74,20 +86,26 @@ class LiveRoomViewModel(
                                 )
                             } else state
                         }
-                        // Resolve character portrait from DB
+                        // Push current table style to the new player
+                        val style = _uiState.value
+                        server?.sendToPlayer(id, LiveRoomMessage.TableStyle(style.tablePack, style.chairPack))
+                        // Share character portrait from master's DB (re-encoded so other devices can read it)
                         if (charId != null && characterRepository != null) {
-                            viewModelScope.launch {
+                            viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                                 try {
                                     characterRepository.getCharacterByIdOnce(charId)?.let { char ->
-                                        val uri = char.portraitUri ?: ""
-                                        _uiState.update { state ->
-                                            state.copy(
-                                                characterPortraits = state.characterPortraits + (charId to uri)
-                                            )
-                                        }
-                                        // Broadcast to all clients
-                                        if (uri.isNotEmpty()) {
-                                            server?.broadcast(LiveRoomMessage.PortraitUpdate(charId, uri))
+                                        val uri = char.portraitUri
+                                        if (!uri.isNullOrBlank() && java.io.File(uri).exists()) {
+                                            // Local path is valid on this device only
+                                            _uiState.update { state ->
+                                                if (charId in state.characterPortraits) state
+                                                else state.copy(
+                                                    characterPortraits = state.characterPortraits + (charId to uri)
+                                                )
+                                            }
+                                            encodePortraitThumb(uri)?.let { b64 ->
+                                                server?.cacheAndBroadcastPortrait(charId, b64)
+                                            }
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -175,6 +193,35 @@ class LiveRoomViewModel(
             }
             is LiveRoomMessage.DiceRoll -> {
                 server?.broadcast(message)
+            }
+            is LiveRoomMessage.PortraitData -> {
+                // Server already cached + broadcast it; just refresh master's own view
+                viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                    val path = savePortraitThumb(message.characterId, message.base64Thumb)
+                    if (path != null) {
+                        _uiState.update {
+                            it.copy(characterPortraits = it.characterPortraits + (message.characterId to path))
+                        }
+                    }
+                }
+            }
+            is LiveRoomMessage.CharacterData -> {
+                // Player shared its sheet with the master: keep it in memory (read-only)
+                viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                    try {
+                        val result = com.v20charactermanager.domain.engine.CharacterImporter.import(message.characterJson)
+                        result.character?.let { parsed ->
+                            val char = parsed.copy(
+                                id = message.characterId,
+                                portraitUri = _uiState.value.characterPortraits[message.characterId] ?: parsed.portraitUri
+                            )
+                            _sharedCharacters.update { it + (message.characterId to char) }
+                            Log.d(TAG, "Received shared sheet for ${message.characterId}")
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to import shared character sheet", e)
+                    }
+                }
             }
             else -> {}
         }
@@ -421,22 +468,44 @@ class LiveRoomViewModel(
                             chronicleId = "",
                             port = 0
                         ),
+                        localPlayer = it.localPlayer?.copy(id = message.playerId),
                         connectedPlayers = message.players.map {
                             ConnectedPlayer(it.id, it.name, it.characterId)
                         },
                         error = null
                     )
                 }
-                // Client only loads own portrait (other players' chars not in local DB)
+                // Load own portrait locally and share its thumbnail with the table
                 val localCharId = _uiState.value.localPlayer?.characterId
                 if (localCharId != null && characterRepository != null) {
-                    viewModelScope.launch {
+                    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                         try {
                             characterRepository.getCharacterByIdOnce(localCharId)?.let { char ->
-                                _uiState.update { state ->
-                                    state.copy(
-                                        characterPortraits = state.characterPortraits + (localCharId to (char.portraitUri ?: ""))
+                                val localPath = char.portraitUri
+                                if (!localPath.isNullOrBlank() && java.io.File(localPath).exists()) {
+                                    _uiState.update { state ->
+                                        state.copy(
+                                            characterPortraits = state.characterPortraits + (localCharId to localPath)
+                                        )
+                                    }
+                                    encodePortraitThumb(localPath)?.let { b64 ->
+                                        client?.sendMessage(LiveRoomMessage.PortraitData(localCharId, b64))
+                                        Log.d(TAG, "Shared own portrait (${b64.length} b64 chars)")
+                                    }
+                                }
+                                // Share full sheet so the Master can read it
+                                try {
+                                    val jsonStr = com.v20charactermanager.domain.engine.CharacterExporter.export(char)
+                                    client?.sendMessage(
+                                        LiveRoomMessage.CharacterData(
+                                            characterId = localCharId,
+                                            playerName = _uiState.value.localPlayer?.name ?: "",
+                                            characterJson = jsonStr
+                                        )
                                     )
+                                    Log.d(TAG, "Shared own sheet (${jsonStr.length} chars)")
+                                } catch (e: Exception) {
+                                    Log.w(TAG, "Failed to share own sheet", e)
                                 }
                             }
                         } catch (e: Exception) {
@@ -468,6 +537,19 @@ class LiveRoomViewModel(
                     state.copy(
                         characterPortraits = state.characterPortraits + (message.characterId to message.portraitUri)
                     )
+                }
+            }
+            is LiveRoomMessage.PortraitData -> {
+                // Never overwrite the local character's own (fresh, device-local) portrait
+                if (message.characterId != _uiState.value.localPlayer?.characterId) {
+                    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        val path = savePortraitThumb(message.characterId, message.base64Thumb)
+                        if (path != null) {
+                            _uiState.update {
+                                it.copy(characterPortraits = it.characterPortraits + (message.characterId to path))
+                            }
+                        }
+                    }
                 }
             }
             is LiveRoomMessage.PresentFile -> {
@@ -518,6 +600,34 @@ class LiveRoomViewModel(
                 client?.disconnect()
                 client = null
             }
+            is LiveRoomMessage.TableStyle -> {
+                _uiState.update {
+                    it.copy(tablePack = message.tablePack, chairPack = message.chairPack)
+                }
+            }
+            is LiveRoomMessage.RequestCharacter -> {
+                // The Master asked for our sheet: send the full character JSON back
+                val reqCharId = message.characterId
+                if (reqCharId.isNotBlank() && characterRepository != null) {
+                    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        try {
+                            characterRepository.getCharacterByIdOnce(reqCharId)?.let { char ->
+                                val jsonStr = com.v20charactermanager.domain.engine.CharacterExporter.export(char)
+                                client?.sendMessage(
+                                    LiveRoomMessage.CharacterData(
+                                        characterId = reqCharId,
+                                        playerName = _uiState.value.localPlayer?.name ?: "",
+                                        characterJson = jsonStr
+                                    )
+                                )
+                                Log.d(TAG, "Sent sheet data for $reqCharId (${jsonStr.length} chars)")
+                            }
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to send sheet data", e)
+                        }
+                    }
+                }
+            }
             else -> {}
         }
     }
@@ -539,6 +649,25 @@ class LiveRoomViewModel(
         _uiState.update { it.copy(error = null) }
     }
 
+    /** Master: ask the player holding this character for its sheet (deduped, fire-and-forget). */
+    fun requestSharedCharacter(characterId: String) {
+        if (characterId.isBlank()) return
+        if (_sharedCharacters.value.containsKey(characterId)) return
+        val playerId = _uiState.value.connectedPlayers
+            .firstOrNull { it.characterId == characterId }?.id ?: return
+        synchronized(requestedSheets) {
+            if (!requestedSheets.add(characterId)) return
+        }
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                server?.sendToPlayer(playerId, LiveRoomMessage.RequestCharacter(characterId))
+                Log.d(TAG, "Requested sheet for $characterId from $playerId")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to request sheet", e)
+            }
+        }
+    }
+
     fun closeRoom() {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
@@ -552,6 +681,18 @@ class LiveRoomViewModel(
         }
     }
 
+    fun setTableStyle(tablePack: String, chairPack: String) {
+        _uiState.update { it.copy(tablePack = tablePack, chairPack = chairPack) }
+        stylePrefs.edit().putString("table", tablePack).putString("chair", chairPack).apply()
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                server?.broadcast(LiveRoomMessage.TableStyle(tablePack, chairPack))
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to broadcast TableStyle", e)
+            }
+        }
+    }
+
     fun disconnect() {
         server?.stop()
         server = null
@@ -559,8 +700,52 @@ class LiveRoomViewModel(
         client = null
         wifiDirectManager.removeGroup()
         discoveryManager.stopBroadcasting()
-        _uiState.value = LiveRoomState()
+        val style = _uiState.value
+        _uiState.value = LiveRoomState(tablePack = style.tablePack, chairPack = style.chairPack)
+        _sharedCharacters.value = emptyMap()
+        synchronized(requestedSheets) { requestedSheets.clear() }
         Log.d(TAG, "Disconnected")
+    }
+
+    // --- Character portrait sharing (thumbnails over TCP) ---
+
+    private fun encodePortraitThumb(path: String): String? {
+        return try {
+            val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            android.graphics.BitmapFactory.decodeFile(path, bounds)
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+            var sample = 1
+            while (bounds.outWidth / sample > 512 || bounds.outHeight / sample > 512) sample *= 2
+            val opts = android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
+            val bmp = android.graphics.BitmapFactory.decodeFile(path, opts) ?: return null
+            val stream = java.io.ByteArrayOutputStream()
+            bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, stream)
+            bmp.recycle()
+            android.util.Base64.encodeToString(stream.toByteArray(), android.util.Base64.NO_WRAP)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to encode portrait thumbnail", e)
+            null
+        }
+    }
+
+    private fun savePortraitThumb(characterId: String, base64Thumb: String): String? {
+        return try {
+            if (base64Thumb.isEmpty() || base64Thumb.length > 1_500_000) return null
+            val bytes = android.util.Base64.decode(base64Thumb, android.util.Base64.NO_WRAP)
+            if (bytes.isEmpty()) return null
+            val dir = java.io.File(application.cacheDir, "live_portraits")
+            if (!dir.exists()) dir.mkdirs()
+            val safeId = characterId
+                .filter { it.isLetterOrDigit() || it == '-' || it == '_' }
+                .take(40)
+                .ifBlank { "unknown" }
+            val file = java.io.File(dir, "char_$safeId.jpg")
+            file.writeBytes(bytes)
+            file.absolutePath
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to save portrait thumbnail", e)
+            null
+        }
     }
 
     override fun onCleared() {

@@ -130,9 +130,13 @@ class LiveRoomClient {
                 is LiveRoomMessage.RequestCharacter -> json.encodeToString(LiveRoomMessage.RequestCharacter.serializer(), message)
                 else -> json.encodeToString(message)
             }
-            writer?.write(jsonStr)
-            writer?.newLine()
-            writer?.flush()
+            writer?.let { w ->
+                synchronized(w) {
+                    w.write(jsonStr)
+                    w.newLine()
+                    w.flush()
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Send failed", e)
         }

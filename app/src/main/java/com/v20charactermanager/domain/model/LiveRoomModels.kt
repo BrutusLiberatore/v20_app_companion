@@ -34,7 +34,9 @@ data class LiveRoomState(
     val error: String? = null,
     val chronicleAssets: List<MediaAsset> = emptyList(),
     val connectionStatus: String = "",
-    val characterPortraits: Map<String, String> = emptyMap()
+    val characterPortraits: Map<String, String> = emptyMap(),
+    val tablePack: String = "medievale",
+    val chairPack: String = "medievale"
 )
 
 @Serializable
@@ -108,4 +110,10 @@ sealed class LiveRoomMessage {
 
     @Serializable
     object RoomClosed : LiveRoomMessage()
+
+    @Serializable
+    data class TableStyle(val tablePack: String, val chairPack: String) : LiveRoomMessage()
+
+    @Serializable
+    data class PortraitData(val characterId: String, val base64Thumb: String) : LiveRoomMessage()
 }

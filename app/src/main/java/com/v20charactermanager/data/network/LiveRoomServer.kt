@@ -31,6 +31,9 @@ class LiveRoomServer(
     private val _connections = ConcurrentHashMap<String, ClientConnection>()
     val connections: Map<String, ClientConnection> get() = _connections.toMap()
 
+    // characterId -> base64 portrait thumbnail, replayed to players joining later
+    private val portraitCache = ConcurrentHashMap<String, String>()
+
     private var onClientMessage: ((clientId: String, message: LiveRoomMessage) -> Unit)? = null
     private var onClientConnected: ((clientId: String, playerName: String, characterId: String?) -> Unit)? = null
     private var onClientDisconnected: ((clientId: String, playerName: String) -> Unit)? = null
@@ -171,6 +174,11 @@ class LiveRoomServer(
 
                 onClientConnected?.invoke(clientId, joinMsg.playerName, joinMsg.characterId)
 
+                // Replay cached character portraits so the newcomer sees everyone
+                portraitCache.forEach { (charId, b64) ->
+                    sendToClient(writer, LiveRoomMessage.PortraitData(charId, b64))
+                }
+
                 // Set read timeout for the message loop to detect dead clients
                 socket.soTimeout = CLIENT_READ_TIMEOUT_MS
 
@@ -197,10 +205,18 @@ class LiveRoomServer(
                     if (line.isBlank()) continue
                     try {
                         val message = json.decodeFromString<LiveRoomMessage>(line)
-                        if (message is LiveRoomMessage.Pong) {
-                            Log.d(TAG, "Pong from ${joinMsg.playerName}")
-                        } else {
-                            onClientMessage?.invoke(clientId, message)
+                        when (message) {
+                            is LiveRoomMessage.Pong -> {
+                                Log.d(TAG, "Pong from ${joinMsg.playerName}")
+                            }
+                            is LiveRoomMessage.PortraitData -> {
+                                if (message.base64Thumb.isNotEmpty() && message.base64Thumb.length <= 1_500_000) {
+                                    portraitCache[message.characterId] = message.base64Thumb
+                                    broadcast(message, excludeId = clientId)
+                                }
+                                onClientMessage?.invoke(clientId, message)
+                            }
+                            else -> onClientMessage?.invoke(clientId, message)
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to parse message: $line", e)
@@ -223,9 +239,12 @@ class LiveRoomServer(
         try {
             val jsonStr = json.encodeToString(message)
             Log.d(TAG, "sendToClient: ${jsonStr.take(300)}")
-            writer.write(jsonStr)
-            writer.newLine()
-            writer.flush()
+            // Writers can be hit from multiple coroutines (replay + broadcasts): serialize per socket
+            synchronized(writer) {
+                writer.write(jsonStr)
+                writer.newLine()
+                writer.flush()
+            }
             Log.d(TAG, "sendToClient flushed OK")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send message: ${e.javaClass.simpleName}: ${e.message}", e)
@@ -256,6 +275,13 @@ class LiveRoomServer(
 
     fun sendToPlayer(playerId: String, message: LiveRoomMessage) {
         _connections[playerId]?.let { sendToClient(it.writer, message) }
+    }
+
+    /** Master-originated portrait: cache it for late joiners and send it to everyone. */
+    fun cacheAndBroadcastPortrait(characterId: String, base64Thumb: String) {
+        if (base64Thumb.isEmpty() || base64Thumb.length > 1_500_000) return
+        portraitCache[characterId] = base64Thumb
+        broadcast(LiveRoomMessage.PortraitData(characterId, base64Thumb))
     }
 
     private fun getServerHostIp(clientSocket: Socket): String {
@@ -306,6 +332,7 @@ class LiveRoomServer(
         scope.cancel()
         _connections.values.forEach { try { it.socket.close() } catch (_: Exception) {} }
         _connections.clear()
+        portraitCache.clear()
         try { serverSocket?.close() } catch (_: Exception) {}
         Log.d(TAG, "Server stopped")
     }

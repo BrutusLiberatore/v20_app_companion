@@ -9,6 +9,7 @@ import android.widget.MediaController
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -19,6 +20,7 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -90,6 +92,8 @@ fun LiveRoomScreen(
     onToggleFullscreen: () -> Unit,
     onDisconnect: () -> Unit,
     onCloseRoom: () -> Unit,
+    onTableStyleChange: (String, String) -> Unit,
+    onOpenSheet: (String) -> Unit,
     onBack: () -> Unit,
     onClearError: () -> Unit,
     onSendStatUpdate: (String, String, Int?) -> Unit,
@@ -188,6 +192,8 @@ fun LiveRoomScreen(
                     onToggleFullscreen = onToggleFullscreen,
                     onSendStatUpdate = onSendStatUpdate,
                     onCloseRoom = onCloseRoom,
+                    onTableStyleChange = onTableStyleChange,
+                    onOpenSheet = onOpenSheet,
                     modifier = modifier.padding(padding)
                 )
             }
@@ -408,6 +414,8 @@ private fun VirtualTableView(
     onToggleFullscreen: () -> Unit,
     onSendStatUpdate: (String, String, Int?) -> Unit,
     onCloseRoom: () -> Unit = {},
+    onTableStyleChange: (String, String) -> Unit = { _, _ -> },
+    onOpenSheet: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
 
@@ -485,9 +493,9 @@ private fun VirtualTableView(
                 .onGloballyPositioned { tableBoxSize = it.size },
             contentAlignment = Alignment.Center
         ) {
-            // Medieval round table asset
+            // Round table asset (style pack chosen by the Master)
             Image(
-                painter = painterResource(id = R.drawable.assets_tavolo),
+                painter = painterResource(id = TableStylePack.fromId(uiState.tablePack).tableRes),
                 contentDescription = "Tavolo",
                 modifier = Modifier.fillMaxHeight(),
                 contentScale = ContentScale.Fit
@@ -525,11 +533,21 @@ private fun VirtualTableView(
             }
 
             // Chairs with player icons positioned in a circle
+            val chairRes = TableStylePack.fromId(uiState.chairPack).chairRes
+            val ownCharId = uiState.localPlayer?.characterId
             seatDataList.forEach { seat ->
                 val angleRad = Math.toRadians(seat.angleDeg.toDouble())
 
+                // Players open only their own sheet; the Master can open any player's sheet
+                val seatCharId: String? = when {
+                    seat.isLocal && !ownCharId.isNullOrBlank() -> ownCharId
+                    uiState.isMaster && !seat.isMaster && !seat.characterId.isNullOrBlank() -> seat.characterId
+                    else -> null
+                }
                 ChairWithPlayer(
                     seat = seat,
+                    chairRes = chairRes,
+                    onCharClick = if (seatCharId != null) ({ onOpenSheet(seatCharId) }) else null,
                     modifier = Modifier.offset {
                         val radiusX = tableBoxSize.width.toFloat() * 0.40f
                         val radiusY = tableBoxSize.height.toFloat() * 0.40f
@@ -559,7 +577,8 @@ private fun VirtualTableView(
                     onPresentAsset = onPresentAsset,
                     onDismissFile = onDismissFile,
                     onToggleFullscreen = onToggleFullscreen,
-                    onCloseRoom = onCloseRoom
+                    onCloseRoom = onCloseRoom,
+                    onTableStyleChange = onTableStyleChange
                 )
             } else {
                 PlayerBottomPanel(
@@ -574,6 +593,8 @@ private fun VirtualTableView(
 @Composable
 private fun ChairWithPlayer(
     seat: SeatData,
+    chairRes: Int = R.drawable.assets_sedia,
+    onCharClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val chairPx = with(LocalDensity.current) { seat.chairSize.toPx() }
@@ -585,7 +606,7 @@ private fun ChairWithPlayer(
     ) {
         // Chair image, rotated to face center
         Image(
-            painter = painterResource(id = R.drawable.assets_sedia),
+            painter = painterResource(id = chairRes),
             contentDescription = null,
             modifier = Modifier
                 .size(seat.chairSize)
@@ -618,6 +639,14 @@ private fun ChairWithPlayer(
                             else -> Color(0xFF3949AB)
                         },
                         CircleShape
+                    )
+                    .then(
+                        if (onCharClick != null) {
+                            Modifier.clickable(
+                                onClickLabel = stringResource(R.string.live_open_sheet),
+                                onClick = onCharClick
+                            )
+                        } else Modifier
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -648,7 +677,16 @@ private fun ChairWithPlayer(
 
             // Name tag below chair
             Surface(
-                modifier = Modifier.offset(y = with(LocalDensity.current) { (chairPx * 0.55f).toDp() }),
+                modifier = Modifier
+                    .offset(y = with(LocalDensity.current) { (chairPx * 0.55f).toDp() })
+                    .then(
+                        if (onCharClick != null) {
+                            Modifier.clickable(
+                                onClickLabel = stringResource(R.string.live_open_sheet),
+                                onClick = onCharClick
+                            )
+                        } else Modifier
+                    ),
                 shape = RoundedCornerShape(6.dp),
                 color = Color.Black.copy(alpha = 0.7f)
             ) {
@@ -722,13 +760,15 @@ private fun MasterBottomPanel(
     onPresentAsset: (String, String, String) -> Unit,
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit,
-    onCloseRoom: () -> Unit = {}
+    onCloseRoom: () -> Unit = {},
+    onTableStyleChange: (String, String) -> Unit = { _, _ -> }
 ) {
     var showFileSelector by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var showAudioMixer by remember { mutableStateOf(false) }
     var showChronicleInfo by remember { mutableStateOf(false) }
     var showCloseTable by remember { mutableStateOf(false) }
+    var showStyleEditor by remember { mutableStateOf(false) }
     val audioUiState = audioViewModel?.uiState?.collectAsState()
     val audioState = audioUiState?.value ?: com.v20charactermanager.ui.chronicle.AudioMixUiState()
 
@@ -762,6 +802,11 @@ private fun MasterBottomPanel(
                         text = { Text("Cronaca") },
                         leadingIcon = { Icon(Icons.Default.Book, contentDescription = null) },
                         onClick = { showMenu = false; showChronicleInfo = true }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.live_customize_table)) },
+                        leadingIcon = { Icon(Icons.Default.Chair, contentDescription = null) },
+                        onClick = { showMenu = false; showStyleEditor = true }
                     )
                     DropdownMenuItem(
                         text = {
@@ -825,6 +870,15 @@ private fun MasterBottomPanel(
                 onPresentAsset(asset.id, asset.title, mimeType)
             },
             onDismiss = { showFileSelector = false }
+        )
+    }
+
+    if (showStyleEditor) {
+        TableStyleEditorPopup(
+            tablePack = uiState.tablePack,
+            chairPack = uiState.chairPack,
+            onSelect = onTableStyleChange,
+            onDismiss = { showStyleEditor = false }
         )
     }
 
@@ -950,6 +1004,144 @@ private fun ChronicleFileSelector(
         },
         dismissButton = null
     )
+}
+
+@Composable
+private fun TableStyleEditorPopup(
+    tablePack: String,
+    chairPack: String,
+    onSelect: (String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF2A2A4A),
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Chair, contentDescription = null, tint = Gold)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.live_customize_table),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.heightIn(max = 520.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.live_style_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.6f)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = stringResource(R.string.live_style_section_table),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Gold
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp)
+                ) {
+                    items(TableStylePack.entries) { pack ->
+                        StylePackCard(
+                            label = stringResource(pack.labelRes),
+                            previewRes = pack.tableRes,
+                            selected = pack.id == tablePack,
+                            onClick = { onSelect(pack.id, chairPack) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = stringResource(R.string.live_style_section_chairs),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Gold
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(vertical = 4.dp)
+                ) {
+                    items(TableStylePack.entries) { pack ->
+                        StylePackCard(
+                            label = stringResource(pack.labelRes),
+                            previewRes = pack.chairRes,
+                            selected = pack.id == chairPack,
+                            onClick = { onSelect(tablePack, pack.id) }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_close), color = Gold)
+            }
+        },
+        dismissButton = null
+    )
+}
+
+@Composable
+private fun StylePackCard(
+    label: String,
+    previewRes: Int,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) Gold else Color.White.copy(alpha = 0.12f),
+        label = "packBorder"
+    )
+    val background = if (selected) Gold.copy(alpha = 0.14f) else Color(0xFF1A1A2E)
+    Column(
+        modifier = Modifier
+            .width(112.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(background)
+            .border(2.dp, borderColor, RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AsyncImage(
+            model = previewRes,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(76.dp),
+            contentScale = ContentScale.Fit
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                color = if (selected) Gold else Color.White.copy(alpha = 0.85f),
+                maxLines = 1
+            )
+            if (selected) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    tint = Gold,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -1545,7 +1737,8 @@ private data class SeatData(
     val rotation: Float = 0f,
     val chairSize: Dp = 60.dp,
     val avatarSize: Dp = 36.dp,
-    val portraitUri: String? = null
+    val portraitUri: String? = null,
+    val characterId: String? = null
 )
 
 private fun buildCircularSeats(
@@ -1556,6 +1749,7 @@ private fun buildCircularSeats(
     val seats = mutableListOf<SeatData>()
 
     val angleStep = 360f / totalSeats
+    val localId = uiState.localPlayer?.id
 
     for (i in 0 until totalSeats) {
         val angleDeg = masterAngle + (i * angleStep)
@@ -1579,15 +1773,20 @@ private fun buildCircularSeats(
                     else -> "Libero"
                 },
                 isMaster = isMasterSeat,
-                isLocal = isMasterSeat && uiState.isMaster,
+                isLocal = if (isMasterSeat) {
+                    uiState.isMaster
+                } else {
+                    player != null && !localId.isNullOrEmpty() && player.id == localId
+                },
                 isOccupied = isMasterSeat || player != null,
                 angleDeg = angleDeg,
                 rotation = angleDeg + 90f,
                 chairSize = 60.dp,
                 avatarSize = if (isMasterSeat) 40.dp else 34.dp,
                 portraitUri = player?.characterId?.let { charId ->
-                    uiState.characterPortraits[charId]?.ifBlank { null }
-                }
+                    uiState.characterPortraits[charId]?.takeIf { it.isNotBlank() && java.io.File(it).exists() }
+                },
+                characterId = player?.characterId
             )
         )
     }

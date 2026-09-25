@@ -9,6 +9,7 @@ data class DisciplineValue(
     val value: Int = 1
 ) {
     init {
-        require(value in 1..5) { "Discipline value must be between 1 and 5" }
+        // Up to 10: the highest generation max trait (elders, XP-trained).
+        require(value in 1..10) { "Discipline value must be between 1 and 10" }
     }
 }

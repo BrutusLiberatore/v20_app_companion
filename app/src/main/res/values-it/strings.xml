@@ -846,6 +846,18 @@
     <string name="live_close_table_title">Chiudere il tavolo?</string>
     <string name="live_close_table_message">Tutti i giocatori verranno disconnessi e il tavolo verrà chiuso definitivamente.</string>
     <string name="live_room_closed_by_master">Il tavolo è stato chiuso dal Master.</string>
+    <string name="live_customize_table">Personalizza Tavolo</string>
+    <string name="live_style_section_table">Tavolo</string>
+    <string name="live_style_section_chairs">Sedie</string>
+    <string name="live_style_hint">Tocca un\'anteprima per applicarla al tavolo in tempo reale.</string>
+    <string name="style_pack_medievale">Medievale</string>
+    <string name="style_pack_giardino">Giardino</string>
+    <string name="style_pack_mare">Mare</string>
+    <string name="style_pack_nonna">Nonna</string>
+    <string name="style_pack_poker">Poker</string>
+    <string name="live_open_sheet">Apri la scheda personaggio</string>
+    <string name="sheet_loading">Caricamento scheda personaggio…</string>
+    <string name="sheet_unavailable">Scheda personaggio non disponibile.</string>
 
     <!-- Crash Logs -->
     <string name="crash_logs">Log di Crash</string>
