@@ -2,8 +2,11 @@ package com.v20charactermanager.domain.engine
 
 import com.v20charactermanager.domain.definition.*
 import com.v20charactermanager.domain.model.Character
+import com.v20charactermanager.domain.model.HouseRules
 
-class CharacterCreationValidator {
+class CharacterCreationValidator(
+    private val houseRules: HouseRules? = null
+) {
 
     /**
      * Severity split:
@@ -31,6 +34,11 @@ class CharacterCreationValidator {
                 }
             }
         }
+        houseRules?.let { rules ->
+            if (character.identity.clan.name in rules.excludedClans) {
+                errors.add("Clan ${character.identity.clan.nameEn} is excluded by house rules")
+            }
+        }
         return ValidationResult(errors = errors)
     }
 
@@ -51,8 +59,12 @@ class CharacterCreationValidator {
             }
         }
 
+        val attrPrimary = houseRules?.attributePrimary ?: RuleSet.ATTRIBUTE_PRIMARY
+        val attrSecondary = houseRules?.attributeSecondary ?: RuleSet.ATTRIBUTE_SECONDARY
+        val attrTertiary = houseRules?.attributeTertiary ?: RuleSet.ATTRIBUTE_TERTIARY
+
         val totalPoints = categoryPoints.sumOf { it.second }
-        val expectedTotal = RuleSet.ATTRIBUTE_PRIMARY + RuleSet.ATTRIBUTE_SECONDARY + RuleSet.ATTRIBUTE_TERTIARY
+        val expectedTotal = attrPrimary + attrSecondary + attrTertiary
         if (totalPoints != expectedTotal) {
             warnings.add("Total attribute points: $totalPoints, expected $expectedTotal")
         }
@@ -67,8 +79,8 @@ class CharacterCreationValidator {
         }
 
         val sorted = categoryPoints.map { it.second }.sorted()
-        if (sorted != listOf(RuleSet.ATTRIBUTE_TERTIARY, RuleSet.ATTRIBUTE_SECONDARY, RuleSet.ATTRIBUTE_PRIMARY)) {
-            warnings.add("Attribute distribution must be a 7/5/3 split across categories")
+        if (sorted != listOf(attrTertiary, attrSecondary, attrPrimary)) {
+            warnings.add("Attribute distribution must be a $attrPrimary/$attrSecondary/$attrTertiary split across categories")
         }
 
         return ValidationResult(errors = errors, warnings = warnings)
@@ -88,8 +100,12 @@ class CharacterCreationValidator {
             category to abils.sumOf { it.value - RuleSet.ABILITY_BASE }
         }
 
+        val abilityPrimary = houseRules?.abilityPrimary ?: RuleSet.ABILITY_PRIMARY
+        val abilitySecondary = houseRules?.abilitySecondary ?: RuleSet.ABILITY_SECONDARY
+        val abilityTertiary = houseRules?.abilityTertiary ?: RuleSet.ABILITY_TERTIARY
+
         val totalPoints = categoryPoints.sumOf { it.second }
-        val expectedTotal = RuleSet.ABILITY_PRIMARY + RuleSet.ABILITY_SECONDARY + RuleSet.ABILITY_TERTIARY
+        val expectedTotal = abilityPrimary + abilitySecondary + abilityTertiary
         if (totalPoints != expectedTotal) {
             warnings.add("Total ability points: $totalPoints, expected $expectedTotal")
         }
@@ -101,8 +117,8 @@ class CharacterCreationValidator {
         }
 
         val sorted = categoryPoints.map { it.second }.sorted()
-        if (sorted != listOf(RuleSet.ABILITY_TERTIARY, RuleSet.ABILITY_SECONDARY, RuleSet.ABILITY_PRIMARY)) {
-            warnings.add("Ability distribution must be a 13/9/5 split across categories")
+        if (sorted != listOf(abilityTertiary, abilitySecondary, abilityPrimary)) {
+            warnings.add("Ability distribution must be a $abilityPrimary/$abilitySecondary/$abilityTertiary split across categories")
         }
 
         return ValidationResult(warnings = warnings)
@@ -165,7 +181,8 @@ class CharacterCreationValidator {
             errors.add("Willpower should be $expectedWillpower, is ${character.willpower.permanent}")
         }
 
-        val freebieReport = FreebiePointCalculator().calculate(character)
+        val freebieReport = (houseRules?.toFreebiePointCalculator() ?: FreebiePointCalculator())
+            .calculate(character)
         if (freebieReport.remainingPoints < 0) {
             warnings.add("Freebie points exceeded: used ${freebieReport.usedPoints} of ${freebieReport.initialPoints}")
         }

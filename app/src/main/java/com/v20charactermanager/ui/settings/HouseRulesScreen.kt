@@ -16,11 +16,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
+import com.v20charactermanager.domain.definition.ClanId
 import com.v20charactermanager.domain.model.HouseRules
 import com.v20charactermanager.ui.theme.V20GoldBright
 import com.v20charactermanager.ui.theme.V20Surface
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HouseRulesScreen(
     uiState: HouseRulesUiState,
@@ -207,6 +208,82 @@ fun HouseRulesScreen(
 
             HorizontalDivider()
 
+            // XP Costs
+            SectionHeader(stringResource(R.string.house_rules_xp))
+
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_attr),
+                value = rules.xpAttributeCostPerDot,
+                onValueChange = { onUpdateRules(rules.copy(xpAttributeCostPerDot = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_attr_new),
+                value = rules.xpNewAttributeCost,
+                onValueChange = { onUpdateRules(rules.copy(xpNewAttributeCost = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_ability),
+                value = rules.xpAbilityCostPerDot,
+                onValueChange = { onUpdateRules(rules.copy(xpAbilityCostPerDot = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_ability_new),
+                value = rules.xpNewAbilityCost,
+                onValueChange = { onUpdateRules(rules.copy(xpNewAbilityCost = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_background),
+                value = rules.xpBackgroundCostPerDot,
+                onValueChange = { onUpdateRules(rules.copy(xpBackgroundCostPerDot = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_virtue),
+                value = rules.xpVirtueCostPerDot,
+                onValueChange = { onUpdateRules(rules.copy(xpVirtueCostPerDot = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_humanity),
+                value = rules.xpHumanityCostPerDot,
+                onValueChange = { onUpdateRules(rules.copy(xpHumanityCostPerDot = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_willpower),
+                value = rules.xpWillpowerCostPerDot,
+                onValueChange = { onUpdateRules(rules.copy(xpWillpowerCostPerDot = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_disc_in),
+                value = rules.xpDisciplineInClanPerLevel,
+                onValueChange = { onUpdateRules(rules.copy(xpDisciplineInClanPerLevel = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_disc_new),
+                value = rules.xpNewDisciplineInClan,
+                onValueChange = { onUpdateRules(rules.copy(xpNewDisciplineInClan = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_disc_out),
+                value = rules.xpDisciplineOutOfClanPerLevel,
+                onValueChange = { onUpdateRules(rules.copy(xpDisciplineOutOfClanPerLevel = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_disc_new_out),
+                value = rules.xpNewDisciplineOutOfClan,
+                onValueChange = { onUpdateRules(rules.copy(xpNewDisciplineOutOfClan = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_disc_caitiff),
+                value = rules.xpDisciplineCaitiffPerLevel,
+                onValueChange = { onUpdateRules(rules.copy(xpDisciplineCaitiffPerLevel = it)) }
+            )
+            NumericField(
+                label = stringResource(R.string.house_rules_xp_disc_new_caitiff),
+                value = rules.xpNewDisciplineCaitiff,
+                onValueChange = { onUpdateRules(rules.copy(xpNewDisciplineCaitiff = it)) }
+            )
+
+            HorizontalDivider()
+
             // Dice Rules
             SectionHeader(stringResource(R.string.house_rules_dice))
 
@@ -215,6 +292,63 @@ fun HouseRulesScreen(
                 value = rules.difficultyDefault,
                 onValueChange = { onUpdateRules(rules.copy(difficultyDefault = it)) }
             )
+            CheckRow(
+                label = stringResource(R.string.house_rules_exploding_available),
+                checked = rules.explodingTensAvailable,
+                onCheckedChange = { onUpdateRules(rules.copy(explodingTensAvailable = it)) }
+            )
+            CheckRow(
+                label = stringResource(R.string.house_rules_exploding_default),
+                checked = rules.explodingTensDefault,
+                enabled = rules.explodingTensAvailable,
+                onCheckedChange = { onUpdateRules(rules.copy(explodingTensDefault = it)) }
+            )
+            CheckRow(
+                label = stringResource(R.string.house_rules_exploding_recursive),
+                checked = rules.explodingTensRecursive,
+                enabled = rules.explodingTensAvailable,
+                onCheckedChange = { onUpdateRules(rules.copy(explodingTensRecursive = it)) }
+            )
+
+            HorizontalDivider()
+
+            // Allowed Content
+            SectionHeader(stringResource(R.string.house_rules_allowed))
+
+            Text(
+                text = stringResource(R.string.house_rules_allowed_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ClanId.entries.forEach { clan ->
+                    val allowed = clan.name !in rules.excludedClans
+                    FilterChip(
+                        selected = allowed,
+                        onClick = {
+                            val updated = if (allowed) {
+                                rules.excludedClans + clan.name
+                            } else {
+                                rules.excludedClans - clan.name
+                            }
+                            onUpdateRules(rules.copy(excludedClans = updated))
+                        },
+                        label = {
+                            Text(
+                                text = if (clan == ClanId.CAITIFF) {
+                                    stringResource(R.string.clan_no_clan)
+                                } else {
+                                    clan.nameEn
+                                }
+                            )
+                        }
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -229,6 +363,33 @@ private fun SectionHeader(title: String) {
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold
     )
+}
+
+@Composable
+private fun CheckRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = checked,
+            enabled = enabled,
+            onCheckedChange = onCheckedChange
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+        )
+    }
 }
 
 @Composable

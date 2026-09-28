@@ -195,7 +195,8 @@ fun CreationScreen(
                 1 -> IdentityStep(
                     identity = uiState.character.identity,
                     onIdentityChange = onIdentityChange,
-                    onAttributesChange = onAttributeChange
+                    onAttributesChange = onAttributeChange,
+                    excludedClans = uiState.houseRules?.excludedClans ?: emptyList()
                 )
                 2 -> AttributesStep(
                     attributes = uiState.character.attributes,

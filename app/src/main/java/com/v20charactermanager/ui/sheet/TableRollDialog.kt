@@ -37,7 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
-import com.v20charactermanager.domain.definition.RuleSet
 import com.v20charactermanager.domain.model.Character
 import com.v20charactermanager.domain.model.RollSpec
 
@@ -55,10 +54,10 @@ fun TableRollDialog(
     onRoll: (RollSpec) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var difficulty by remember { mutableIntStateOf(RuleSet.DIFFICULTY_STANDARD) }
+    var difficulty by remember { mutableIntStateOf(com.v20charactermanager.domain.engine.DiceEngine.defaultDifficulty()) }
     var diceModifier by remember { mutableIntStateOf(0) }
     var willpowerUsed by remember { mutableStateOf(false) }
-    var explodingTens by remember { mutableStateOf(false) }
+    var explodingTens by remember { mutableStateOf(com.v20charactermanager.domain.engine.DiceEngine.currentRules().explodingTensDefault) }
     val selected = remember { mutableStateListOf<RollTrait>() }
 
     val groups = remember(character) {
@@ -223,6 +222,7 @@ fun TableRollDialog(
                 ) {
                     Checkbox(
                         checked = explodingTens,
+                        enabled = com.v20charactermanager.domain.engine.DiceEngine.currentRules().explodingTensAvailable,
                         onCheckedChange = { explodingTens = it }
                     )
                     Spacer(modifier = Modifier.width(4.dp))

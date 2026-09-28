@@ -159,9 +159,17 @@ fun DiceScreen(
                     ) {
                         Checkbox(
                             checked = uiState.explodingTens,
+                            enabled = uiState.explodingTensAvailable,
                             onCheckedChange = { viewModel.updateExplodingTens(it) }
                         )
-                        Text(stringResource(R.string.dice_exploding_tens))
+                        Text(
+                            text = stringResource(R.string.dice_exploding_tens),
+                            color = if (uiState.explodingTensAvailable) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            }
+                        )
                     }
                 }
             }

@@ -17,7 +17,8 @@ data class DiceResult(
 data class DiceRules(
     val explodingTensAvailable: Boolean = true,
     val explodingTensDefault: Boolean = false,
-    val explodingTensRecursive: Boolean = false
+    val explodingTensRecursive: Boolean = false,
+    val difficultyDefault: Int = 6
 )
 
 object DiceEngine {
@@ -27,6 +28,10 @@ object DiceEngine {
     fun configure(rules: DiceRules) {
         diceRules = rules
     }
+
+    fun currentRules(): DiceRules = diceRules
+
+    fun defaultDifficulty(): Int = diceRules.difficultyDefault
 
     fun roll(
         pool: Int,

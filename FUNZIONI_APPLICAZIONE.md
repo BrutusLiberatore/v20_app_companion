@@ -29,7 +29,9 @@ Funzioni di supporto:
 - Contatore punti per **Meriti** e **Difetti**.
 - **Validazione**: elenca gli errori da sistemare prima del salvataggio.
 - **Avviso di punti**: se i punti assegnati non corrispondono al totale standard, chiede se continuare comunque.
+- **Sezioni riordinabili**: dall'icona di riordino in alto è possibile riassegnare l'ordine delle tab della scheda (su/giù), con ripristino all'ordine standard; l'ordine è salvato nell'app.
 - **Suggerimenti di creazione** con le cifre consigliate dal manuale.
+- **Regole della casa della cronaca**: avviando la creazione dal tab Personaggi di una cronaca (pulsante "Crea personaggio"), vengono applicati costi e punti freebie, totali di ripartizione e clan esclusi della cronaca; al salvataggio il PG viene collegato automaticamente alla cronaca.
 
 ## 3. Scheda del personaggio
 
@@ -71,6 +73,7 @@ Schermata dedicata alla spesa dei punti esperienza:
 
 - **Pool di dadi** e **difficoltà** del tiro.
 - Opzioni: dado extra, attivazione della **volontà**, modificatore di tiri, modificatore di difficoltà, **decine esplosive**, motivo del modificatore.
+- I valori predefiniti di difficoltà e decine esplosive seguono le **Regole della casa** quando configurate (vedi sezione 15).
 - Risultato con **successi**, **falle**, **botch** e riepilogo (successi e 1).
 
 ## 7. Compendio
@@ -168,6 +171,8 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Dadi 3D animati**: d10 in marmo a texture reale (volatina, atterraggio sul risultato, tinta rosso/verde per boccia/successo). Mesh e texture dal set gratuito "Low Poly 3D Dice Set" di **eddex** (itch.io), licenza **CC BY-SA 4.0**.
 - **Sincronizzazione dei dati**: aggiornamenti delle statistiche del personaggio condivisi (es. salute, volontà, sangue).
 - **Foglio in sola lettura**: i giocatori possono vedere il foglio condiviso senza modificarlo.
+- **Invio volontario della scheda**: dal proprio foglio aperto al tavolo il giocatore può premere l'icona invio per **inviare la scheda corrente al Narratore** (in aggiunta all'invio automatico alla connessione e alla richiesta del Narratore); arriva un'avviso "Scheda inviata" al giocatore e "Scheda ricevuta da…" al Narratore.
+- **Salvataggio della scheda ricevuta**: il Narratore, aprendo il foglio condiviso di un giocatore, può premere **"Salva sul dispositivo"** per conservarlo nella propria libreria locale (e nella cronaca della tavola, se presente).
 - **Presentazione dei file** dal Narratore (immagini, PDF, video) a schermo intero per tutti.
 - **Condivisione di file** verso i giocatori: il file ricevuto viene salvato nella cronaca del giocatore.
 - Il Narratore può **chiudere la tavola**; tutti ricevono l'avviso.
@@ -194,7 +199,12 @@ Strumento sonoro per l'atmosfera di partita:
 - **Lingua**: Inglese / Italiano, applicata subito senza riavvio.
 - **Tema**: aspetto dell'interfaccia.
 - **Import/Export** dei personaggi.
-- **Regole della casa** delle cronache.
+- **Regole della casa** delle cronache, per cronaca:
+  - Valori di **creazione** (abilità, discipline, background, virtù, punti freebie) e **costi freebie**.
+  - **Valori iniziali** (sangue e volontà).
+  - **Costi XP**: attributi, abilità, background, virtù, umanità, volontà e discipline (in clan, fuori clan, Caitiff) — applicati alla schermata **Esperienza**.
+  - **Regole dei dadi**: difficoltà predefinita e **decine esplosive** (consentite, attive per default, a cascata) — applicate a tutti i tiri.
+  - **Contenuti ammessi**: clan esclusi non appaiono nella tendina di creazione (e un clan escluso blocca il salvataggio).
 - **Log di errore**.
 
 ## 16. Log di errore

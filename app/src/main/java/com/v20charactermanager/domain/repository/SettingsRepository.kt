@@ -5,7 +5,9 @@ import kotlinx.coroutines.flow.Flow
 interface SettingsRepository {
     val language: Flow<String>
     val theme: Flow<String>
+    val sheetSectionOrder: Flow<String>
 
     suspend fun setLanguage(language: String)
     suspend fun setTheme(theme: String)
+    suspend fun setSheetSectionOrder(order: String)
 }

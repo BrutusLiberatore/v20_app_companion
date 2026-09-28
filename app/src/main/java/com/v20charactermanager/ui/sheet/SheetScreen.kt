@@ -14,13 +14,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Reorder
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Casino
@@ -88,20 +92,18 @@ fun SheetScreen(
     saveError: String? = null,
     onClearMessages: () -> Unit = {},
     canEdit: Boolean = true,
-    onRollFromTable: ((RollSpec) -> Unit)? = null
+    onRollFromTable: ((RollSpec) -> Unit)? = null,
+    sheetSectionOrder: List<SheetSection> = SheetSection.defaultOrder,
+    onSectionOrderChange: (List<SheetSection>) -> Unit = {},
+    onSendToMaster: (() -> Unit)? = null,
+    onSaveShared: (() -> Unit)? = null
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedSection by remember { mutableStateOf(SheetSection.OVERVIEW) }
     var showTableRoll by remember { mutableStateOf(false) }
-    val tabs = listOf(
-        stringResource(R.string.sheet_tab_overview),
-        stringResource(R.string.sheet_tab_attributes),
-        stringResource(R.string.sheet_tab_abilities),
-        stringResource(R.string.sheet_tab_advantages),
-        stringResource(R.string.sheet_tab_details),
-        stringResource(R.string.sheet_merits_flaws),
-        stringResource(R.string.sheet_equipment),
-        stringResource(R.string.sheet_notes)
-    )
+    var showReorder by remember { mutableStateOf(false) }
+    var reorderList by remember { mutableStateOf(listOf<SheetSection>()) }
+    val orderedSections = sheetSectionOrder
+    val selectedIndex = orderedSections.indexOf(selectedSection).coerceAtLeast(0)
 
     Scaffold(
         topBar = {
@@ -121,6 +123,35 @@ fun SheetScreen(
                     }
                 },
                 actions = {
+                    if (onSaveShared != null && !isEditing) {
+                        TextButton(onClick = onSaveShared) {
+                            Text(
+                                text = stringResource(R.string.sheet_save_shared),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                    if (onSendToMaster != null && !isEditing) {
+                        IconButton(onClick = onSendToMaster) {
+                            Icon(
+                                Icons.Default.Send,
+                                contentDescription = stringResource(R.string.sheet_send_to_master),
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                    if (!isEditing) {
+                        IconButton(onClick = {
+                            reorderList = orderedSections
+                            showReorder = true
+                        }) {
+                            Icon(
+                                Icons.Default.Reorder,
+                                contentDescription = stringResource(R.string.sheet_reorder_title),
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
                     if (onRollFromTable != null && !isEditing) {
                         IconButton(onClick = { showTableRoll = true }) {
                             Icon(
@@ -208,34 +239,28 @@ fun SheetScreen(
                 }
             }
             ScrollableTabRow(
-                selectedTabIndex = selectedTab,
+                selectedTabIndex = selectedIndex,
                 containerColor = TabBg,
                 contentColor = TabActive,
                 edgePadding = 0.dp,
                 divider = {}
             ) {
-                tabs.forEachIndexed { index, title ->
+                orderedSections.forEach { section ->
                     Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
+                        selected = selectedSection == section,
+                        onClick = { selectedSection = section },
                         text = {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                when (index) {
-                                    1 -> Icon(painterResource(R.drawable.ic_attributes), null, Modifier.size(16.dp), tint = Color.Unspecified)
-                                    2 -> Icon(painterResource(R.drawable.ic_abilities), null, Modifier.size(16.dp), tint = Color.Unspecified)
-                                    3 -> Icon(painterResource(R.drawable.ic_merits), null, Modifier.size(16.dp), tint = Color.Unspecified)
-                                    4 -> Icon(painterResource(R.drawable.ic_blood_pool), null, Modifier.size(16.dp), tint = Color.Unspecified)
-                                    5 -> Icon(painterResource(R.drawable.ic_humanity), null, Modifier.size(16.dp), tint = Color.Unspecified)
-                                    6 -> Icon(painterResource(R.drawable.ic_equipment), null, Modifier.size(16.dp), tint = Color.Unspecified)
-                                    7 -> Icon(painterResource(R.drawable.ic_notes), null, Modifier.size(16.dp), tint = Color.Unspecified)
+                                section.iconRes?.let { icon ->
+                                    Icon(painterResource(icon), null, Modifier.size(16.dp), tint = Color.Unspecified)
                                 }
                                 Text(
-                                    text = title,
+                                    text = stringResource(section.labelRes),
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = if (selectedTab == index) TabActive else TabInactive
+                                    color = if (selectedSection == section) TabActive else TabInactive
                                 )
                             }
                         },
@@ -245,8 +270,8 @@ fun SheetScreen(
                 }
             }
 
-            when (selectedTab) {
-                0 -> OverviewTab(
+            when (selectedSection) {
+                SheetSection.OVERVIEW -> OverviewTab(
                     character = character,
                     isEditing = isEditing,
                     canEdit = canEdit,
@@ -255,19 +280,19 @@ fun SheetScreen(
                     onNavigateToSession = onNavigateToSession,
                     onNavigateToXpSpending = onNavigateToXpSpending
                 )
-                1 -> AttributesTab(
+                SheetSection.ATTRIBUTES -> AttributesTab(
                     character = character,
                     isEditing = isEditing,
                     onAttributeChange = onAttributeChange,
                     onNavigateToDice = onNavigateToDice
                 )
-                2 -> AbilitiesTab(
+                SheetSection.ABILITIES -> AbilitiesTab(
                     character = character,
                     isEditing = isEditing,
                     onAbilityChange = onAbilityChange,
                     onNavigateToDice = onNavigateToDice
                 )
-                3 -> AdvantagesTab(
+                SheetSection.ADVANTAGES -> AdvantagesTab(
                     character = character,
                     isEditing = isEditing,
                     onDisciplineValueChange = onDisciplineValueChange,
@@ -276,8 +301,8 @@ fun SheetScreen(
                     onBackgroundRemove = onBackgroundRemove,
                     onVirtueChange = onVirtueChange
                 )
-                4 -> DetailsTab(character)
-                5 -> MeritsFlawsTab(
+                SheetSection.DETAILS -> DetailsTab(character)
+                SheetSection.MERITS_FLAWS -> MeritsFlawsTab(
                     character = character,
                     isEditing = isEditing,
                     onMeritAdd = onMeritAdd,
@@ -287,7 +312,7 @@ fun SheetScreen(
                     onFlawRemove = onFlawRemove,
                     onFlawClone = onFlawClone
                 )
-                6 -> EquipmentTab(
+                SheetSection.EQUIPMENT -> EquipmentTab(
                     character = character,
                     isEditing = isEditing,
                     onEquipmentAdd = onEquipmentAdd,
@@ -295,7 +320,7 @@ fun SheetScreen(
                     onEquipmentRemove = onEquipmentRemove,
                     onEquipmentClone = onEquipmentClone
                 )
-                7 -> NotesTab(character, onNotesChange, canEdit)
+                SheetSection.NOTES -> NotesTab(character, onNotesChange, canEdit)
             }
         }
     }
@@ -310,6 +335,88 @@ fun SheetScreen(
             onDismiss = { showTableRoll = false }
         )
     }
+
+    if (showReorder) {
+        AlertDialog(
+            onDismissRequest = { showReorder = false },
+            title = { Text(stringResource(R.string.sheet_reorder_title)) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    reorderList.forEachIndexed { index, section ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            section.iconRes?.let { icon ->
+                                Icon(
+                                    painterResource(icon),
+                                    null,
+                                    Modifier.size(18.dp),
+                                    tint = Color.Unspecified
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(section.labelRes),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                enabled = index > 0,
+                                onClick = {
+                                    reorderList = reorderList.swapped(index, index - 1)
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.ArrowUpward,
+                                    contentDescription = stringResource(R.string.sheet_move_up)
+                                )
+                            }
+                            IconButton(
+                                enabled = index < reorderList.lastIndex,
+                                onClick = {
+                                    reorderList = reorderList.swapped(index, index + 1)
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.ArrowDownward,
+                                    contentDescription = stringResource(R.string.sheet_move_down)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onSectionOrderChange(reorderList)
+                    showReorder = false
+                }) {
+                    Text(stringResource(R.string.action_save))
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = { reorderList = SheetSection.defaultOrder }) {
+                        Text(stringResource(R.string.sheet_reorder_reset))
+                    }
+                    TextButton(onClick = { showReorder = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            }
+        )
+    }
+}
+
+private fun List<SheetSection>.swapped(first: Int, second: Int): List<SheetSection> {
+    val mutable = toMutableList()
+    val temp = mutable[first]
+    mutable[first] = mutable[second]
+    mutable[second] = temp
+    return mutable
 }
 
 @Composable

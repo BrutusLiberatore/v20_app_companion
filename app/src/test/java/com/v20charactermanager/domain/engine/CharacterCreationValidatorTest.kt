@@ -223,4 +223,11 @@ class CharacterCreationValidatorTest {
         val result = validator.validateStep(character, 99)
         assertTrue(result.isValid)
     }
+
+    @Test
+    fun `clan excluded by house rules is a hard error`() {
+        val rules = HouseRules(chronicleId = "c1", excludedClans = listOf(ClanId.BRUAH.name))
+        val result = CharacterCreationValidator(rules).validateIdentity(character)
+        assertTrue(result.errors.any { it.contains("excluded by house rules") })
+    }
 }

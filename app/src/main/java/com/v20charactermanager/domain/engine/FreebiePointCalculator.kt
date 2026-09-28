@@ -2,9 +2,28 @@ package com.v20charactermanager.domain.engine
 
 import com.v20charactermanager.domain.definition.*
 import com.v20charactermanager.domain.model.Character
+import com.v20charactermanager.domain.model.HouseRules
+
+fun HouseRules.toFreebiePointCalculator(): FreebiePointCalculator = FreebiePointCalculator(
+    freebieCost = RuleSet.FreebieCost(
+        attributeCost = freebieAttributeCost,
+        abilityCost = freebieAbilityCost,
+        disciplineCost = freebieDisciplineCost,
+        backgroundCost = freebieBackgroundCost,
+        virtueCost = freebieVirtueCost,
+        humanityCost = freebieHumanityCost,
+        willpowerCost = freebieWillpowerCost
+    ),
+    initialPoints = freebiePoints,
+    expectedAttributePoints = attributePrimary + attributeSecondary + attributeTertiary,
+    expectedAbilityPoints = abilityPrimary + abilitySecondary + abilityTertiary
+)
 
 class FreebiePointCalculator(
-    private val freebieCost: RuleSet.FreebieCost = RuleSet.defaultFreebieCost
+    private val freebieCost: RuleSet.FreebieCost = RuleSet.defaultFreebieCost,
+    private val initialPoints: Int = RuleSet.FREEBIE_CREATION_POINTS,
+    private val expectedAttributePoints: Int = RuleSet.ATTRIBUTE_PRIMARY + RuleSet.ATTRIBUTE_SECONDARY + RuleSet.ATTRIBUTE_TERTIARY,
+    private val expectedAbilityPoints: Int = RuleSet.ABILITY_PRIMARY + RuleSet.ABILITY_SECONDARY + RuleSet.ABILITY_TERTIARY
 ) {
     data class FreebieReport(
         val initialPoints: Int,
@@ -21,7 +40,7 @@ class FreebiePointCalculator(
 
     fun calculate(character: Character): FreebieReport {
         val used = calculateUsedPoints(character)
-        val initial = RuleSet.FREEBIE_CREATION_POINTS
+        val initial = initialPoints
         return FreebieReport(
             initialPoints = initial,
             usedPoints = used,
@@ -47,14 +66,14 @@ class FreebiePointCalculator(
         val profile = CreationProfile.forSect(character.identity.sect)
         val isNosferatu = character.identity.clan == ClanId.NOSFERATU
 
-        val expectedAttributes = RuleSet.ATTRIBUTE_PRIMARY + RuleSet.ATTRIBUTE_SECONDARY + RuleSet.ATTRIBUTE_TERTIARY
+        val expectedAttributes = expectedAttributePoints
         val attributePoints = character.attributes.sumOf { attr ->
             val base = if (isNosferatu && attr.id == AttributeId.APPEARANCE) 0 else RuleSet.ATTRIBUTE_BASE
             (attr.value - base).coerceAtLeast(0)
         }
         total += (attributePoints - expectedAttributes).coerceAtLeast(0) * freebieCost.attributeCost
 
-        val expectedAbilities = RuleSet.ABILITY_PRIMARY + RuleSet.ABILITY_SECONDARY + RuleSet.ABILITY_TERTIARY
+        val expectedAbilities = expectedAbilityPoints
         val abilityPoints = character.abilities.sumOf { (it.value - RuleSet.ABILITY_BASE).coerceAtLeast(0) }
         total += (abilityPoints - expectedAbilities).coerceAtLeast(0) * freebieCost.abilityCost
 

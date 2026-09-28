@@ -797,10 +797,10 @@ private fun DiceRollDialog(
     onRequest: ((RollSpec, String) -> Unit)? = null
 ) {
     var pool by remember { mutableIntStateOf(4) }
-    var difficulty by remember { mutableIntStateOf(com.v20charactermanager.domain.definition.RuleSet.DIFFICULTY_STANDARD) }
+    var difficulty by remember { mutableIntStateOf(com.v20charactermanager.domain.engine.DiceEngine.defaultDifficulty()) }
     var diceModifier by remember { mutableIntStateOf(0) }
     var willpowerUsed by remember { mutableStateOf(false) }
-    var explodingTens by remember { mutableStateOf(false) }
+    var explodingTens by remember { mutableStateOf(com.v20charactermanager.domain.engine.DiceEngine.currentRules().explodingTensDefault) }
     var privateRoll by remember { mutableStateOf(false) }
     var reason by remember { mutableStateOf("") }
     var targetPlayerId by remember { mutableStateOf("") }
@@ -865,9 +865,15 @@ private fun DiceRollDialog(
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { explodingTens = !explodingTens }
+                    modifier = Modifier.clickable(
+                        enabled = com.v20charactermanager.domain.engine.DiceEngine.currentRules().explodingTensAvailable
+                    ) { explodingTens = !explodingTens }
                 ) {
-                    Checkbox(checked = explodingTens, onCheckedChange = { explodingTens = it })
+                    Checkbox(
+                        checked = explodingTens,
+                        enabled = com.v20charactermanager.domain.engine.DiceEngine.currentRules().explodingTensAvailable,
+                        onCheckedChange = { explodingTens = it }
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = stringResource(R.string.dice_exploding_tens),

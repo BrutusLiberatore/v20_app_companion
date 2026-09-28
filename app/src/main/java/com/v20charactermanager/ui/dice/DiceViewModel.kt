@@ -9,12 +9,13 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class DiceUiState(
     val pool: Int = 5,
-    val difficulty: Int = 6,
+    val difficulty: Int = DiceEngine.defaultDifficulty(),
     val extraDice: Int = 0,
     val diceModifier: Int = 0,
     val difficultyModifier: Int = 0,
     val useWillpower: Boolean = false,
-    val explodingTens: Boolean = false,
+    val explodingTens: Boolean = DiceEngine.currentRules().explodingTensDefault,
+    val explodingTensAvailable: Boolean = DiceEngine.currentRules().explodingTensAvailable,
     val modifierReason: String = "",
     val result: DiceResult? = null
 )

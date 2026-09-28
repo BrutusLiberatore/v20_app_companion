@@ -140,4 +140,26 @@ class FreebiePointCalculatorTest {
         assertEquals(2, cost.humanityCost)
         assertEquals(1, cost.willpowerCost)
     }
+
+    @Test
+    fun `house rules override freebie costs points and expected totals`() {
+        var updated = character
+        AttributeId.entries.forEach { updated = updated.setAttributeValue(it, 3) }
+
+        val rules = HouseRules(
+            chronicleId = "c1",
+            freebiePoints = 10,
+            freebieAttributeCost = 4,
+            attributePrimary = 7,
+            attributeSecondary = 5,
+            attributeTertiary = 4
+        )
+        val report = rules.toFreebiePointCalculator().calculate(updated)
+
+        // 18 dots above base, house expects 16 -> 2 extra dots x 4 = 8 used of 10
+        assertEquals(10, report.initialPoints)
+        assertEquals(8, report.usedPoints)
+        assertEquals(2, report.remainingPoints)
+        assertEquals(4, report.nextAttributeCost)
+    }
 }

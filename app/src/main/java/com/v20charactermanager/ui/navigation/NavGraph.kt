@@ -43,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +84,7 @@ import com.v20charactermanager.ui.chronicle.ChronicleViewModel
 import com.v20charactermanager.ui.chronicle.ChronicleViewModelFactory
 import com.v20charactermanager.ui.chronicle.ImageViewerScreen
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.v20charactermanager.ui.chronicle.DrawToolState
 import com.v20charactermanager.ui.chronicle.toAnnotationType
@@ -122,6 +124,7 @@ import com.v20charactermanager.ui.settings.HouseRulesViewModelFactory
 import com.v20charactermanager.ui.sheet.EditCharacterViewModel
 import com.v20charactermanager.ui.sheet.EditCharacterViewModelFactory
 import com.v20charactermanager.ui.sheet.SheetScreen
+import com.v20charactermanager.ui.sheet.SheetSection
 import com.v20charactermanager.ui.xp.XpSpendingScreen
 import com.v20charactermanager.ui.xp.XpSpendingViewModel
 import com.v20charactermanager.ui.xp.XpSpendingViewModelFactory
@@ -129,7 +132,7 @@ import kotlin.math.roundToInt
 
 object Routes {
     const val HOME = "home"
-    const val CREATION = "creation/{step}"
+    const val CREATION = "creation/{step}?chronicleId={chronicleId}"
     const val SHEET = "sheet/{characterId}"
     const val SESSION = "session/{characterId}"
     const val DICE = "dice?pool={pool}"
@@ -155,7 +158,8 @@ object Routes {
 
     fun xpSpending(characterId: String) = "xp_spending/$characterId"
 
-    fun creationStep(step: Int) = "creation/$step"
+    fun creationStep(step: Int, chronicleId: String = "") =
+        if (chronicleId.isEmpty()) "creation/$step" else "creation/$step?chronicleId=$chronicleId"
     fun sheet(characterId: String) = "sheet/$characterId"
     fun session(characterId: String) = "session/$characterId"
     fun dice(pool: Int? = null) = if (pool != null) "dice?pool=$pool" else "dice"
@@ -287,11 +291,23 @@ fun V20NavGraph(
         }
         composable(
             route = Routes.CREATION,
-            arguments = listOf(navArgument("step") { type = NavType.IntType })
+            arguments = listOf(
+                navArgument("step") { type = NavType.IntType },
+                navArgument("chronicleId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
         ) { backStackEntry ->
             val step = backStackEntry.arguments?.getInt("step") ?: 1
+            val creationChronicleId = backStackEntry.arguments?.getString("chronicleId") ?: ""
             val viewModel: CharacterCreationViewModel = viewModel(
-                factory = CharacterCreationViewModelFactory(appContainer.characterRepository)
+                factory = CharacterCreationViewModelFactory(
+                    appContainer.characterRepository,
+                    appContainer.houseRuleRepository,
+                    appContainer.chronicleRepository,
+                    creationChronicleId
+                )
             )
             val uiState by viewModel.uiState.collectAsState()
 
@@ -398,6 +414,11 @@ fun V20NavGraph(
             val displayCharacter = localCharacter ?: sharedCharacters[characterId]
             val isLocalChar = localCharacter != null
 
+            val sheetSettingsRepo = appContainer.settingsRepository
+            val rawSectionOrder by sheetSettingsRepo.sheetSectionOrder.collectAsState(initial = "")
+            val sectionOrder = remember(rawSectionOrder) { SheetSection.parseOrder(rawSectionOrder) }
+            val sheetScope = rememberCoroutineScope()
+
             when {
                 displayCharacter != null -> {
                 SheetScreen(
@@ -483,6 +504,34 @@ fun V20NavGraph(
                         { spec ->
                             liveRoomViewModel.rollWith(spec)
                             navController.popBackStack()
+                        }
+                    } else {
+                        null
+                    },
+                    sheetSectionOrder = sectionOrder,
+                    onSectionOrderChange = { newOrder ->
+                        sheetScope.launch {
+                            sheetSettingsRepo.setSheetSectionOrder(SheetSection.serializeOrder(newOrder))
+                        }
+                    },
+                    onSendToMaster = if (isLocalChar && !liveUiState.isMaster && liveUiState.isConnected) {
+                        { liveRoomViewModel.sendSheetToMaster(displayCharacter) }
+                    } else {
+                        null
+                    },
+                    onSaveShared = if (!isLocalChar && liveUiState.isMaster && liveUiState.isConnected) {
+                        {
+                            editViewModel.saveSharedCharacter(displayCharacter)
+                            val roomChronicleId = liveUiState.room?.chronicleId
+                            if (!roomChronicleId.isNullOrBlank()) {
+                                sheetScope.launch {
+                                    appContainer.chronicleRepository.addCharacterToChronicle(
+                                        roomChronicleId,
+                                        displayCharacter.id,
+                                        com.v20charactermanager.domain.model.ChronicleMemberRole.PLAYER_CHARACTER
+                                    )
+                                }
+                            }
                         }
                     } else {
                         null
@@ -969,6 +1018,9 @@ fun V20NavGraph(
                 },
                 onAddCharacter = { cId, charId, role ->
                     viewModel.addCharacterToChronicle(cId, charId, role)
+                },
+                onCreateCharacter = {
+                    navController.navigate(Routes.creationStep(1, chronicleId))
                 },
                 onRemoveCharacter = { cId, charId ->
                     viewModel.removeCharacterFromChronicle(cId, charId)

@@ -16,6 +16,7 @@ class SettingsDataStore(private val context: Context) {
     companion object {
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val THEME_KEY = stringPreferencesKey("theme")
+        private val SHEET_SECTION_ORDER_KEY = stringPreferencesKey("sheet_section_order")
     }
 
     val language: Flow<String> = context.dataStore.data.map { preferences ->
@@ -24,6 +25,10 @@ class SettingsDataStore(private val context: Context) {
 
     val theme: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[THEME_KEY] ?: "dark"
+    }
+
+    val sheetSectionOrder: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[SHEET_SECTION_ORDER_KEY] ?: ""
     }
 
     suspend fun setLanguage(language: String) {
@@ -35,6 +40,12 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setTheme(theme: String) {
         context.dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme
+        }
+    }
+
+    suspend fun setSheetSectionOrder(order: String) {
+        context.dataStore.edit { preferences ->
+            preferences[SHEET_SECTION_ORDER_KEY] = order
         }
     }
 }

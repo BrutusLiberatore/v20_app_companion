@@ -3,14 +3,19 @@ package com.v20charactermanager.ui.creation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.v20charactermanager.data.repository.HouseRuleRepositoryImpl
 import com.v20charactermanager.domain.definition.*
 import com.v20charactermanager.domain.engine.CharacterCreationValidator
 import com.v20charactermanager.domain.engine.FreebiePointCalculator
 import com.v20charactermanager.domain.engine.GenerationRules
+import com.v20charactermanager.domain.engine.toFreebiePointCalculator
 import com.v20charactermanager.domain.model.BloodPoolState
 import com.v20charactermanager.domain.model.Character
+import com.v20charactermanager.domain.model.ChronicleMemberRole
 import com.v20charactermanager.domain.model.FlawValue
+import com.v20charactermanager.domain.model.HouseRules
 import com.v20charactermanager.domain.model.MeritValue
+import com.v20charactermanager.domain.repository.ChronicleRepository
 import com.v20charactermanager.domain.repository.CharacterRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,22 +30,37 @@ data class CreationUiState(
     val pendingWarnings: List<String>? = null,
     val pendingSave: Boolean = false,
     val freebieReport: FreebiePointCalculator.FreebieReport? = null,
+    val houseRules: HouseRules? = null,
     val isSaving: Boolean = false,
     val saved: Boolean = false,
     val error: String? = null
 )
 
 class CharacterCreationViewModel(
-    private val characterRepository: CharacterRepository
+    private val characterRepository: CharacterRepository,
+    private val houseRuleRepository: HouseRuleRepositoryImpl? = null,
+    private val chronicleRepository: ChronicleRepository? = null,
+    private val chronicleId: String = ""
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreationUiState())
     val uiState: StateFlow<CreationUiState> = _uiState.asStateFlow()
 
-    private val validator = CharacterCreationValidator()
-    private val freebieCalculator = FreebiePointCalculator()
+    private var validator = CharacterCreationValidator()
+    private var freebieCalculator = FreebiePointCalculator()
 
     init {
+        if (chronicleId.isNotEmpty() && houseRuleRepository != null) {
+            viewModelScope.launch {
+                try {
+                    val rules = houseRuleRepository.getHouseRules(chronicleId)
+                    freebieCalculator = rules.toFreebiePointCalculator()
+                    validator = CharacterCreationValidator(rules)
+                    _uiState.value = _uiState.value.copy(houseRules = rules)
+                    updateFreebieReport()
+                } catch (_: Exception) { }
+            }
+        }
         saveDraft()
     }
 
@@ -324,6 +344,13 @@ class CharacterCreationViewModel(
                     updatedAt = System.currentTimeMillis()
                 )
                 characterRepository.insertCharacter(toSave)
+                if (chronicleId.isNotEmpty()) {
+                    chronicleRepository?.addCharacterToChronicle(
+                        chronicleId,
+                        toSave.id,
+                        ChronicleMemberRole.PLAYER_CHARACTER
+                    )
+                }
                 _uiState.value = _uiState.value.copy(
                     character = toSave,
                     isSaving = false,
@@ -344,12 +371,20 @@ class CharacterCreationViewModel(
 }
 
 class CharacterCreationViewModelFactory(
-    private val characterRepository: CharacterRepository
+    private val characterRepository: CharacterRepository,
+    private val houseRuleRepository: HouseRuleRepositoryImpl? = null,
+    private val chronicleRepository: ChronicleRepository? = null,
+    private val chronicleId: String = ""
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CharacterCreationViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return CharacterCreationViewModel(characterRepository) as T
+            return CharacterCreationViewModel(
+                characterRepository,
+                houseRuleRepository,
+                chronicleRepository,
+                chronicleId
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

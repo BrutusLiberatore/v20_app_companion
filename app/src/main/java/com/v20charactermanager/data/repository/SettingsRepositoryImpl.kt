@@ -14,11 +14,18 @@ class SettingsRepositoryImpl(
     override val theme: Flow<String>
         get() = settingsDataStore.theme
 
+    override val sheetSectionOrder: Flow<String>
+        get() = settingsDataStore.sheetSectionOrder
+
     override suspend fun setLanguage(language: String) {
         settingsDataStore.setLanguage(language)
     }
 
     override suspend fun setTheme(theme: String) {
         settingsDataStore.setTheme(theme)
+    }
+
+    override suspend fun setSheetSectionOrder(order: String) {
+        settingsDataStore.setSheetSectionOrder(order)
     }
 }

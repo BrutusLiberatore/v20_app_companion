@@ -56,6 +56,22 @@ class EditCharacterViewModel(
         _uiState.value = _uiState.value.copy(isEditing = true)
     }
 
+    /** Master: persist a sheet received from a player (shared, read-only) into the local database. */
+    fun saveSharedCharacter(character: Character) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSaving = true, error = null, successMessage = null)
+            try {
+                characterRepository.insertCharacter(character)
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    successMessage = context.getString(R.string.msg_sheet_saved)
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isSaving = false, error = e.message)
+            }
+        }
+    }
+
     fun cancelEditing() {
         val original = _uiState.value.originalCharacter ?: return
         _uiState.value = _uiState.value.copy(

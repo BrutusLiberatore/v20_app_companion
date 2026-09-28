@@ -227,6 +227,14 @@ class LiveRoomViewModel(
                             )
                             _sharedCharacters.update { it + (message.characterId to char) }
                             Log.d(TAG, "Received shared sheet for ${message.characterId}")
+                            if (_uiState.value.isMaster) {
+                                showToast(
+                                    application.getString(
+                                        com.v20charactermanager.R.string.live_sheet_received,
+                                        message.playerName.ifBlank { char.identity.name }
+                                    )
+                                )
+                            }
                         }
                     } catch (e: Exception) {
                         Log.w(TAG, "Failed to import shared character sheet", e)
@@ -915,6 +923,27 @@ class LiveRoomViewModel(
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    /** Player: voluntarily push the current sheet to the Master. */
+    fun sendSheetToMaster(character: Character) {
+        if (_uiState.value.isMaster || client == null) return
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val jsonStr = com.v20charactermanager.domain.engine.CharacterExporter.export(character)
+                client?.sendMessage(
+                    LiveRoomMessage.CharacterData(
+                        characterId = character.id,
+                        playerName = _uiState.value.localPlayer?.name ?: "",
+                        characterJson = jsonStr
+                    )
+                )
+                Log.d(TAG, "Sent own sheet to master (${jsonStr.length} chars)")
+                showToast(application.getString(com.v20charactermanager.R.string.live_sheet_sent_to_master))
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to send sheet to master", e)
+            }
+        }
     }
 
     /** Master: ask the player holding this character for its sheet (deduped, fire-and-forget). */

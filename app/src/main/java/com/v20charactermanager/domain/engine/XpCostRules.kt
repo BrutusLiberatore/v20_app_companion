@@ -2,6 +2,30 @@ package com.v20charactermanager.domain.engine
 
 import com.v20charactermanager.domain.definition.ClanId
 import com.v20charactermanager.domain.definition.SectId
+import com.v20charactermanager.domain.model.HouseRules
+
+fun HouseRules.toXpCostRules(): XpCostRules = XpCostRules(
+    caitiffDisciplineCost = DisciplineXpCost(
+        newDisciplineCost = xpNewDisciplineCaitiff,
+        increaseMultiplier = xpDisciplineCaitiffPerLevel
+    ),
+    standardDisciplineCost = DisciplineXpCost(
+        newDisciplineCost = xpNewDisciplineInClan,
+        increaseMultiplier = xpDisciplineInClanPerLevel
+    ),
+    outOfClanDisciplineCost = DisciplineXpCost(
+        newDisciplineCost = xpNewDisciplineOutOfClan,
+        increaseMultiplier = xpDisciplineOutOfClanPerLevel
+    ),
+    attributeCost = xpAttributeCostPerDot,
+    abilityCost = xpAbilityCostPerDot,
+    backgroundCost = xpBackgroundCostPerDot,
+    virtueCost = xpVirtueCostPerDot,
+    humanityCost = xpHumanityCostPerDot,
+    willpowerCost = xpWillpowerCostPerDot,
+    newAbilityCost = xpNewAbilityCost,
+    newAttributeCost = xpNewAttributeCost
+)
 
 data class DisciplineXpCost(
     val newDisciplineCost: Int = 7,
@@ -46,7 +70,11 @@ data class XpCostRules(
 }
 
 object XpCostCalculator {
-    private val rules = XpCostRules()
+    private var rules = XpCostRules()
+
+    fun configure(newRules: XpCostRules) {
+        rules = newRules
+    }
 
     fun calculateDisciplineCost(clan: ClanId, currentLevel: Int, isNew: Boolean, inClan: Boolean = true): Int {
         return if (isNew) {

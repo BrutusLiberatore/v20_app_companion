@@ -29,6 +29,7 @@ fun ChroniclePeopleTab(
     onWillpowerChange: (Character, Int) -> Unit = { _, _ -> },
     onHealthChange: (Character, Int) -> Unit = { _, _ -> },
     onCreateCharacterFromNpc: (NpcEntry, (String) -> Unit) -> Unit = { _, _ -> },
+    onCreateCharacter: () -> Unit = {},
     onOpenSheet: (String) -> Unit = {},
     onLinkClick: (String, String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
@@ -54,8 +55,13 @@ fun ChroniclePeopleTab(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                IconButton(onClick = { showAddCharacterDialog = true }) {
-                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_add))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onCreateCharacter) {
+                        Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.create_character))
+                    }
+                    IconButton(onClick = { showAddCharacterDialog = true }) {
+                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_add))
+                    }
                 }
             }
         }

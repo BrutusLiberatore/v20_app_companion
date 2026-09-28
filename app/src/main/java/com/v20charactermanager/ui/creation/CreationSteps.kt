@@ -24,7 +24,8 @@ import com.v20charactermanager.ui.components.V20IntField
 fun IdentityStep(
     identity: CharacterIdentity,
     onIdentityChange: (CharacterIdentity) -> Unit,
-    onAttributesChange: ((AttributeId, Int) -> Unit)? = null
+    onAttributesChange: ((AttributeId, Int) -> Unit)? = null,
+    excludedClans: List<String> = emptyList()
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -95,7 +96,9 @@ fun IdentityStep(
                 expanded = clanExpanded,
                 onDismissRequest = { clanExpanded = false }
             ) {
-                ClanId.entries.forEach { clan ->
+                ClanId.entries
+                    .filter { it.name !in excludedClans }
+                    .forEach { clan ->
                     val displayName = if (clan == ClanId.CAITIFF) {
                         stringResource(R.string.clan_no_clan)
                     } else {
