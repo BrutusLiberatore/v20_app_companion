@@ -1,5 +1,7 @@
 package com.v20charactermanager.ui.sheet
 
+import com.v20charactermanager.R
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -22,7 +24,8 @@ data class EditCharacterUiState(
 )
 
 class EditCharacterViewModel(
-    private val characterRepository: CharacterRepository
+    private val characterRepository: CharacterRepository,
+    private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditCharacterUiState())
@@ -209,7 +212,7 @@ class EditCharacterViewModel(
         val current = _uiState.value.character ?: return
         val cloned = merit.copy(
             id = java.util.UUID.randomUUID().toString(),
-            name = "${merit.name} (Copy)"
+            name = context.getString(R.string.copy_named, merit.name)
         )
         _uiState.value = _uiState.value.copy(
             character = current.addMerit(cloned),
@@ -221,7 +224,7 @@ class EditCharacterViewModel(
         val current = _uiState.value.character ?: return
         val cloned = flaw.copy(
             id = java.util.UUID.randomUUID().toString(),
-            name = "${flaw.name} (Copy)"
+            name = context.getString(R.string.copy_named, flaw.name)
         )
         _uiState.value = _uiState.value.copy(
             character = current.addFlaw(cloned),
@@ -257,7 +260,7 @@ class EditCharacterViewModel(
         val current = _uiState.value.character ?: return
         val cloned = item.copy(
             id = java.util.UUID.randomUUID().toString(),
-            name = "${item.name} (Copy)"
+            name = context.getString(R.string.copy_named, item.name)
         )
         _uiState.value = _uiState.value.copy(
             character = current.addEquipment(cloned),
@@ -280,12 +283,12 @@ class EditCharacterViewModel(
                     isEditing = false,
                     isSaving = false,
                     hasChanges = false,
-                    successMessage = "Character saved successfully"
+                    successMessage = context.getString(R.string.sheet_save_success)
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
-                    error = "Save failed: ${e.message}"
+                    error = e.message
                 )
             }
         }
@@ -297,12 +300,13 @@ class EditCharacterViewModel(
 }
 
 class EditCharacterViewModelFactory(
-    private val characterRepository: CharacterRepository
+    private val characterRepository: CharacterRepository,
+    private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(EditCharacterViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return EditCharacterViewModel(characterRepository) as T
+            return EditCharacterViewModel(characterRepository, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

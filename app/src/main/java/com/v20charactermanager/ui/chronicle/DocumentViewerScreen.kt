@@ -58,10 +58,10 @@ fun DocumentViewerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(asset?.title ?: "Document", color = V20GoldBright) },
+                title = { Text(asset?.title ?: stringResource(R.string.media_type_document), color = V20GoldBright) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = V20Ink)
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = V20Ink)
                     }
                 },
                 actions = {
@@ -73,7 +73,7 @@ fun DocumentViewerScreen(
                             }
                             context.startActivity(intent)
                         }) {
-                            Icon(Icons.Filled.Fullscreen, contentDescription = "Presentazione", tint = V20GoldBright)
+                            Icon(Icons.Filled.Fullscreen, contentDescription = stringResource(R.string.presentation_mode), tint = V20GoldBright)
                         }
                     }
                 },
@@ -103,7 +103,7 @@ fun DocumentViewerScreen(
             } else {
                 V20ErrorScreen(
                     errorType = V20ErrorType.FILE_NOT_FOUND,
-                    customMessage = "File non trovato o formato non supportato:\n${file.name}",
+                    customMessage = stringResource(R.string.doc_not_found_msg, file.name),
                     onGoBack = onBack,
                     modifier = Modifier.padding(padding)
                 )
@@ -142,7 +142,7 @@ private fun PdfRendererContent(
 
     LaunchedEffect(file) {
         isLoading = true
-        loadingMessage = "Apertura documento..."
+        loadingMessage = context.getString(R.string.doc_opening)
         loadingProgress = 0f
         error = null
         currentPage = savedPage.coerceAtLeast(0)
@@ -154,12 +154,12 @@ private fun PdfRendererContent(
                 renderer = pdfRenderer
                 val count = pdfRenderer.pageCount
                 totalPages = count
-                loadingMessage = "Caricamento pagina 1 di $count..."
+                loadingMessage = context.getString(R.string.doc_loading_page1, count)
 
                 val bitmaps = mutableMapOf<Int, Bitmap>()
                 for (i in 0 until count) {
                     if (!isActive) break
-                    loadingMessage = "Caricamento pagina ${i + 1} di $count..."
+                    loadingMessage = context.getString(R.string.doc_loading_page, i + 1, count)
                     loadingProgress = (i.toFloat() / count)
 
                     val page = pdfRenderer.openPage(i)
@@ -177,7 +177,7 @@ private fun PdfRendererContent(
                     renderedPages = bitmaps.toMap()
                 }
                 loadingProgress = 1f
-                loadingMessage = "Pronto!"
+                loadingMessage = context.getString(R.string.doc_ready)
             }
             isLoading = false
         } catch (e: OutOfMemoryError) {
@@ -246,7 +246,7 @@ private fun PdfRendererContent(
                     },
                     enabled = currentPage > 0
                 ) {
-                    Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous", tint = V20Ink)
+                    Icon(Icons.Filled.ChevronLeft, contentDescription = stringResource(R.string.pdf_previous), tint = V20Ink)
                 }
 
                 Text(
@@ -263,7 +263,7 @@ private fun PdfRendererContent(
                     },
                     enabled = currentPage < totalPages - 1
                 ) {
-                    Icon(Icons.Filled.ChevronRight, contentDescription = "Next", tint = V20Ink)
+                    Icon(Icons.Filled.ChevronRight, contentDescription = stringResource(R.string.pdf_next), tint = V20Ink)
                 }
             }
 
@@ -293,14 +293,14 @@ private fun PdfRendererContent(
                 ) {
                     Image(
                         bitmap = renderedPages[currentPage]!!.asImageBitmap(),
-                        contentDescription = "Page ${currentPage + 1}",
+                        contentDescription = stringResource(R.string.pdf_page_desc, currentPage + 1),
                         contentScale = ContentScale.FillWidth,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             } else {
                 PdfLoadingScreen(
-                    message = "Caricamento pagina ${currentPage + 1} di $totalPages...",
+                    message = stringResource(R.string.doc_loading_page, currentPage + 1, totalPages),
                     progress = if (totalPages > 0) (currentPage.toFloat() / totalPages) else 0f,
                     modifier = Modifier.weight(1f)
                 )
@@ -330,7 +330,7 @@ private fun PdfLoadingScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Caricamento PDF",
+            text = stringResource(R.string.doc_loading_pdf),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = V20GoldBright,
@@ -358,7 +358,7 @@ private fun PdfLoadingScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Attendere prego...",
+            text = stringResource(R.string.doc_please_wait),
             style = MaterialTheme.typography.bodySmall,
             color = V20InkFaint,
             textAlign = TextAlign.Center

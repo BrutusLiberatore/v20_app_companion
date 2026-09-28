@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -80,7 +81,11 @@ fun SheetScreen(
     onEquipmentUpdate: (com.v20charactermanager.domain.model.EquipmentItem) -> Unit = {},
     onEquipmentRemove: (String) -> Unit = {},
     onEquipmentClone: (com.v20charactermanager.domain.model.EquipmentItem) -> Unit = {},
-    onNavigateToXpSpending: () -> Unit = {}
+    onNavigateToXpSpending: () -> Unit = {},
+    saveSuccess: Boolean = false,
+    saveError: String? = null,
+    onClearMessages: () -> Unit = {},
+    canEdit: Boolean = true
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf(
@@ -120,7 +125,7 @@ fun SheetScreen(
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
-                    } else {
+                    } else if (canEdit) {
                         IconButton(onClick = onToggleEdit) {
                             Icon(
                                 Icons.Default.Edit,
@@ -142,6 +147,53 @@ fun SheetScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
+            if (saveSuccess || saveError != null) {
+                LaunchedEffect(saveSuccess, saveError) {
+                    kotlinx.coroutines.delay(3000)
+                    onClearMessages()
+                }
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (saveError != null) {
+                            MaterialTheme.colorScheme.errorContainer
+                        } else {
+                            Color(0xFF1B5E20)
+                        }
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            if (saveError != null) Icons.Default.Error else Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = if (saveError != null) {
+                                MaterialTheme.colorScheme.onErrorContainer
+                            } else {
+                                Color(0xFFA5D6A7)
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (saveError != null) {
+                                stringResource(R.string.msg_save_error) +
+                                        (saveError.takeIf { it.isNotBlank() }?.let { ": $it" } ?: "")
+                            } else {
+                                stringResource(R.string.msg_sheet_saved)
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (saveError != null) {
+                                MaterialTheme.colorScheme.onErrorContainer
+                            } else {
+                                Color.White
+                            }
+                        )
+                    }
+                }
+            }
             ScrollableTabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = TabBg,
@@ -184,6 +236,7 @@ fun SheetScreen(
                 0 -> OverviewTab(
                     character = character,
                     isEditing = isEditing,
+                    canEdit = canEdit,
                     onPortraitChange = onPortraitChange,
                     onNavigateToDice = onNavigateToDice,
                     onNavigateToSession = onNavigateToSession,
@@ -229,7 +282,7 @@ fun SheetScreen(
                     onEquipmentRemove = onEquipmentRemove,
                     onEquipmentClone = onEquipmentClone
                 )
-                7 -> NotesTab(character, onNotesChange)
+                7 -> NotesTab(character, onNotesChange, canEdit)
             }
         }
     }
@@ -280,6 +333,7 @@ fun V20DotRating(
 fun OverviewTab(
     character: Character,
     isEditing: Boolean = false,
+    canEdit: Boolean = true,
     onPortraitChange: (String?) -> Unit = {},
     onNavigateToDice: (Int) -> Unit,
     onNavigateToSession: () -> Unit,
@@ -355,7 +409,8 @@ fun OverviewTab(
                     onGalleryPick = { showGalleryPicker = true },
                     onCameraPick = { showCameraPicker = true },
                     onRemove = { onPortraitChange(null) },
-                    size = 100
+                    size = 100,
+                    enabled = canEdit
                 )
 
                 Column(modifier = Modifier.weight(1f)) {
@@ -514,24 +569,28 @@ fun OverviewTab(
                         modifier = Modifier.weight(1f),
                         height = 40.dp
                     )
-                    V20IvoryButton(
-                        text = stringResource(R.string.dashboard_session_mode),
-                        onClick = onNavigateToSession,
-                        modifier = Modifier.weight(1f),
-                        height = 40.dp
-                    )
+                    if (canEdit) {
+                        V20IvoryButton(
+                            text = stringResource(R.string.dashboard_session_mode),
+                            onClick = onNavigateToSession,
+                            modifier = Modifier.weight(1f),
+                            height = 40.dp
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    V20IvoryButton(
-                        text = stringResource(R.string.sheet_spend_xp),
-                        onClick = onNavigateToXpSpending,
-                        modifier = Modifier.weight(1f),
-                        height = 40.dp
-                    )
+                if (canEdit) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        V20IvoryButton(
+                            text = stringResource(R.string.sheet_spend_xp),
+                            onClick = onNavigateToXpSpending,
+                            modifier = Modifier.weight(1f),
+                            height = 40.dp
+                        )
+                    }
                 }
             }
         }
@@ -1786,7 +1845,8 @@ fun AddEquipmentDialog(
 @Composable
 fun NotesTab(
     character: Character,
-    onNotesChange: (String) -> Unit
+    onNotesChange: (String) -> Unit,
+    canEdit: Boolean = true
 ) {
     var notesText by remember(character.notes) { mutableStateOf(character.notes) }
     var isDirty by remember { mutableStateOf(false) }
@@ -1804,29 +1864,49 @@ fun NotesTab(
             color = MaterialTheme.colorScheme.primary
         )
 
-        OutlinedTextField(
-            value = notesText,
-            onValueChange = { newValue ->
-                notesText = newValue
-                isDirty = newValue != character.notes
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            label = { Text(stringResource(R.string.notes_character_notes)) },
-            placeholder = { Text(stringResource(R.string.notes_placeholder)) },
-            singleLine = false
-        )
+        if (canEdit) {
+            OutlinedTextField(
+                value = notesText,
+                onValueChange = { newValue ->
+                    notesText = newValue
+                    isDirty = newValue != character.notes
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                label = { Text(stringResource(R.string.notes_character_notes)) },
+                placeholder = { Text(stringResource(R.string.notes_placeholder)) },
+                singleLine = false
+            )
 
-        V20BloodButton(
-            text = stringResource(R.string.action_save),
-            onClick = {
-                onNotesChange(notesText)
-                isDirty = false
-            },
-            enabled = isDirty,
-            modifier = Modifier.fillMaxWidth()
-        )
+            V20BloodButton(
+                text = stringResource(R.string.action_save),
+                onClick = {
+                    onNotesChange(notesText)
+                    isDirty = false
+                },
+                enabled = isDirty,
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            if (character.notes.isBlank()) {
+                Text(
+                    text = stringResource(R.string.notes_placeholder),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Text(
+                    text = character.notes,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                )
+            }
+        }
     }
 }
 

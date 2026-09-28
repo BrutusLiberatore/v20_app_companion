@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,10 +27,18 @@ fun HouseRulesScreen(
     onUpdateRules: (HouseRules) -> Unit,
     onSave: () -> Unit,
     onResetDefaults: () -> Unit,
+    onClearMessage: () -> Unit = {},
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val rules = uiState.rules
+
+    LaunchedEffect(uiState.message) {
+        if (uiState.message != null) {
+            kotlinx.coroutines.delay(2500)
+            onClearMessage()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -60,6 +69,31 @@ fun HouseRulesScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            uiState.message?.let {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1B5E20))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = Color(0xFFA5D6A7)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.msg_house_rules_saved),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
             // Creation Section
             SectionHeader(stringResource(R.string.house_rules_creation))
 

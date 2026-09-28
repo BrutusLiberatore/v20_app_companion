@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.chronicle
 
+import com.v20charactermanager.R
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
@@ -69,10 +70,6 @@ class MediaViewModel(
         }
     }
 
-    fun filterByCategory(category: MediaAssetCategory) {
-        _libraryUiState.update { it.copy(selectedCategory = category) }
-    }
-
     fun importImage(chronicleId: String, uri: Uri, title: String, type: MediaAssetType, visibility: Visibility) {
         viewModelScope.launch {
             try {
@@ -110,7 +107,7 @@ class MediaViewModel(
                 )
                 mediaRepository.insertLayer(layer)
                 loadAssets(chronicleId)
-                _libraryUiState.update { it.copy(isLoading = false, message = "Image imported") }
+                _libraryUiState.update { it.copy(isLoading = false, message = context.getString(R.string.media_image_imported)) }
             } catch (e: OutOfMemoryError) {
                 _libraryUiState.update {
                     it.copy(
@@ -192,7 +189,7 @@ class MediaViewModel(
                 )
                 mediaRepository.insertAsset(asset)
                 loadAssets(chronicleId)
-                _libraryUiState.update { it.copy(isLoading = false, message = "Document imported") }
+                _libraryUiState.update { it.copy(isLoading = false, message = context.getString(R.string.media_document_imported)) }
             } catch (e: Exception) {
                 _libraryUiState.update {
                     it.copy(
@@ -260,7 +257,7 @@ class MediaViewModel(
                 )
                 mediaRepository.insertAsset(asset)
                 loadAssets(chronicleId)
-                _libraryUiState.update { it.copy(isLoading = false, message = "Video imported") }
+                _libraryUiState.update { it.copy(isLoading = false, message = context.getString(R.string.media_video_imported)) }
             } catch (e: Exception) {
                 _libraryUiState.update {
                     it.copy(
@@ -329,17 +326,6 @@ class MediaViewModel(
         }
     }
 
-    fun setAssetTags(assetId: String, tags: List<String>) {
-        viewModelScope.launch {
-            val asset = mediaRepository.getAssetById(assetId) ?: return@launch
-            mediaRepository.updateAsset(asset.copy(tags = tags, modifiedAt = System.currentTimeMillis()))
-            val allTags = _libraryUiState.value.assets.map { a ->
-                if (a.id == assetId) tags else a.tags
-            }.flatten().distinct().sorted()
-            _libraryUiState.update { it.copy(availableTags = allTags) }
-        }
-    }
-
     fun deleteAsset(assetId: String) {
         viewModelScope.launch {
             val asset = mediaRepository.getAssetById(assetId) ?: return@launch
@@ -353,13 +339,6 @@ class MediaViewModel(
         viewModelScope.launch {
             val asset = mediaRepository.getAssetById(assetId) ?: return@launch
             mediaRepository.updateAsset(asset.copy(title = newTitle, modifiedAt = System.currentTimeMillis()))
-        }
-    }
-
-    fun updateAssetDescription(assetId: String, description: String) {
-        viewModelScope.launch {
-            val asset = mediaRepository.getAssetById(assetId) ?: return@launch
-            mediaRepository.updateAsset(asset.copy(description = description, modifiedAt = System.currentTimeMillis()))
         }
     }
 
@@ -519,12 +498,6 @@ class MediaViewModel(
                 undoStack = it.undoStack + layerAnnotations,
                 redoStack = emptyList()
             )
-        }
-    }
-
-    fun addLayer(layer: ImageLayer) {
-        viewModelScope.launch {
-            mediaRepository.insertLayer(layer)
         }
     }
 

@@ -316,7 +316,7 @@ class CharacterCreationViewModel(
 
     private fun performSave(character: Character) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isSaving = true, pendingWarnings = null, pendingSave = false, validationResult = null)
+            _uiState.value = _uiState.value.copy(isSaving = true, pendingWarnings = null, pendingSave = false, validationResult = null, error = null)
             try {
                 val toSave = character.copy(
                     isComplete = true,
@@ -335,14 +335,6 @@ class CharacterCreationViewModel(
                     error = e.message
                 )
             }
-        }
-    }
-
-    fun deleteDraft() {
-        viewModelScope.launch {
-            try {
-                characterRepository.deleteCharacter(_uiState.value.character.id)
-            } catch (_: Exception) { }
         }
     }
 

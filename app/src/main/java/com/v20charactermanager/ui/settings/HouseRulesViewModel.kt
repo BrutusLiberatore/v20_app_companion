@@ -1,5 +1,7 @@
 package com.v20charactermanager.ui.settings
 
+import com.v20charactermanager.R
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -18,7 +20,8 @@ data class HouseRulesUiState(
 )
 
 class HouseRulesViewModel(
-    private val repository: HouseRuleRepositoryImpl
+    private val repository: HouseRuleRepositoryImpl,
+    private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HouseRulesUiState())
@@ -38,7 +41,7 @@ class HouseRulesViewModel(
     fun save() {
         viewModelScope.launch {
             repository.saveHouseRules(_uiState.value.rules)
-            _uiState.update { it.copy(message = "House Rules saved") }
+            _uiState.update { it.copy(message = context.getString(R.string.msg_house_rules_saved)) }
         }
     }
 
@@ -53,12 +56,13 @@ class HouseRulesViewModel(
 }
 
 class HouseRulesViewModelFactory(
-    private val repository: HouseRuleRepositoryImpl
+    private val repository: HouseRuleRepositoryImpl,
+    private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HouseRulesViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HouseRulesViewModel(repository) as T
+            return HouseRulesViewModel(repository, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

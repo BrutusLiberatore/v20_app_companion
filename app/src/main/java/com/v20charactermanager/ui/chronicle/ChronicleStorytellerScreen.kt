@@ -28,8 +28,6 @@ fun ChronicleStorytellerScreen(
     onCharacterBloodChange: (Character, Int) -> Unit,
     onCharacterWillpowerChange: (Character, Int) -> Unit,
     onCharacterHealthChange: (Character, Int) -> Unit,
-    onNpcClick: (NpcEntry) -> Unit,
-    onOpenScene: (ChronicleScene) -> Unit,
     onChangeScene: (String) -> Unit,
     onDiceClick: () -> Unit,
     onQuickNote: (String) -> Unit,
@@ -43,6 +41,7 @@ fun ChronicleStorytellerScreen(
     onCreateNpc: (String, String, CreatureType, String, String?) -> Unit,
     onDeleteNpc: (String) -> Unit,
     onUpdateNpc: (NpcEntry) -> Unit,
+    onCreateCharacterFromNpc: (NpcEntry, (String) -> Unit) -> Unit,
     onCreatePlotArc: (String, String, PlotType) -> Unit,
     onDeletePlotArc: (String) -> Unit,
     onUpdatePlotArc: (PlotArc) -> Unit,
@@ -79,13 +78,24 @@ fun ChronicleStorytellerScreen(
     onViewRecap: (String, String) -> Unit,
     onCloneSession: (Session) -> Unit,
     onLiveRoom: () -> Unit,
-    onJoinLiveRoom: () -> Unit = {}
+    onJoinLiveRoom: () -> Unit = {},
+    requestedTab: ChronicleBottomNavItem? = null,
+    onTabRequestConsumed: () -> Unit = {}
 ) {
     var selectedNavItem by remember { mutableStateOf(ChronicleBottomNavItem.LIVE) }
     var showSceneDeck by remember { mutableStateOf(false) }
     var showNewSceneDialog by remember { mutableStateOf(false) }
     var newSceneTitle by remember { mutableStateOf("") }
+    var selectedNpc by remember { mutableStateOf<NpcEntry?>(null) }
+    var selectedScene by remember { mutableStateOf<ChronicleScene?>(null) }
     val layoutType = rememberAdaptiveLayout()
+
+    LaunchedEffect(requestedTab) {
+        requestedTab?.let {
+            selectedNavItem = it
+            onTabRequestConsumed()
+        }
+    }
 
     val chronicle = uiState.chronicle
 
@@ -95,6 +105,7 @@ fun ChronicleStorytellerScreen(
                 uiState = uiState,
                 selectedNavItem = selectedNavItem,
                 onItemSelected = { selectedNavItem = it },
+                onBack = onBack,
                 chronicle = chronicle,
                 showSceneDeck = showSceneDeck,
                 onShowSceneDeckChange = { showSceneDeck = it },
@@ -108,8 +119,8 @@ fun ChronicleStorytellerScreen(
                 onCharacterBloodChange = onCharacterBloodChange,
                 onCharacterWillpowerChange = onCharacterWillpowerChange,
                 onCharacterHealthChange = onCharacterHealthChange,
-                onNpcClick = onNpcClick,
-                onOpenScene = onOpenScene,
+                onNpcClick = { selectedNpc = it },
+                onOpenScene = { selectedScene = it },
                 onChangeScene = { showSceneDeck = true },
                 onDiceClick = onDiceClick,
                 onQuickNote = onQuickNote,
@@ -126,6 +137,7 @@ fun ChronicleStorytellerScreen(
                 onRemoveCharacter = onRemoveCharacter,
                 onDeleteNpc = onDeleteNpc,
                 onUpdateNpc = onUpdateNpc,
+                onCreateCharacterFromNpc = onCreateCharacterFromNpc,
                 onCreateNpc = onCreateNpc,
                 onNavigateToDice = onNavigateToDice,
                 onLinkClick = onLinkClick,
@@ -194,8 +206,8 @@ fun ChronicleStorytellerScreen(
                         onCharacterBloodChange = onCharacterBloodChange,
                         onCharacterWillpowerChange = onCharacterWillpowerChange,
                         onCharacterHealthChange = onCharacterHealthChange,
-                        onNpcClick = onNpcClick,
-                        onOpenScene = onOpenScene,
+                        onNpcClick = { selectedNpc = it },
+                        onOpenScene = { selectedScene = it },
                         onChangeScene = { showSceneDeck = true },
                         onDiceClick = onDiceClick,
                         onQuickNote = onQuickNote,
@@ -211,6 +223,7 @@ fun ChronicleStorytellerScreen(
                         onRemoveCharacter = onRemoveCharacter,
                         onDeleteNpc = onDeleteNpc,
                         onUpdateNpc = onUpdateNpc,
+                        onCreateCharacterFromNpc = onCreateCharacterFromNpc,
                         onCreateNpc = onCreateNpc,
                         onNavigateToDice = onNavigateToDice,
                         onLinkClick = onLinkClick,
@@ -310,6 +323,48 @@ fun ChronicleStorytellerScreen(
             }
         )
     }
+
+    // NPC Detail Sheet (opened from LIVE tab)
+    selectedNpc?.let { npc ->
+        val linkableItems = remember(uiState) { uiState.toLinkableItems() }
+        NpcDetailSheet(
+            npc = npc,
+            linkableItems = linkableItems,
+            onUpdate = { updatedNpc ->
+                onUpdateNpc(updatedNpc)
+                selectedNpc = null
+            },
+            onCreateSheet = { sheetNpc ->
+                onCreateCharacterFromNpc(sheetNpc) { newCharacterId ->
+                    selectedNpc = null
+                    onCharacterClick(newCharacterId)
+                }
+            },
+            onOpenSheet = { characterId ->
+                onCharacterClick(characterId)
+                selectedNpc = null
+            },
+            onLinkClick = onLinkClick,
+            onDelete = {
+                onDeleteNpc(npc.id)
+                selectedNpc = null
+            },
+            onDismiss = { selectedNpc = null }
+        )
+    }
+
+    // Scene Detail Dialog (opened from LIVE tab "Open")
+    selectedScene?.let { scene ->
+        SceneDetailDialog(
+            scene = scene,
+            isActive = uiState.activeSession?.activeSceneId == scene.id,
+            onActivate = {
+                onChangeScene(scene.id)
+                selectedScene = null
+            },
+            onDismiss = { selectedScene = null }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -318,6 +373,7 @@ private fun CompactStorytellerLayout(
     uiState: ChronicleDetailUiState,
     selectedNavItem: ChronicleBottomNavItem,
     onItemSelected: (ChronicleBottomNavItem) -> Unit,
+    onBack: () -> Unit,
     chronicle: Chronicle?,
     showSceneDeck: Boolean,
     onShowSceneDeckChange: (Boolean) -> Unit,
@@ -345,6 +401,7 @@ private fun CompactStorytellerLayout(
     onRemoveCharacter: (String, String) -> Unit,
     onDeleteNpc: (String) -> Unit,
     onUpdateNpc: (NpcEntry) -> Unit,
+    onCreateCharacterFromNpc: (NpcEntry, (String) -> Unit) -> Unit,
     onCreateNpc: (String, String, CreatureType, String, String?) -> Unit,
     onNavigateToDice: () -> Unit,
     onLinkClick: (String, String) -> Unit,
@@ -388,6 +445,11 @@ private fun CompactStorytellerLayout(
         topBar = {
             TopAppBar(
                 title = { Text(chronicle?.name ?: "") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
+                },
                 actions = {
                     if (selectedNavItem == ChronicleBottomNavItem.AUDIO && audioViewModel != null) {
                         IconButton(onClick = { audioViewModel.stopAll() }) {
@@ -480,6 +542,7 @@ private fun CompactStorytellerLayout(
             onRemoveCharacter = onRemoveCharacter,
             onDeleteNpc = onDeleteNpc,
             onUpdateNpc = onUpdateNpc,
+            onCreateCharacterFromNpc = onCreateCharacterFromNpc,
             onCreateNpc = onCreateNpc,
             onNavigateToDice = onNavigateToDice,
             onLinkClick = onLinkClick,
@@ -553,6 +616,7 @@ private fun StorytellerContent(
     onRemoveCharacter: (String, String) -> Unit,
     onDeleteNpc: (String) -> Unit,
     onUpdateNpc: (NpcEntry) -> Unit,
+    onCreateCharacterFromNpc: (NpcEntry, (String) -> Unit) -> Unit,
     onCreateNpc: (String, String, CreatureType, String, String?) -> Unit,
     onNavigateToDice: () -> Unit,
     onLinkClick: (String, String) -> Unit,
@@ -635,6 +699,10 @@ private fun StorytellerContent(
                 onCreateNpc = onCreateNpc,
                 onDeleteNpc = onDeleteNpc,
                 onUpdateNpc = onUpdateNpc,
+                onBloodChange = { character, delta -> onCharacterBloodChange(character, delta) },
+                onWillpowerChange = { character, delta -> onCharacterWillpowerChange(character, delta) },
+                onHealthChange = { character, delta -> onCharacterHealthChange(character, delta) },
+                onCreateCharacterFromNpc = onCreateCharacterFromNpc,
                 onOpenSheet = onCharacterClick,
                 onLinkClick = onLinkClick,
                 modifier = modifier

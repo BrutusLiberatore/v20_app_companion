@@ -36,7 +36,8 @@ data class LiveRoomState(
     val connectionStatus: String = "",
     val characterPortraits: Map<String, String> = emptyMap(),
     val tablePack: String = "medievale",
-    val chairPack: String = "medievale"
+    val chairPack: String = "medievale",
+    val diceRolls: List<LiveRoomMessage.DiceRoll> = emptyList()
 )
 
 @Serializable
@@ -79,10 +80,13 @@ sealed class LiveRoomMessage {
     data class StatUpdate(val characterId: String, val field: String, val intValue: Int? = null, val stringValue: String? = null) : LiveRoomMessage()
 
     @Serializable
-    data class DiceRoll(val characterId: String, val playerName: String, val pool: String, val result: String, val dice: List<Int> = emptyList()) : LiveRoomMessage()
+    data class DiceRoll(val characterId: String, val playerName: String, val pool: String, val result: String, val dice: List<Int> = emptyList(), val difficulty: Int = 6) : LiveRoomMessage()
 
     @Serializable
     data class PresentFile(val fileName: String, val mimeType: String, val base64Data: String) : LiveRoomMessage()
+
+    @Serializable
+    data class SharedFile(val fileName: String, val mimeType: String, val base64Data: String) : LiveRoomMessage()
 
     @Serializable
     data class DismissFile(val dummy: String = "") : LiveRoomMessage()

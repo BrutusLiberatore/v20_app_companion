@@ -39,7 +39,7 @@ fun ImageViewerScreen(
     isDrawingEnabled: Boolean,
     activeLayerId: String?,
     onBack: () -> Unit,
-    onToggleLayers: () -> Unit,
+    onToggleLayerVisibility: (String) -> Unit,
     onToggleDrawing: () -> Unit,
     onTogglePresentation: () -> Unit,
     onToolChange: (DrawTool) -> Unit,
@@ -60,6 +60,7 @@ fun ImageViewerScreen(
     var showToolbar by remember { mutableStateOf(true) }
     var showLayersPanel by remember { mutableStateOf(false) }
     var isPresentationMode by remember { mutableStateOf(false) }
+    val pinLabel = stringResource(R.string.draw_tool_pin)
 
     val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
         if (!isDrawingEnabled) {
@@ -216,7 +217,23 @@ fun ImageViewerScreen(
                         translationY = offsetY
                     ),
                 onStrokeComplete = onStrokeComplete,
-                onPinTap = { }
+                onPinTap = { offset ->
+                    val annotation = ImageAnnotation(
+                        id = java.util.UUID.randomUUID().toString(),
+                        layerId = activeLayerId ?: "",
+                        imageDocumentId = "",
+                        type = AnnotationType.PIN,
+                        geometry = AnnotationGeometry(
+                            position = NormalizedPoint(offset.x / 1000f, offset.y / 1000f)
+                        ),
+                        style = AnnotationStyle(
+                            strokeColor = toolState.color.toLong(),
+                            strokeWidth = toolState.strokeWidth
+                        ),
+                        text = pinLabel
+                    )
+                    onStrokeComplete(annotation)
+                }
             )
 
             if (showLayersPanel && !isPresentationMode) {
@@ -252,12 +269,17 @@ fun ImageViewerScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(
-                                    if (layer.visible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = null,
-                                    tint = if (layer.visible) V20GreenBright else V20InkFaint,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                IconButton(
+                                    onClick = { onToggleLayerVisibility(layer.id) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        if (layer.visible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                        contentDescription = null,
+                                        tint = if (layer.visible) V20GreenBright else V20InkFaint,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = layer.name,

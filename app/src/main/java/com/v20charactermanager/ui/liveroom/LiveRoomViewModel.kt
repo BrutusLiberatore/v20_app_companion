@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.liveroom
 
+import com.v20charactermanager.R
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -9,11 +10,13 @@ import com.v20charactermanager.data.network.LiveRoomClient
 import com.v20charactermanager.data.network.LiveRoomServer
 import com.v20charactermanager.data.network.TableDiscoveryManager
 import com.v20charactermanager.data.network.WifiDirectManager
+import com.v20charactermanager.domain.definition.DamageType
 import com.v20charactermanager.domain.model.*
 import com.v20charactermanager.domain.repository.MediaRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -22,7 +25,8 @@ import java.util.UUID
 class LiveRoomViewModel(
     private val application: Application,
     private val mediaRepository: MediaRepository,
-    private val characterRepository: com.v20charactermanager.domain.repository.CharacterRepository? = null
+    private val characterRepository: com.v20charactermanager.domain.repository.CharacterRepository? = null,
+    private val chronicleRepository: com.v20charactermanager.domain.repository.ChronicleRepository? = null
 ) : ViewModel() {
 
     companion object {
@@ -172,7 +176,7 @@ class LiveRoomViewModel(
                             discoveryManager.startBroadcasting(roomName, masterName, chronicleId, port)
                             Log.d(TAG, "Room created (direct): $roomName on $hostIp:$port")
                         } catch (e: Exception) {
-                            _uiState.update { it.copy(error = "Impossibile creare la stanza: ${e.message}") }
+                            _uiState.update { it.copy(error = application.getString(com.v20charactermanager.R.string.live_create_room_error, e.message ?: "")) }
                         }
                     }
                 )
@@ -189,10 +193,12 @@ class LiveRoomViewModel(
                 // Master would need to load character data from DB and send it
             }
             is LiveRoomMessage.StatUpdate -> {
+                applyStatUpdate(message)
                 server?.broadcast(message, excludeId = clientId)
             }
             is LiveRoomMessage.DiceRoll -> {
-                server?.broadcast(message)
+                server?.broadcast(message, excludeId = clientId)
+                appendDiceRoll(message)
             }
             is LiveRoomMessage.PortraitData -> {
                 // Server already cached + broadcast it; just refresh master's own view
@@ -241,7 +247,7 @@ class LiveRoomViewModel(
                     compressImage(file, maxBytes.toInt())
                 } else if (file.length() > maxBytes * 2) {
                     Log.w(TAG, "File too large for TCP transfer: ${file.length()} bytes")
-                    _uiState.update { it.copy(error = "File troppo grande (${file.length() / 1024 / 1024}MB). Massimo 8MB.") }
+                    _uiState.update { it.copy(error = application.getString(com.v20charactermanager.R.string.live_file_too_large, file.length() / 1024 / 1024)) }
                     return@launch
                 } else {
                     file.readBytes()
@@ -270,9 +276,48 @@ class LiveRoomViewModel(
                 Log.d(TAG, "Presented asset: $fileName (${bytes.size} bytes, b64=${b64.length})")
             } catch (e: OutOfMemoryError) {
                 Log.e(TAG, "OOM presenting asset", e)
-                _uiState.update { it.copy(error = "File troppo grande per la memoria. Prova con un'immagine più piccola.") }
+                _uiState.update { it.copy(error = application.getString(com.v20charactermanager.R.string.live_file_too_large_mem)) }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to present asset", e)
+            }
+        }
+    }
+
+    /** Master: sends a chronicle file to specific players, who save it into their chronicle. */
+    fun shareAsset(assetId: String, fileName: String, mimeType: String, targetIds: List<String>) {
+        if (targetIds.isEmpty()) return
+        val asset = _uiState.value.chronicleAssets.find { it.id == assetId } ?: return
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val file = java.io.File(asset.originalFilePath)
+                if (!file.exists()) return@launch
+
+                val isImage = mimeType.startsWith("image/") && !mimeType.contains("gif") && !mimeType.contains("svg")
+                val maxBytes = 4 * 1024 * 1024L // 4MB limit for Base64 transfer
+
+                var outName = fileName
+                var outMime = mimeType
+                val bytes = if (isImage && file.length() > maxBytes) {
+                    outName = fileName.substringBeforeLast('.') + ".jpg"
+                    outMime = "image/jpeg"
+                    compressImage(file, maxBytes.toInt())
+                } else if (file.length() > maxBytes * 2) {
+                    Log.w(TAG, "File too large for TCP transfer: ${file.length()} bytes")
+                    _uiState.update { it.copy(error = application.getString(com.v20charactermanager.R.string.live_file_too_large, file.length() / 1024 / 1024)) }
+                    return@launch
+                } else {
+                    file.readBytes()
+                }
+
+                val b64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                val message = LiveRoomMessage.SharedFile(outName, outMime, b64)
+                targetIds.forEach { server?.sendToPlayer(it, message) }
+                Log.d(TAG, "Shared asset $outName to ${targetIds.size} player(s) (${bytes.size} bytes)")
+            } catch (e: OutOfMemoryError) {
+                Log.e(TAG, "OOM sharing asset", e)
+                _uiState.update { it.copy(error = application.getString(com.v20charactermanager.R.string.live_file_too_large_mem)) }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to share asset", e)
             }
         }
     }
@@ -323,20 +368,28 @@ class LiveRoomViewModel(
         }
     }
 
-    fun toggleFileFullscreen() {
-        val newFullscreen = !_uiState.value.isFileFullscreen
-        _uiState.update { it.copy(isFileFullscreen = newFullscreen) }
-        server?.broadcast(LiveRoomMessage.FullscreenFile(newFullscreen))
-    }
-
-    fun sendStatUpdateToAll(characterId: String, field: String, intValue: Int?) {
-        val update = LiveRoomMessage.StatUpdate(characterId, field, intValue)
-        server?.broadcast(update)
-    }
-
-    fun sendDiceRollToAll(characterId: String, playerName: String, pool: String, result: String, dice: List<Int>) {
-        val roll = LiveRoomMessage.DiceRoll(characterId, playerName, pool, result, dice)
-        server?.broadcast(roll)
+    fun rollDice(pool: Int, difficulty: Int) {
+        val result = com.v20charactermanager.domain.engine.DiceEngine.roll(pool, difficulty)
+        val summary = when {
+            result.isBotch -> application.getString(com.v20charactermanager.R.string.live_roll_result_botch)
+            result.isSuccess -> application.getString(com.v20charactermanager.R.string.live_roll_result_successes, result.netSuccesses)
+            else -> application.getString(com.v20charactermanager.R.string.live_roll_result_failure)
+        }
+        val state = _uiState.value
+        val roll = LiveRoomMessage.DiceRoll(
+            characterId = state.localPlayer?.characterId ?: "",
+            playerName = state.localPlayer?.name ?: state.room?.masterName ?: "Master",
+            pool = pool.toString(),
+            result = summary,
+            dice = result.individualResults,
+            difficulty = difficulty
+        )
+        appendDiceRoll(roll)
+        if (state.isMaster) {
+            server?.broadcast(roll)
+        } else {
+            client?.sendMessage(roll)
+        }
     }
 
     // --- PLAYER (Client) ---
@@ -362,18 +415,18 @@ class LiveRoomViewModel(
                 )
                 client?.disconnect()
                 client = null
-                client = LiveRoomClient()
+                client = LiveRoomClient(application)
                 client!!.setCallbacks(
                     onMessage = { message ->
                         Log.d(TAG, "Client message: ${message::class.simpleName}")
-                        _uiState.update { it.copy(connectionStatus = "Ricevuto: ${message::class.simpleName}") }
+                        _uiState.update { it.copy(connectionStatus = application.getString(com.v20charactermanager.R.string.live_received_format, message::class.simpleName ?: "")) }
                         handleClientMessage(message)
                     },
                     onDisconnected = {
                         Log.d(TAG, "Client disconnected callback")
                         _uiState.update { state ->
                             if (state.isConnected) {
-                                state.copy(isConnected = false, error = "Connessione persa", connectionStatus = "")
+                                state.copy(isConnected = false, error = application.getString(com.v20charactermanager.R.string.live_connection_lost), connectionStatus = "")
                             } else {
                                 state
                             }
@@ -402,7 +455,7 @@ class LiveRoomViewModel(
                 client!!.connect(host, port, playerName, characterId)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to join room", e)
-                _uiState.update { it.copy(error = e.message ?: "Errore sconosciuto") }
+                _uiState.update { it.copy(error = e.message ?: application.getString(R.string.unknown_error)) }
             }
         }
     }
@@ -575,14 +628,17 @@ class LiveRoomViewModel(
             is LiveRoomMessage.DismissFile -> {
                 _uiState.update { it.copy(presentedFile = null, isFileFullscreen = false) }
             }
+            is LiveRoomMessage.SharedFile -> {
+                receiveSharedFile(message)
+            }
             is LiveRoomMessage.FullscreenFile -> {
                 _uiState.update { it.copy(isFileFullscreen = message.isFullscreen) }
             }
             is LiveRoomMessage.StatUpdate -> {
-                // Handle stat update from other players
+                applyStatUpdate(message)
             }
             is LiveRoomMessage.DiceRoll -> {
-                // Handle dice roll from other players
+                appendDiceRoll(message)
             }
             is LiveRoomMessage.RoomClosed -> {
                 _uiState.update { state ->
@@ -632,9 +688,123 @@ class LiveRoomViewModel(
         }
     }
 
-    fun sendStatUpdate(characterId: String, field: String, intValue: Int?) {
-        val update = LiveRoomMessage.StatUpdate(characterId, field, intValue)
+    fun sendStatUpdate(characterId: String, field: String, intValue: Int?, stringValue: String? = null) {
+        val update = LiveRoomMessage.StatUpdate(characterId, field, intValue, stringValue)
         client?.sendMessage(update)
+    }
+
+    /**
+     * Player: receives a file shared by the Master and saves it into a chronicle.
+     * Matching chronicles (by campaign name, or "campaign — master") are reused;
+     * otherwise a new chronicle named "campaign — master" is created.
+     */
+    private fun receiveSharedFile(message: LiveRoomMessage.SharedFile) {
+        val repo = chronicleRepository
+        val room = _uiState.value.room
+        if (repo == null || room == null) {
+            Log.e(TAG, "Cannot save SharedFile: repo=${repo != null}, room=${room != null}")
+            showToast(application.getString(com.v20charactermanager.R.string.live_share_failed))
+            return
+        }
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val bytes = android.util.Base64.decode(message.base64Data, android.util.Base64.NO_WRAP)
+                val allChronicles = repo.getAllChronicles().first()
+                val compositeName = "${room.name} — ${room.masterName}"
+                val chronicle = allChronicles.find { it.name == room.name }
+                    ?: allChronicles.find { it.name == compositeName }
+                    ?: Chronicle(
+                        id = UUID.randomUUID().toString(),
+                        name = compositeName,
+                        storytellerName = room.masterName,
+                        userRole = ChronicleUserRole.PLAYER
+                    ).also { repo.insertChronicle(it) }
+
+                val dir = java.io.File(application.filesDir, "chronicle_documents")
+                if (!dir.exists()) dir.mkdirs()
+                val safeName = message.fileName.replace(Regex("[^A-Za-z0-9._ -]"), "_")
+                val outFile = java.io.File(dir, "${UUID.randomUUID()}_$safeName")
+                outFile.writeBytes(bytes)
+
+                val lower = message.fileName.lowercase()
+                val type = when {
+                    message.mimeType == "application/pdf" || lower.endsWith(".pdf") -> MediaAssetType.DOCUMENT
+                    message.mimeType.startsWith("video/") ||
+                        lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mkv") -> MediaAssetType.VIDEO
+                    message.mimeType.startsWith("image/") ||
+                        lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") ||
+                        lower.endsWith(".gif") || lower.endsWith(".webp") -> MediaAssetType.PHOTO
+                    else -> MediaAssetType.OTHER
+                }
+                mediaRepository.insertAsset(
+                    MediaAsset(
+                        id = UUID.randomUUID().toString(),
+                        chronicleId = chronicle.id,
+                        type = type,
+                        title = message.fileName,
+                        originalFilePath = outFile.absolutePath
+                    )
+                )
+                Log.d(TAG, "Saved shared file ${message.fileName} -> chronicle '${chronicle.name}' (${bytes.size} bytes)")
+                showToast(
+                    application.getString(
+                        com.v20charactermanager.R.string.live_share_saved,
+                        message.fileName,
+                        chronicle.name
+                    )
+                )
+            } catch (e: OutOfMemoryError) {
+                Log.e(TAG, "OOM decoding SharedFile", e)
+                showToast(application.getString(com.v20charactermanager.R.string.live_share_failed))
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save SharedFile", e)
+                showToast(application.getString(com.v20charactermanager.R.string.live_share_failed))
+            }
+        }
+    }
+
+    private fun showToast(text: String) {
+        android.os.Handler(application.mainLooper).post {
+            android.widget.Toast.makeText(application, text, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun appendDiceRoll(roll: LiveRoomMessage.DiceRoll) {
+        _uiState.update { it.copy(diceRolls = (it.diceRolls + roll).takeLast(8)) }
+    }
+
+    private fun applyStatUpdate(message: LiveRoomMessage.StatUpdate) {
+        _sharedCharacters.update { map ->
+            val char = map[message.characterId] ?: return@update map
+            val updated = when (message.field) {
+                "blood" -> {
+                    val v = message.intValue ?: return@update map
+                    char.copy(bloodPool = char.bloodPool.copy(current = v.coerceIn(0, char.bloodPool.maximum)))
+                }
+                "willpower" -> {
+                    val v = message.intValue ?: return@update map
+                    char.copy(willpower = char.willpower.copy(current = v.coerceIn(0, char.willpower.permanent)))
+                }
+                "health" -> {
+                    val raw = message.stringValue ?: return@update map
+                    val idx = raw.substringBefore(':').toIntOrNull() ?: return@update map
+                    if (idx !in char.health.levels.indices) return@update map
+                    val kind = raw.substringAfter(':', "")
+                    if (kind == "HEAL") {
+                        char.copy(health = char.health.heal(idx))
+                    } else {
+                        val type = try {
+                            DamageType.valueOf(kind)
+                        } catch (_: Exception) {
+                            return@update map
+                        }
+                        char.copy(health = char.health.withDamage(idx, type))
+                    }
+                }
+                else -> return@update map
+            }
+            map + (message.characterId to updated)
+        }
     }
 
     fun toggleFullscreen() {
@@ -759,12 +929,13 @@ class LiveRoomViewModel(
 class LiveRoomViewModelFactory(
     private val application: Application,
     private val mediaRepository: MediaRepository,
-    private val characterRepository: com.v20charactermanager.domain.repository.CharacterRepository? = null
+    private val characterRepository: com.v20charactermanager.domain.repository.CharacterRepository? = null,
+    private val chronicleRepository: com.v20charactermanager.domain.repository.ChronicleRepository? = null
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LiveRoomViewModel::class.java)) {
-            return LiveRoomViewModel(application, mediaRepository, characterRepository) as T
+            return LiveRoomViewModel(application, mediaRepository, characterRepository, chronicleRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

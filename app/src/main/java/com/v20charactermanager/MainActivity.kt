@@ -111,12 +111,12 @@ private fun CrashDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Crash Report", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.crash_report_title), fontWeight = FontWeight.Bold)
         },
         text = {
             Column {
                 Text(
-                    text = "Copia questo testo e incollalo allo sviluppatore:",
+                    text = stringResource(R.string.crash_copy_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -141,12 +141,12 @@ private fun CrashDialog(
         },
         confirmButton = {
             TextButton(onClick = { onCopy(safeLog) }) {
-                Text("COPIA LOG")
+                Text(stringResource(R.string.crash_copy_button))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Chiudi")
+                Text(stringResource(R.string.action_close))
             }
         }
     )

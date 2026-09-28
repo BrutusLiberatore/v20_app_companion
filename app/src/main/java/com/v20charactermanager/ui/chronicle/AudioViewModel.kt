@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.chronicle
 
+import com.v20charactermanager.R
 import android.content.Context
 import android.media.MediaPlayer
 import android.net.Uri
@@ -72,7 +73,7 @@ class AudioViewModel(
                 val fileName = "audio_${assetId}.$ext"
                 val inputStream = context.contentResolver.openInputStream(uri)
                 if (inputStream == null) {
-                    _uiState.update { it.copy(isImporting = false, error = "Impossibile leggere il file") }
+                    _uiState.update { it.copy(isImporting = false, error = context.getString(R.string.audio_read_error)) }
                     return@launch
                 }
                 val dir = File(context.filesDir, "chronicle_audio")
@@ -88,9 +89,9 @@ class AudioViewModel(
                     category = category
                 )
                 audioRepository.insertTrack(track)
-                _uiState.update { it.copy(isImporting = false, message = "Audio importato") }
+                _uiState.update { it.copy(isImporting = false, message = context.getString(R.string.audio_imported)) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isImporting = false, error = e.message ?: "Errore sconosciuto") }
+                _uiState.update { it.copy(isImporting = false, error = e.message ?: context.getString(R.string.audio_unknown_error)) }
             }
         }
     }
@@ -141,7 +142,7 @@ class AudioViewModel(
             mediaPlayers[track.id] = player
             updateTrackActive(track.id, true)
         } catch (e: Exception) {
-            _uiState.update { it.copy(error = "Errore riproduzione: ${e.message}") }
+            _uiState.update { it.copy(error = context.getString(R.string.audio_playback_error, e.message)) }
         }
     }
 
@@ -197,7 +198,7 @@ class AudioViewModel(
         viewModelScope.launch {
             val activeTracks = _uiState.value.tracks.filter { it.isActive || mediaPlayers.containsKey(it.id) }
             if (activeTracks.isEmpty()) {
-                _uiState.update { it.copy(message = "Nessuna traccia attiva da salvare") }
+                _uiState.update { it.copy(message = context.getString(R.string.audio_no_active_tracks)) }
                 return@launch
             }
             val presetTracks = activeTracks.map { track ->
@@ -215,7 +216,7 @@ class AudioViewModel(
                 tracks = presetTracks
             )
             audioRepository.insertPreset(preset)
-            _uiState.update { it.copy(message = "Preset '$name' salvato") }
+            _uiState.update { it.copy(message = context.getString(R.string.audio_preset_saved_msg, name)) }
         }
     }
 
@@ -228,7 +229,7 @@ class AudioViewModel(
                 audioRepository.updateTrack(updatedTrack)
                 startTrack(updatedTrack)
             }
-            _uiState.update { it.copy(message = "Preset '${preset.name}' attivato") }
+            _uiState.update { it.copy(message = context.getString(R.string.audio_preset_activated_msg, preset.name)) }
         }
     }
 

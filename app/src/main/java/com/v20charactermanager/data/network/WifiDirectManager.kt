@@ -1,5 +1,6 @@
 package com.v20charactermanager.data.network
 
+import com.v20charactermanager.R
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -163,7 +164,7 @@ class WifiDirectManager(private val context: Context) {
 
             override fun onFailure(reason: Int) {
                 Log.e(TAG, "Discovery failed: $reason")
-                _state.value = _state.value.copy(isDiscovering = false, error = "Discovery fallita: $reason")
+                _state.value = _state.value.copy(isDiscovering = false, error = context.getString(R.string.net_discovery_failed_fmt, reason))
                 onFound(emptyList())
             }
         })

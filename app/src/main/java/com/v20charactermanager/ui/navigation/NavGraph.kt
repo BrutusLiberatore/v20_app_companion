@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.navigation
 
+import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,11 +21,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material3.Card
@@ -73,7 +76,6 @@ import com.v20charactermanager.domain.model.MediaAsset
 import com.v20charactermanager.domain.model.MediaAssetType
 import com.v20charactermanager.domain.model.Visibility
 import com.v20charactermanager.ui.compendium.CompendiumDetailScreen
-import com.v20charactermanager.ui.chronicle.ChronicleDetailScreen
 import com.v20charactermanager.ui.chronicle.ChronicleStorytellerScreen
 import com.v20charactermanager.ui.chronicle.LocationImageScreen
 import com.v20charactermanager.ui.chronicle.ChronicleListScreen
@@ -92,6 +94,8 @@ import com.v20charactermanager.ui.chronicle.MediaViewModelFactory
 import com.v20charactermanager.ui.chronicle.VersionHistoryScreen
 import com.v20charactermanager.ui.chronicle.DocumentViewerScreen
 import com.v20charactermanager.ui.chronicle.ChronicleSearchScreen
+import com.v20charactermanager.ui.chronicle.ChronicleBottomNavItem
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.v20charactermanager.ui.compendium.CompendiumScreen
 import com.v20charactermanager.ui.compendium.CompendiumViewModel
 import com.v20charactermanager.ui.compendium.CompendiumViewModelFactory
@@ -135,11 +139,10 @@ object Routes {
     const val IMPORT_EXPORT = "import_export"
     const val XP_SPENDING = "xp_spending/{characterId}"
     const val CHRONICLES = "chronicles"
-    const val CHRONICLE_DETAIL = "chronicle/{chronicleId}"
+    const val CHRONICLE_DETAIL = "chronicle/{chronicleId}?tab={tab}"
     const val MEDIA_LIBRARY = "chronicle/{chronicleId}/media"
     const val IMAGE_VIEWER = "chronicle/{chronicleId}/media/{assetId}"
     const val DOCUMENT_VIEWER = "chronicle/{chronicleId}/document/{assetId}"
-    const val VIDEO_VIEWER = "chronicle/{chronicleId}/video/{assetId}"
     const val CHRONICLE_SEARCH = "chronicle/{chronicleId}/search"
     const val VERSION_HISTORY = "chronicle/{chronicleId}/media/{assetId}/versions"
     const val LOCATION_IMAGE = "chronicle/{chronicleId}/location/{locationId}/image"
@@ -157,11 +160,11 @@ object Routes {
     fun session(characterId: String) = "session/$characterId"
     fun dice(pool: Int? = null) = if (pool != null) "dice?pool=$pool" else "dice"
     fun compendiumDetail(itemId: String) = "compendium/detail/$itemId"
-    fun chronicleDetail(chronicleId: String) = "chronicle/$chronicleId"
+    fun chronicleDetail(chronicleId: String, tab: String = "") =
+        if (tab.isEmpty()) "chronicle/$chronicleId" else "chronicle/$chronicleId?tab=$tab"
     fun mediaLibrary(chronicleId: String) = "chronicle/$chronicleId/media"
     fun imageViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId"
     fun documentViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/document/$assetId"
-    fun videoViewer(chronicleId: String, assetId: String) = "chronicle/$chronicleId/video/$assetId"
     fun chronicleSearch(chronicleId: String) = "chronicle/$chronicleId/search"
     fun versionHistory(chronicleId: String, assetId: String) = "chronicle/$chronicleId/media/$assetId/versions"
     fun locationImage(chronicleId: String, locationId: String) = "chronicle/$chronicleId/location/$locationId/image"
@@ -175,6 +178,49 @@ object Routes {
     fun selectCharacter(host: String, port: Int, roomName: String, masterName: String) =
         "select_character?host=$host&port=$port&roomName=${roomName.replace(" ", "%20")}&masterName=${masterName.replace(" ", "%20")}"
     fun crashLogs() = "crash_logs"
+}
+
+/** Centered spinner while a route's data is loading. */
+@Composable
+private fun RouteLoading() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF1A1A2E)),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(color = Color(0xFFD4A847))
+    }
+}
+
+/** Fallback for routes whose content is missing: message + back button, never a blank screen. */
+@Composable
+private fun RouteEmptyState(message: String, onBack: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF1A1A2E)),
+        contentAlignment = Alignment.Center
+    ) {
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .statusBarsPadding()
+                .padding(4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = stringResource(R.string.action_back),
+                tint = Color.White
+            )
+        }
+        Text(
+            text = message,
+            color = Color.White.copy(alpha = 0.8f),
+            modifier = Modifier.padding(horizontal = 32.dp)
+        )
+    }
 }
 
 @Composable
@@ -192,7 +238,8 @@ fun V20NavGraph(
         factory = com.v20charactermanager.ui.liveroom.LiveRoomViewModelFactory(
             context.applicationContext as android.app.Application,
             appContainer.mediaRepository,
-            appContainer.characterRepository
+            appContainer.characterRepository,
+            appContainer.chronicleRepository
         )
     )
     val liveRoomState by liveRoomViewModel.uiState.collectAsState()
@@ -250,14 +297,6 @@ fun V20NavGraph(
 
             LaunchedEffect(step) {
                 viewModel.goToStep(step)
-            }
-
-            LaunchedEffect(uiState.saved) {
-                if (uiState.saved) {
-                    navController.navigate(Routes.HOME) {
-                        popUpTo(Routes.HOME) { inclusive = true }
-                    }
-                }
             }
 
             CreationScreen(
@@ -321,6 +360,11 @@ fun V20NavGraph(
                 },
                 onDismissWarnings = {
                     viewModel.dismissWarnings()
+                },
+                onSavedConfirm = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
                 }
             )
         }
@@ -330,7 +374,7 @@ fun V20NavGraph(
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
             val editViewModel: EditCharacterViewModel = viewModel(
-                factory = EditCharacterViewModelFactory(appContainer.characterRepository)
+                factory = EditCharacterViewModelFactory(appContainer.characterRepository, context.applicationContext)
             )
             val uiState by editViewModel.uiState.collectAsState()
             val sharedCharacters by liveRoomViewModel.sharedCharacters.collectAsState()
@@ -429,22 +473,17 @@ fun V20NavGraph(
                     },
                     onNavigateToXpSpending = {
                         if (isLocalChar) navController.navigate(Routes.xpSpending(characterId))
-                    }
+                    },
+                    saveSuccess = isLocalChar && uiState.successMessage != null,
+                    saveError = if (isLocalChar) uiState.error else null,
+                    onClearMessages = { editViewModel.clearMessages() },
+                    canEdit = isLocalChar
                 )
                 }
-                sheetUnavailable -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color(0xFF1A1A2E)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.sheet_unavailable),
-                            color = Color.White.copy(alpha = 0.8f)
-                        )
-                    }
-                }
+                sheetUnavailable -> RouteEmptyState(
+                    message = stringResource(R.string.sheet_unavailable),
+                    onBack = { navController.popBackStack() }
+                )
                 else -> {
                     Box(
                         modifier = Modifier
@@ -474,8 +513,26 @@ fun V20NavGraph(
             )
             val uiState by viewModel.uiState.collectAsState()
 
+            viewModel.onStatSync = { field, intValue, stringValue ->
+                liveRoomViewModel.sendStatUpdate(characterId, field, intValue, stringValue)
+            }
+
+            var sessionMissing by remember { mutableStateOf(false) }
             LaunchedEffect(characterId) {
                 viewModel.loadCharacter(characterId)
+                kotlinx.coroutines.delay(700)
+                if (viewModel.uiState.value.character == null) sessionMissing = true
+            }
+
+            if (uiState.character == null) {
+                if (sessionMissing) {
+                    RouteEmptyState(
+                        message = stringResource(R.string.route_not_found),
+                        onBack = { navController.popBackStack() }
+                    )
+                } else {
+                    RouteLoading()
+                }
             }
 
             uiState.character?.let { character ->
@@ -560,7 +617,7 @@ fun V20NavGraph(
         ) { backStackEntry ->
             val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: return@composable
             val viewModel: HouseRulesViewModel = viewModel(
-                factory = HouseRulesViewModelFactory(appContainer.houseRuleRepository)
+                factory = HouseRulesViewModelFactory(appContainer.houseRuleRepository, context.applicationContext)
             )
             val uiState by viewModel.uiState.collectAsState()
 
@@ -573,6 +630,7 @@ fun V20NavGraph(
                 onUpdateRules = { viewModel.updateRules(it) },
                 onSave = { viewModel.save() },
                 onResetDefaults = { viewModel.resetToDefaults() },
+                onClearMessage = { viewModel.clearMessage() },
                 onBack = { navController.popBackStack() }
             )
         }
@@ -604,6 +662,23 @@ fun V20NavGraph(
                 factory = CompendiumViewModelFactory(appContainer.ruleRepository)
             )
             val uiState by viewModel.uiState.collectAsState()
+
+            var compendiumMissing by remember { mutableStateOf(false) }
+            LaunchedEffect(itemId) {
+                kotlinx.coroutines.delay(700)
+                if (uiState.items.none { it.id == itemId }) compendiumMissing = true
+            }
+
+            if (uiState.items.none { it.id == itemId }) {
+                if (compendiumMissing) {
+                    RouteEmptyState(
+                        message = stringResource(R.string.route_not_found),
+                        onBack = { navController.popBackStack() }
+                    )
+                } else {
+                    RouteLoading()
+                }
+            }
 
             val selectedItem = uiState.items.find { it.id == itemId }
             selectedItem?.let { item ->
@@ -662,7 +737,7 @@ fun V20NavGraph(
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
             val viewModel: XpSpendingViewModel = viewModel(
-                factory = XpSpendingViewModelFactory(appContainer.characterRepository)
+                factory = XpSpendingViewModelFactory(appContainer.characterRepository, context.applicationContext)
             )
 
             LaunchedEffect(characterId) {
@@ -678,7 +753,7 @@ fun V20NavGraph(
         }
         composable(Routes.CHRONICLES) {
             val viewModel: ChronicleViewModel = viewModel(
-                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository)
+                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository, context.applicationContext as Application)
             )
             val uiState by viewModel.listUiState.collectAsState()
 
@@ -703,13 +778,21 @@ fun V20NavGraph(
         }
         composable(
             route = Routes.CHRONICLE_DETAIL,
-            arguments = listOf(navArgument("chronicleId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("chronicleId") { type = NavType.StringType },
+                navArgument("tab") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
         ) { backStackEntry ->
             val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: ""
+            val routeTab = backStackEntry.arguments?.getString("tab") ?: ""
             val viewModel: ChronicleViewModel = viewModel(
-                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository)
+                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository, context.applicationContext as Application)
             )
             val uiState by viewModel.detailUiState.collectAsState()
+            var tabRequest by rememberSaveable { mutableStateOf(routeTab) }
 
             val audioViewModel: AudioViewModel = viewModel(
                 factory = AudioViewModelFactory(
@@ -743,12 +826,6 @@ fun V20NavGraph(
                 },
                 onCharacterHealthChange = { character, delta ->
                     viewModel.updateCharacterHealth(character.id, delta)
-                },
-                onNpcClick = { npc ->
-                    // TODO: Open NPC detail
-                },
-                onOpenScene = { scene ->
-                    // TODO: Open scene detail
                 },
                 onChangeScene = { sceneId ->
                     uiState.activeSession?.let { session ->
@@ -796,6 +873,9 @@ fun V20NavGraph(
                 },
                 onUpdateNpc = { npc ->
                     viewModel.updateNpc(npc)
+                },
+                onCreateCharacterFromNpc = { npc, onCreated ->
+                    viewModel.createCharacterFromNpc(npc, onCreated)
                 },
                 onCreatePlotArc = { cId, title, type ->
                     viewModel.createPlotArc(cId, title, type)
@@ -889,25 +969,20 @@ fun V20NavGraph(
                 },
                 onLinkClick = { type, id ->
                     when (type) {
-                        "PG" -> navController.navigate(Routes.sheet(id))
-                        "NPC" -> { /* NPC detail is opened via onNpcClick in People tab */ }
+                        "PG" -> navController.navigate(Routes.sheet(id)) { launchSingleTop = true }
+                        "NPC" -> tabRequest = "people"
                         "LUOGHI" -> {
                             uiState.chronicle?.let { chronicle ->
-                                navController.navigate(Routes.locationImage(chronicle.id, id))
+                                navController.navigate(Routes.locationImage(chronicle.id, id)) { launchSingleTop = true }
                             }
                         }
-                        "SEGRETI" -> { /* No dedicated screen — user finds in Plots tab */ }
-                        "INDIZI" -> { /* No dedicated screen — user finds in Plots tab */ }
-                        "NOTE" -> { /* Note stays in place */ }
-                        "SESSIONI" -> { /* No dedicated screen — user finds in More > Sessions */ }
-                        "FAZIONI" -> { /* No dedicated screen — user finds in More > Factions */ }
-                        "EVENTI" -> { /* No dedicated screen — user finds in Plots tab */ }
-                        "SCENE" -> { /* No dedicated screen — user finds in Plots tab */ }
+                        "SESSIONI", "FAZIONI" -> tabRequest = "more"
+                        "SEGRETI", "INDIZI", "NOTE", "EVENTI", "SCENE", "TRAME" -> tabRequest = "plots"
                     }
                 },
                 onSearchClick = {
                     uiState.chronicle?.let { chronicle ->
-                        navController.navigate(Routes.chronicleSearch(chronicle.id))
+                        navController.navigate(Routes.chronicleSearch(chronicle.id)) { launchSingleTop = true }
                     }
                 },
                 audioViewModel = audioViewModel,
@@ -922,7 +997,13 @@ fun V20NavGraph(
                 },
                 onJoinLiveRoom = {
                     navController.navigate(Routes.liveRoom(chronicleId, asMaster = false))
-                }
+                },
+                requestedTab = if (tabRequest.isEmpty()) {
+                    null
+                } else {
+                    ChronicleBottomNavItem.entries.find { it.route == tabRequest }
+                },
+                onTabRequestConsumed = { tabRequest = "" }
             )
         }
 
@@ -940,28 +1021,31 @@ fun V20NavGraph(
             val uiState by mediaViewModel.libraryUiState.collectAsState()
             LaunchedEffect(chronicleId) { mediaViewModel.loadAssets(chronicleId) }
 
+            val imageFallback = stringResource(R.string.media_type_image)
             val pickImageLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.GetContent()
             ) { uri: Uri? ->
                 uri?.let {
-                    mediaViewModel.importImage(chronicleId, it, "Image", MediaAssetType.OTHER, Visibility.GM_ONLY)
+                    mediaViewModel.importImage(chronicleId, it, imageFallback, MediaAssetType.OTHER, Visibility.GM_ONLY)
                 }
             }
 
+            val documentFallback = stringResource(R.string.media_type_document)
             val pickDocumentLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.GetContent()
             ) { uri: Uri? ->
                 uri?.let {
-                    val title = uri.lastPathSegment?.substringAfterLast('/') ?: "Document"
+                    val title = uri.lastPathSegment?.substringAfterLast('/') ?: documentFallback
                     mediaViewModel.importDocument(chronicleId, it, title)
                 }
             }
 
+            val videoFallback = stringResource(R.string.media_type_video)
             val pickVideoLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.GetContent()
             ) { uri: Uri? ->
                 uri?.let {
-                    val title = uri.lastPathSegment?.substringAfterLast('/') ?: "Video"
+                    val title = uri.lastPathSegment?.substringAfterLast('/') ?: videoFallback
                     mediaViewModel.importVideo(chronicleId, it, title)
                 }
             }
@@ -1029,7 +1113,23 @@ fun V20NavGraph(
                 )
             )
             val uiState by mediaViewModel.viewerUiState.collectAsState()
-            LaunchedEffect(assetId) { mediaViewModel.loadAssetForViewing(assetId) }
+            var assetMissing by remember { mutableStateOf(false) }
+            LaunchedEffect(assetId) {
+                mediaViewModel.loadAssetForViewing(assetId)
+                kotlinx.coroutines.delay(700)
+                if (mediaViewModel.viewerUiState.value.asset == null) assetMissing = true
+            }
+
+            if (uiState.asset == null) {
+                if (assetMissing) {
+                    RouteEmptyState(
+                        message = stringResource(R.string.route_not_found),
+                        onBack = { navController.popBackStack() }
+                    )
+                } else {
+                    RouteLoading()
+                }
+            }
 
             uiState.asset?.let { asset ->
                 var drawToolState by remember { mutableStateOf(DrawToolState()) }
@@ -1046,7 +1146,7 @@ fun V20NavGraph(
                     isDrawingEnabled = uiState.isDrawingEnabled,
                     activeLayerId = uiState.activeLayerId,
                     onBack = { navController.popBackStack() },
-                    onToggleLayers = { },
+                    onToggleLayerVisibility = { layerId -> mediaViewModel.toggleLayerVisibility(layerId) },
                     onToggleDrawing = { mediaViewModel.toggleDrawingMode() },
                     onTogglePresentation = { },
                     onToolChange = { tool ->
@@ -1139,7 +1239,7 @@ fun V20NavGraph(
         ) { backStackEntry ->
             val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: return@composable
             val viewModel: ChronicleViewModel = viewModel(
-                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository)
+                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository, context.applicationContext as Application)
             )
             val uiState by viewModel.detailUiState.collectAsState()
             LaunchedEffect(chronicleId) { viewModel.loadChronicleDetail(chronicleId) }
@@ -1148,8 +1248,11 @@ fun V20NavGraph(
                 uiState = uiState,
                 onEntityClick = { type, id ->
                     when (type) {
-                        "PG" -> navController.navigate(Routes.sheet(id))
-                        else -> { /* future: open entity detail */ }
+                        "PG" -> navController.navigate(Routes.sheet(id)) { launchSingleTop = true }
+                        "LUOGHI" -> navController.navigate(Routes.locationImage(chronicleId, id)) { launchSingleTop = true }
+                        "NPC" -> navController.navigate(Routes.chronicleDetail(chronicleId, "people")) { launchSingleTop = true }
+                        "SESSIONI", "FAZIONI" -> navController.navigate(Routes.chronicleDetail(chronicleId, "more")) { launchSingleTop = true }
+                        else -> navController.navigate(Routes.chronicleDetail(chronicleId, "plots")) { launchSingleTop = true }
                     }
                 },
                 onBack = { navController.popBackStack() }
@@ -1174,11 +1277,10 @@ fun V20NavGraph(
             )
             val viewerState by mediaViewModel.viewerUiState.collectAsState()
 
-            var location by remember { mutableStateOf<ChronicleLocation?>(null) }
             var linkedAsset by remember { mutableStateOf<MediaAsset?>(null) }
 
             val chronicleViewModel: ChronicleViewModel = viewModel(
-                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository)
+                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository, context.applicationContext as Application)
             )
             val chronicleUiState by chronicleViewModel.detailUiState.collectAsState()
 
@@ -1187,10 +1289,30 @@ fun V20NavGraph(
             }
 
             LaunchedEffect(chronicleId, locationId) {
-                location = chronicleUiState.locations.find { it.id == locationId }
                 mediaViewModel.findAssetForLocation(chronicleId, locationId) { asset ->
                     linkedAsset = asset
                     asset?.let { mediaViewModel.loadAssetForViewing(it.id) }
+                }
+            }
+
+            var locationMissing by remember { mutableStateOf(false) }
+            LaunchedEffect(locationId) {
+                kotlinx.coroutines.delay(700)
+                if (chronicleUiState.locations.none { it.id == locationId }) locationMissing = true
+            }
+
+            // Derived from the flow so it appears as soon as loadChronicleDetail emits
+            // (previously read once inside a LaunchedEffect → permanent blank screen)
+            val location = chronicleUiState.locations.find { it.id == locationId }
+
+            if (location == null) {
+                if (locationMissing) {
+                    RouteEmptyState(
+                        message = stringResource(R.string.route_not_found),
+                        onBack = { navController.popBackStack() }
+                    )
+                } else {
+                    RouteLoading()
                 }
             }
 
@@ -1260,7 +1382,7 @@ fun V20NavGraph(
             val sessionId = backStackEntry.arguments?.getString("sessionId") ?: return@composable
             val chronicleId = backStackEntry.arguments?.getString("chronicleId") ?: return@composable
             val recapViewModel: ChronicleViewModel = viewModel(
-                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository)
+                factory = ChronicleViewModelFactory(appContainer.chronicleRepository, appContainer.characterRepository, context.applicationContext as Application)
             )
             val session by recapViewModel.getSession(sessionId).collectAsState(initial = null)
             val sessionEvents by recapViewModel.getSessionEvents(sessionId).collectAsState(initial = emptyList())
@@ -1268,6 +1390,23 @@ fun V20NavGraph(
 
             LaunchedEffect(chronicleId) {
                 recapViewModel.loadChronicleDetail(chronicleId)
+            }
+
+            var recapMissing by remember { mutableStateOf(false) }
+            LaunchedEffect(sessionId) {
+                kotlinx.coroutines.delay(700)
+                if (session == null) recapMissing = true
+            }
+
+            if (session == null) {
+                if (recapMissing) {
+                    RouteEmptyState(
+                        message = stringResource(R.string.route_not_found),
+                        onBack = { navController.popBackStack() }
+                    )
+                } else {
+                    RouteLoading()
+                }
             }
 
             session?.let { s ->
@@ -1351,6 +1490,9 @@ fun V20NavGraph(
                 onPresentAsset = { assetId, name, mime ->
                     liveRoomViewModel.presentAsset(assetId, name, mime)
                 },
+                onShareAsset = { assetId, name, mime, targets ->
+                    liveRoomViewModel.shareAsset(assetId, name, mime, targets)
+                },
                 onDismissFile = { liveRoomViewModel.dismissFile() },
                 onToggleFullscreen = { liveRoomViewModel.toggleFullscreen() },
                 onDisconnect = { liveRoomViewModel.disconnect() },
@@ -1368,8 +1510,8 @@ fun V20NavGraph(
                 },
                 onBack = { navController.popBackStack() },
                 onClearError = { liveRoomViewModel.clearError() },
-                onSendStatUpdate = { charId, field, value ->
-                    liveRoomViewModel.sendStatUpdate(charId, field, value)
+                onRollDice = { pool, difficulty ->
+                    liveRoomViewModel.rollDice(pool, difficulty)
                 }
             )
         }
@@ -1382,6 +1524,7 @@ fun V20NavGraph(
                 )
             )
             val findTableState by findTableViewModel.uiState.collectAsState()
+            val defaultRoomName = stringResource(R.string.live_style_section_table)
 
             com.v20charactermanager.ui.liveroom.FindTableScreen(
                 discoveredTables = findTableState.discoveredTables,
@@ -1390,7 +1533,7 @@ fun V20NavGraph(
                 onStopScan = { findTableViewModel.stopScan() },
                 onConnect = { host, port ->
                     val table = findTableState.discoveredTables.find { it.host == host && it.port == port }
-                    val roomName = table?.roomName ?: "Tavolo"
+                    val roomName = table?.roomName ?: defaultRoomName
                     val masterName = table?.masterName ?: "Master"
                     navController.navigate(Routes.selectCharacter(host, port, roomName, masterName))
                 },

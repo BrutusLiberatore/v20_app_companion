@@ -123,10 +123,11 @@ fun SelectCharacterScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(characters) { character ->
+                        val unknownName = stringResource(R.string.name_unknown)
                         CharacterCard(
                             character = character,
                             onClick = {
-                                val name = character.identity.name.ifBlank { "Unknown" }
+                                val name = character.identity.name.ifBlank { unknownName }
                                 onCharacterSelected(character.id, name)
                             }
                         )
@@ -187,7 +188,7 @@ private fun CharacterCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = character.identity.name.ifBlank { "Unknown" },
+                    text = character.identity.name.ifBlank { stringResource(R.string.name_unknown) },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

@@ -190,14 +190,33 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.house_rules_button))
                         }
-
+                    }
+                }
+            } else {
+                Card {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.house_rules_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedButton(
-                            onClick = onCrashLogsClick,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(stringResource(R.string.crash_logs))
-                        }
+                        Text(
+                            text = stringResource(R.string.house_rules_no_chronicles),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            Card {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    OutlinedButton(
+                        onClick = onCrashLogsClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.crash_logs))
                     }
                 }
             }

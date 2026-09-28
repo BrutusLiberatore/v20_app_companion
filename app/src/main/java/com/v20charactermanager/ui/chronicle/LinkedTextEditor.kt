@@ -69,8 +69,6 @@ fun ChronicleDetailUiState.toLinkableItems(): List<LinkableItem> {
     return items
 }
 
-private val LINK_REGEX = Regex("""\[(\w+):([^:]+):([^\]]+)\]""")
-private val TAG_REGEX = Regex("""#(\w+)""")
 private val COMBINED_REGEX = Regex("""#(\w+)|\[(\w+):([^:]+):([^\]]+)\]""")
 
 data class TextSegment(
@@ -83,26 +81,6 @@ enum class SegmentType {
     PLAIN,
     LINK,
     TAG
-}
-
-fun parseLinks(text: String): List<Pair<String, String>> {
-    val results = mutableListOf<Pair<String, String>>()
-    var lastEnd = 0
-    for (match in LINK_REGEX.findAll(text)) {
-        if (match.range.first > lastEnd) {
-            results.add(Pair(text.substring(lastEnd, match.range.first), ""))
-        }
-        results.add(Pair("[${match.groupValues[1]}:${match.groupValues[2]}:${match.groupValues[3]}]", match.groupValues[3]))
-        lastEnd = match.range.last + 1
-    }
-    if (lastEnd < text.length) {
-        results.add(Pair(text.substring(lastEnd), ""))
-    }
-    return results
-}
-
-fun parseTags(text: String): List<String> {
-    return TAG_REGEX.findAll(text).map { it.groupValues[1] }.toList()
 }
 
 fun parseSegments(text: String): List<TextSegment> {
@@ -128,10 +106,6 @@ fun parseSegments(text: String): List<TextSegment> {
         results.add(TextSegment(text.substring(lastEnd), SegmentType.PLAIN))
     }
     return results
-}
-
-fun stripLinks(text: String): String {
-    return text.replace(LINK_REGEX) { it.groupValues[3] }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

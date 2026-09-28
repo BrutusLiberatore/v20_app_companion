@@ -39,6 +39,12 @@
 
     <!-- General -->
     <string name="action_save">Salva</string>
+    <string name="action_ok">OK</string>
+    <string name="msg_sheet_saved">Scheda salvata</string>
+    <string name="msg_save_error">Salvataggio non riuscito</string>
+    <string name="msg_house_rules_saved">Regole della casa salvate</string>
+    <string name="msg_character_created">Personaggio creato!</string>
+    <string name="msg_character_created_message">Il tuo personaggio è stato salvato con successo.</string>
     <string name="action_cancel">Annulla</string>
     <string name="action_delete">Elimina</string>
     <string name="action_edit">Modifica</string>
@@ -550,6 +556,11 @@
     <string name="storyteller_no_scenes">Nessuna scena in questa sessione</string>
     <string name="storyteller_new_scene">Nuova Scena</string>
     <string name="storyteller_scene_title">Titolo scena</string>
+    <string name="scene_hook">Gancio</string>
+    <string name="scene_objective">Obiettivo</string>
+    <string name="scene_conflict">Conflitto</string>
+    <string name="scene_mood">Atmosfera</string>
+    <string name="scene_activate">Attiva scena</string>
     <string name="storyteller_active_plots">Trame Attive</string>
 
     <!-- Bottom Navigation -->
@@ -568,6 +579,10 @@
     <string name="session_blood">Sangue</string>
     <string name="chronicle_add_npc">Aggiungi PNG</string>
     <string name="chronicle_add_plot">Aggiungi Trama</string>
+    <string name="chronicle_add_location">Aggiungi Luogo</string>
+    <string name="chronicle_add_faction">Aggiungi Fazione</string>
+    <string name="chronicle_add_secret">Aggiungi Segreto</string>
+    <string name="chronicle_add_clue">Aggiungi Indizio</string>
     <string name="chronicle_no_characters_available">Nessun personaggio disponibile da aggiungere</string>
     <string name="name_hint">Nome</string>
     <string name="location_image_subtitle">Mappa &amp; Annotazioni</string>
@@ -845,6 +860,24 @@
     <string name="live_close_table">Chiudi Tavolo</string>
     <string name="live_close_table_title">Chiudere il tavolo?</string>
     <string name="live_close_table_message">Tutti i giocatori verranno disconnessi e il tavolo verrà chiuso definitivamente.</string>
+    <string name="live_leave_title">Lasciare il tavolo?</string>
+    <string name="live_leave_message_player">Vuoi lasciare il tavolo? Potrai rientrare in qualsiasi momento con il codice tavolo.</string>
+    <string name="live_leave_message_master">Uscendo, il tavolo verrà chiuso e tutti i giocatori verranno disconnessi.</string>
+    <string name="live_roll_pool">Pool di dadi</string>
+    <string name="live_roll_difficulty">Difficoltà</string>
+    <string name="live_roll_result_successes">%1$d successi</string>
+    <string name="live_roll_result_botch">Boccia!</string>
+    <string name="live_roll_result_failure">Fallimento</string>
+    <string name="live_share_recipients">Destinatari</string>
+    <string name="live_share_hint">Il file verrà salvato nella cronaca di ogni giocatore selezionato.</string>
+    <string name="live_share_no_players">Nessun giocatore connesso.</string>
+    <string name="live_share_all">Tutti</string>
+    <string name="live_share_none">Nessuno</string>
+    <string name="live_share_action">Condividi</string>
+    <string name="live_share_saved">File \"%1$s\" salvato nella cronaca \"%2$s\"</string>
+    <string name="live_share_failed">Ricezione file non riuscita.</string>
+    <string name="live_room_stop_scan">Ferma ricerca</string>
+    <string name="house_rules_no_chronicles">Crea una cronaca per configurare le regole della casa.</string>
     <string name="live_room_closed_by_master">Il tavolo è stato chiuso dal Master.</string>
     <string name="live_customize_table">Personalizza Tavolo</string>
     <string name="live_style_section_table">Tavolo</string>
@@ -858,6 +891,7 @@
     <string name="live_open_sheet">Apri la scheda personaggio</string>
     <string name="sheet_loading">Caricamento scheda personaggio…</string>
     <string name="sheet_unavailable">Scheda personaggio non disponibile.</string>
+    <string name="route_not_found">Contenuto non disponibile o eliminato.</string>
 
     <!-- Crash Logs -->
     <string name="crash_logs">Log di Crash</string>
@@ -874,5 +908,92 @@
     <string name="select_character_subtitle">Seleziona un personaggio per unirti al tavolo</string>
     <string name="select_character_empty">Nessun personaggio trovato.\nCrea un personaggio prima di unirti al tavolo.</string>
     <string name="select_character_count">%d personaggi disponibili</string>
+    <!-- Live Room UI -->
+    <string name="live_free_seat">Posto libero</string>
+    <string name="live_in_presentation">In presentazione</string>
+    <string name="live_present_from_chronicle">Presenta dalla Cronaca</string>
+    <string name="live_select_file_chronicle">Seleziona File dalla Cronaca</string>
+    <string name="live_no_files_in_chronicle">Nessun file nella cronaca.\nImporta file nella sezione Media della cronaca.</string>
+    <string name="live_tracks_label">Tracce</string>
+    <string name="live_presets_label">Preset</string>
+    <string name="live_no_audio_tracks">Nessuna traccia audio.\nImporta audio nella sezione Audio della cronaca.</string>
+    <string name="live_stop_all">Ferma Tutto</string>
+    <string name="live_no_presets">Nessun preset salvato.\nSeleziona delle tracce attive e salva un preset.</string>
+    <string name="live_save_preset_audio_title">Salva Preset Audio</string>
+    <string name="live_section_scene">Scena</string>
+    <string name="live_empty_npc">Nessun NPC presente</string>
+    <string name="live_empty_location">Nessun luogo presente</string>
+    <string name="live_empty_note">Nessuna nota presente</string>
+    <string name="live_empty_scene">Nessuna scena presente</string>
+    <string name="live_empty_event">Nessun evento presente</string>
+    <string name="live_empty_secret">Nessun segreto presente</string>
+    <string name="live_empty_file">Nessun file nella cronaca</string>
+    <string name="live_connected">connesso</string>
+    <string name="live_tap_zoom">Tocca per ingrandire</string>
+    <string name="live_pdf_not_viewable">Impossibile visualizzare il PDF</string>
+    <string name="live_format_not_viewable">Formato non visualizzabile direttamente</string>
+    <string name="live_cd_close_presentation">Chiudi presentazione</string>
+    <string name="live_create_room_error">Impossibile creare la stanza: %s</string>
+    <string name="live_file_too_large">File troppo grande (%dMB). Massimo 8MB.</string>
+    <string name="live_file_too_large_mem">File troppo grande per la memoria. Prova con un\'immagine più piccola.</string>
+    <string name="live_connection_lost">Connessione persa</string>
+    <string name="live_received_format">Ricevuto: %s</string>
+    <!-- Eventi sessione automatici -->
+    <string name="event_plot_status">Trama: %s</string>
+    <string name="event_npc_added">NPC aggiunto alla scena: %s</string>
+    <string name="event_npc_removed">NPC rimosso dalla scena: %s</string>
+    <string name="event_clue_revealed">Indizio rivelato: %s</string>
+    <string name="event_session_started">Sessione %d iniziata</string>
+    <string name="event_session_ended">Sessione %d terminata</string>
+    <string name="event_session_clone">%s (Copia)</string>
+    <string name="event_scene_changed">Cambio scena</string>
+    <string name="event_note_created">Nota creata</string>
+    <string name="event_blood_change">Sangue: %s</string>
+    <string name="event_willpower_change">Volontà: %s</string>
+    <string name="event_health_change">Salute: %s</string>
+    <!-- Localizzazione batch: import/export, audio, media, viewer -->
+    <string name="xp_not_enough">XP insufficienti</string>
+    <string name="import_cannot_read">Impossibile leggere il file</string>
+    <string name="import_cannot_write">Impossibile scrivere il file</string>
+    <string name="import_import_failed_simple">Importazione non riuscita</string>
+    <string name="import_import_failed">Importazione non riuscita: %s</string>
+    <string name="import_export_failed_simple">Esportazione fallita</string>
+    <string name="import_export_failed">Esportazione non riuscita: %s</string>
+    <string name="import_save_failed">Salvataggio non riuscito: %s</string>
+    <string name="import_replaced_ok">Personaggio sostituito con successo</string>
+    <string name="import_success_msg">Importato: %s</string>
+    <string name="import_unnamed">Senza nome</string>
+    <string name="import_library_default">Libreria Equipaggiamento</string>
+    <string name="import_exported_count">Esportati %d oggetti di equipaggiamento</string>
+    <string name="audio_read_error">Impossibile leggere il file</string>
+    <string name="audio_imported">Audio importato</string>
+    <string name="audio_unknown_error">Errore sconosciuto</string>
+    <string name="audio_playback_error">Errore riproduzione: %s</string>
+    <string name="audio_no_active_tracks">Nessuna traccia attiva da salvare</string>
+    <string name="audio_preset_saved_msg">Preset \'%s\' salvato</string>
+    <string name="audio_preset_activated_msg">Preset \'%s\' attivato</string>
+    <string name="media_image_imported">Immagine importata</string>
+    <string name="media_document_imported">Documento importato</string>
+    <string name="media_video_imported">Video importato</string>
+    <string name="doc_not_found_msg">File non trovato o formato non supportato:\n%s</string>
+    <string name="doc_opening">Apertura documento...</string>
+    <string name="doc_loading_page1">Caricamento pagina 1 di %d...</string>
+    <string name="doc_loading_page">Caricamento pagina %1$d di %2$d...</string>
+    <string name="doc_ready">Pronto!</string>
+    <string name="doc_loading_pdf">Caricamento PDF</string>
+    <string name="doc_please_wait">Attendere prego...</string>
+    <string name="copy_named">%s (Copia)</string>
+    <string name="crash_report_title">Report del crash</string>
+    <string name="crash_copy_hint">Copia questo testo e incollalo allo sviluppatore:</string>
+    <string name="crash_copy_button">COPIA LOG</string>
+    <string name="unknown_error">Errore sconosciuto</string>
+    <string name="net_error_fmt">Errore di rete: %s</string>
+    <string name="net_check_connection">verifica la connessione</string>
+    <string name="net_connection_error_fmt">Errore di connessione: %s</string>
+    <string name="net_unknown">sconosciuto</string>
+    <string name="net_discovery_failed_fmt">Discovery fallita: %s</string>
+    <string name="name_unknown">Sconosciuto</string>
+    <string name="media_type_image">Immagine</string>
+    <string name="media_type_video">Video</string>
 
 </resources>

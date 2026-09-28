@@ -197,10 +197,6 @@ class CompendiumViewModel(
         _uiState.value = _uiState.value.copy(selectedItem = item)
     }
 
-    fun clearSelection() {
-        _uiState.value = _uiState.value.copy(selectedItem = null)
-    }
-
     private fun getDisciplineDescription(discipline: DisciplineId): Pair<String, String> = when (discipline) {
         DisciplineId.ANIMALISM -> "Permette di comunicare con gli animali, comandarli e persino legare la propria anima a quella di una bestia. A livelli elevati, consente di assumere forme animalesche temporanee." to "Allows communication with animals, commanding them, and even binding one's soul to that of a beast. At higher levels, it permits temporary assumption of animal forms."
         DisciplineId.AUSPEX -> "Concede poteri di percezione soprannaturale: vista fluente, consapevolezza dei disastri, retrocognizione e la capacità di penetrare le illusioni e le menzogne." to "Grants supernatural perception powers:Aura Reading, Spirit's Touch, Psychometry, and the ability to pierce illusions and lies."

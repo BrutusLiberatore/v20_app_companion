@@ -88,6 +88,7 @@ fun LiveRoomScreen(
     onJoinRoom: (String, Int, String, String?) -> Unit,
     onRetryJoin: () -> Unit = {},
     onPresentAsset: (String, String, String) -> Unit,
+    onShareAsset: (String, String, String, List<String>) -> Unit,
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onDisconnect: () -> Unit,
@@ -96,10 +97,11 @@ fun LiveRoomScreen(
     onOpenSheet: (String) -> Unit,
     onBack: () -> Unit,
     onClearError: () -> Unit,
-    onSendStatUpdate: (String, String, Int?) -> Unit,
+    onRollDice: (Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var autoCreated by remember { mutableStateOf(false) }
+    var showLeaveDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(startAsMaster, chronicleName, autoCreated) {
         if (startAsMaster && chronicleName.isNotBlank() && !autoCreated && !uiState.isConnected) {
@@ -108,11 +110,12 @@ fun LiveRoomScreen(
         }
     }
 
+    val playerFallback = stringResource(R.string.field_player)
     // Auto-join when coming from SelectCharacterScreen
     LaunchedEffect(autoHost, autoPort, autoPlayerName, autoCharacterId) {
         if (autoHost.isNotBlank() && autoPort > 0 && !uiState.isConnected && !autoCreated) {
             autoCreated = true
-            val playerName = autoPlayerName.ifBlank { "Giocatore" }
+            val playerName = autoPlayerName.ifBlank { playerFallback }
             val charId = autoCharacterId.ifBlank { null }
             onJoinRoom(autoHost, autoPort, playerName, charId)
         }
@@ -128,6 +131,48 @@ fun LiveRoomScreen(
         return
     }
 
+    if (uiState.isConnected) {
+        BackHandler { showLeaveDialog = true }
+    }
+
+    if (showLeaveDialog) {
+        AlertDialog(
+            onDismissRequest = { showLeaveDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.live_leave_title),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    stringResource(
+                        if (uiState.isMaster) R.string.live_leave_message_master
+                        else R.string.live_leave_message_player
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLeaveDialog = false
+                    if (uiState.isMaster) {
+                        onCloseRoom()
+                    } else {
+                        onDisconnect()
+                        onBack()
+                    }
+                }) {
+                    Text(stringResource(R.string.action_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLeaveDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -141,7 +186,9 @@ fun LiveRoomScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        if (uiState.isConnected) showLeaveDialog = true else onBack()
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
@@ -159,7 +206,7 @@ fun LiveRoomScreen(
                         }
                     }
                     if (uiState.isConnected) {
-                        IconButton(onClick = onDisconnect) {
+                        IconButton(onClick = { showLeaveDialog = true }) {
                             Icon(Icons.Default.LinkOff, contentDescription = stringResource(R.string.live_disconnect), tint = Color.White)
                         }
                     }
@@ -188,9 +235,10 @@ fun LiveRoomScreen(
                     audioViewModel = audioViewModel,
                     chronicleRepository = chronicleRepository,
                     onPresentAsset = onPresentAsset,
+                    onShareAsset = onShareAsset,
                     onDismissFile = onDismissFile,
                     onToggleFullscreen = onToggleFullscreen,
-                    onSendStatUpdate = onSendStatUpdate,
+                    onRollDice = onRollDice,
                     onCloseRoom = onCloseRoom,
                     onTableStyleChange = onTableStyleChange,
                     onOpenSheet = onOpenSheet,
@@ -214,6 +262,7 @@ private fun ConnectingOverlay(
     var showManualDialog by remember { mutableStateOf(false) }
     var manualHost by remember { mutableStateOf("") }
     var manualPort by remember { mutableStateOf("39641") }
+    val playerFallback = stringResource(R.string.field_player)
 
     val isEmulatorIp = remember(uiState.error) {
         val err = uiState.error ?: ""
@@ -388,7 +437,7 @@ private fun ConnectingOverlay(
                         val port = manualPort.toIntOrNull() ?: 39641
                         if (manualHost.isNotBlank()) {
                             onClearError()
-                            onManualJoin(manualHost, port, playerName.ifBlank { "Giocatore" }, null)
+                            onManualJoin(manualHost, port, playerName.ifBlank { playerFallback }, null)
                             showManualDialog = false
                         }
                     }
@@ -410,9 +459,10 @@ private fun VirtualTableView(
     audioViewModel: com.v20charactermanager.ui.chronicle.AudioViewModel? = null,
     chronicleRepository: com.v20charactermanager.domain.repository.ChronicleRepository? = null,
     onPresentAsset: (String, String, String) -> Unit,
+    onShareAsset: (String, String, String, List<String>) -> Unit,
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit,
-    onSendStatUpdate: (String, String, Int?) -> Unit,
+    onRollDice: (Int, Int) -> Unit,
     onCloseRoom: () -> Unit = {},
     onTableStyleChange: (String, String) -> Unit = { _, _ -> },
     onOpenSheet: (String) -> Unit = {},
@@ -426,6 +476,25 @@ private fun VirtualTableView(
     }
 
     var tableBoxSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+    var showRollDialog by remember { mutableStateOf(false) }
+    var diceAnimRoll by remember { mutableStateOf<LiveRoomMessage.DiceRoll?>(null) }
+
+    LaunchedEffect(uiState.diceRolls.lastOrNull()) {
+        val latest = uiState.diceRolls.lastOrNull()
+        if (latest != null && latest.dice.isNotEmpty()) {
+            diceAnimRoll = latest
+        }
+    }
+
+    if (showRollDialog) {
+        DiceRollDialog(
+            onDismiss = { showRollDialog = false },
+            onRoll = { pool, difficulty ->
+                showRollDialog = false
+                onRollDice(pool, difficulty)
+            }
+        )
+    }
 
     Column(
         modifier = modifier
@@ -496,7 +565,7 @@ private fun VirtualTableView(
             // Round table asset (style pack chosen by the Master)
             Image(
                 painter = painterResource(id = TableStylePack.fromId(uiState.tablePack).tableRes),
-                contentDescription = "Tavolo",
+                contentDescription = stringResource(R.string.live_style_section_table),
                 modifier = Modifier.fillMaxHeight(),
                 contentScale = ContentScale.Fit
             )
@@ -516,7 +585,7 @@ private fun VirtualTableView(
                     if (uiState.isMaster) {
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Porta: ${uiState.room.port}",
+                            text = "${stringResource(R.string.live_room_port)}: ${uiState.room.port}",
                             style = MaterialTheme.typography.labelSmall,
                             color = Gold
                         )
@@ -529,6 +598,21 @@ private fun VirtualTableView(
                         style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFF4CAF50)
                     )
+                }
+            }
+
+            // Recent dice rolls feed (all participants)
+            if (uiState.diceRolls.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(4.dp)
+                        .widthIn(max = 240.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    uiState.diceRolls.takeLast(5).asReversed().forEach { roll ->
+                        DiceRollFeedItem(roll)
+                    }
                 }
             }
 
@@ -558,6 +642,14 @@ private fun VirtualTableView(
                     }
                 )
             }
+
+            diceAnimRoll?.let { activeRoll ->
+                Dice3DOverlay(
+                    roll = activeRoll,
+                    modifier = Modifier.fillMaxSize(),
+                    onFinished = { diceAnimRoll = null }
+                )
+            }
         }
 
         // Bottom panel
@@ -575,17 +667,155 @@ private fun VirtualTableView(
                     audioViewModel = audioViewModel,
                     chronicleRepository = chronicleRepository,
                     onPresentAsset = onPresentAsset,
+                    onShareAsset = onShareAsset,
                     onDismissFile = onDismissFile,
                     onToggleFullscreen = onToggleFullscreen,
                     onCloseRoom = onCloseRoom,
-                    onTableStyleChange = onTableStyleChange
+                    onTableStyleChange = onTableStyleChange,
+                    onRollClick = { showRollDialog = true }
                 )
             } else {
                 PlayerBottomPanel(
                     uiState = uiState,
-                    onToggleFullscreen = onToggleFullscreen
+                    onToggleFullscreen = onToggleFullscreen,
+                    onRollClick = { showRollDialog = true }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun DiceRollDialog(
+    onDismiss: () -> Unit,
+    onRoll: (Int, Int) -> Unit
+) {
+    var pool by remember { mutableStateOf(4) }
+    var difficulty by remember { mutableStateOf(com.v20charactermanager.domain.definition.RuleSet.DIFFICULTY_STANDARD) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.dashboard_roll_dice),
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                DicePickerRow(
+                    label = stringResource(R.string.live_roll_pool),
+                    value = pool,
+                    min = 1,
+                    max = 15,
+                    onChange = { pool = it }
+                )
+                DicePickerRow(
+                    label = stringResource(R.string.live_roll_difficulty),
+                    value = difficulty,
+                    min = 2,
+                    max = 10,
+                    onChange = { difficulty = it }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onRoll(pool, difficulty) }) {
+                Text(
+                    text = stringResource(R.string.dashboard_roll_dice),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun DicePickerRow(
+    label: String,
+    value: Int,
+    min: Int,
+    max: Int,
+    onChange: (Int) -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium
+        )
+        IconButton(
+            onClick = { if (value > min) onChange(value - 1) },
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(Icons.Default.Remove, contentDescription = "-", modifier = Modifier.size(18.dp))
+        }
+        Text(
+            text = value.toString(),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(32.dp)
+        )
+        IconButton(
+            onClick = { if (value < max) onChange(value + 1) },
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "+", modifier = Modifier.size(18.dp))
+        }
+    }
+}
+
+@Composable
+private fun DiceRollFeedItem(roll: LiveRoomMessage.DiceRoll) {
+    val successes = roll.dice.count { it >= roll.difficulty }
+    val ones = roll.dice.count { it == 1 }
+    val net = successes - ones
+    val resultColor = when {
+        net <= 0 && ones > 0 -> Color(0xFFCF6679)
+        net > 0 -> Color(0xFF4CAF50)
+        else -> Color.White.copy(alpha = 0.7f)
+    }
+
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = Color.Black.copy(alpha = 0.72f)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
+            Text(
+                text = "${roll.playerName} · ${roll.pool}d10",
+                color = Gold,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (roll.dice.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    roll.dice.take(15).forEach { die ->
+                        Text(
+                            text = die.toString(),
+                            color = when {
+                                die == 1 -> Color(0xFFCF6679)
+                                die >= roll.difficulty -> Color(0xFF4CAF50)
+                                else -> Color.White.copy(alpha = 0.8f)
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            Text(
+                text = roll.result,
+                color = resultColor,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -708,46 +938,11 @@ private fun ChairWithPlayer(
             // Empty seat indicator
             Icon(
                 Icons.Default.PersonAdd,
-                contentDescription = "Posto libero",
+                contentDescription = stringResource(R.string.live_free_seat),
                 tint = Color.White.copy(alpha = 0.25f),
                 modifier = Modifier.size(with(LocalDensity.current) { (chairPx * 0.35f).toDp() })
             )
         }
-    }
-}
-
-@Composable
-private fun FeltTable(modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val padding = 8.dp.toPx()
-        val cornerRadius = CornerRadius(40.dp.toPx())
-
-        drawRoundRect(
-            color = FeltBorder,
-            cornerRadius = cornerRadius,
-            size = Size(w, h)
-        )
-
-        drawRoundRect(
-            brush = Brush.radialGradient(
-                colors = listOf(FeltGreen, FeltGreenDark),
-                center = Offset(w / 2, h / 2),
-                radius = w / 2
-            ),
-            topLeft = Offset(padding, padding),
-            size = Size(w - padding * 2, h - padding * 2),
-            cornerRadius = CornerRadius(36.dp.toPx())
-        )
-
-        drawRoundRect(
-            color = Gold.copy(alpha = 0.3f),
-            topLeft = Offset(padding + 3.dp.toPx(), padding + 3.dp.toPx()),
-            size = Size(w - (padding + 3.dp.toPx()) * 2, h - (padding + 3.dp.toPx()) * 2),
-            cornerRadius = CornerRadius(32.dp.toPx()),
-            style = Stroke(width = 1.dp.toPx())
-        )
     }
 }
 
@@ -758,10 +953,12 @@ private fun MasterBottomPanel(
     audioViewModel: com.v20charactermanager.ui.chronicle.AudioViewModel? = null,
     chronicleRepository: com.v20charactermanager.domain.repository.ChronicleRepository? = null,
     onPresentAsset: (String, String, String) -> Unit,
+    onShareAsset: (String, String, String, List<String>) -> Unit,
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit,
     onCloseRoom: () -> Unit = {},
-    onTableStyleChange: (String, String) -> Unit = { _, _ -> }
+    onTableStyleChange: (String, String) -> Unit = { _, _ -> },
+    onRollClick: () -> Unit = {}
 ) {
     var showFileSelector by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
@@ -771,6 +968,15 @@ private fun MasterBottomPanel(
     var showStyleEditor by remember { mutableStateOf(false) }
     val audioUiState = audioViewModel?.uiState?.collectAsState()
     val audioState = audioUiState?.value ?: com.v20charactermanager.ui.chronicle.AudioMixUiState()
+
+    fun assetMimeOf(asset: MediaAsset): String = when {
+        asset.type == MediaAssetType.DOCUMENT -> "application/pdf"
+        asset.type == MediaAssetType.VIDEO -> "video/*"
+        asset.originalFilePath.endsWith(".pdf") -> "application/pdf"
+        asset.originalFilePath.endsWith(".gif") -> "image/gif"
+        asset.originalFilePath.endsWith(".svg") -> "image/svg+xml"
+        else -> "image/*"
+    }
 
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -783,7 +989,7 @@ private fun MasterBottomPanel(
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "${uiState.connectedPlayers.size} giocatori",
+                text = "${uiState.connectedPlayers.size} ${stringResource(R.string.live_players)}",
                 color = Color.White.copy(alpha = 0.6f),
                 style = MaterialTheme.typography.bodySmall
             )
@@ -799,7 +1005,7 @@ private fun MasterBottomPanel(
                         onClick = { showMenu = false; showAudioMixer = true }
                     )
                     DropdownMenuItem(
-                        text = { Text("Cronaca") },
+                        text = { Text(stringResource(R.string.field_chronicle)) },
                         leadingIcon = { Icon(Icons.Default.Book, contentDescription = null) },
                         onClick = { showMenu = false; showChronicleInfo = true }
                     )
@@ -807,6 +1013,11 @@ private fun MasterBottomPanel(
                         text = { Text(stringResource(R.string.live_customize_table)) },
                         leadingIcon = { Icon(Icons.Default.Chair, contentDescription = null) },
                         onClick = { showMenu = false; showStyleEditor = true }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.dashboard_roll_dice)) },
+                        leadingIcon = { Icon(Icons.Default.Casino, contentDescription = null) },
+                        onClick = { showMenu = false; onRollClick() }
                     )
                     DropdownMenuItem(
                         text = {
@@ -831,13 +1042,13 @@ private fun MasterBottomPanel(
                 Spacer(modifier = Modifier.width(8.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(uiState.presentedFile.name, color = Color.White, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("In presentazione", color = Color.White.copy(alpha = 0.5f), style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.live_in_presentation), color = Color.White.copy(alpha = 0.5f), style = MaterialTheme.typography.bodySmall)
                 }
                 IconButton(onClick = onToggleFullscreen) {
-                    Icon(Icons.Default.Fullscreen, contentDescription = "Fullscreen", tint = Color.White)
+                    Icon(Icons.Default.Fullscreen, contentDescription = stringResource(R.string.live_fullscreen), tint = Color.White)
                 }
                 IconButton(onClick = onDismissFile) {
-                    Icon(Icons.Default.Close, contentDescription = "Chiudi", tint = Color.White)
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_close), tint = Color.White)
                 }
             }
         } else {
@@ -849,7 +1060,7 @@ private fun MasterBottomPanel(
             ) {
                 Icon(Icons.Default.PresentToAll, contentDescription = null, tint = Color(0xFF1A1A2E))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Presenta dalla Cronaca", color = Color(0xFF1A1A2E), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.live_present_from_chronicle), color = Color(0xFF1A1A2E), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -857,17 +1068,14 @@ private fun MasterBottomPanel(
     if (showFileSelector) {
         ChronicleFileSelector(
             assets = uiState.chronicleAssets,
+            players = uiState.connectedPlayers,
             onSelectAsset = { asset ->
                 showFileSelector = false
-                val mimeType = when {
-                    asset.type == MediaAssetType.DOCUMENT -> "application/pdf"
-                    asset.type == MediaAssetType.VIDEO -> "video/*"
-                    asset.originalFilePath.endsWith(".pdf") -> "application/pdf"
-                    asset.originalFilePath.endsWith(".gif") -> "image/gif"
-                    asset.originalFilePath.endsWith(".svg") -> "image/svg+xml"
-                    else -> "image/*"
-                }
-                onPresentAsset(asset.id, asset.title, mimeType)
+                onPresentAsset(asset.id, asset.title, assetMimeOf(asset))
+            },
+            onShareAsset = { asset, targets ->
+                showFileSelector = false
+                onShareAsset(asset.id, asset.title, assetMimeOf(asset), targets)
             },
             onDismiss = { showFileSelector = false }
         )
@@ -923,9 +1131,14 @@ private fun MasterBottomPanel(
             chronicleId = chronicleId,
             chronicleName = uiState.room?.name ?: "",
             assets = uiState.chronicleAssets,
+            players = uiState.connectedPlayers,
             onPresentAsset = { assetId, name, mime ->
                 showChronicleInfo = false
                 onPresentAsset(assetId, name, mime)
+            },
+            onShareAsset = { asset, targets ->
+                showChronicleInfo = false
+                onShareAsset(asset.id, asset.title, assetMimeOf(asset), targets)
             },
             onDismiss = { showChronicleInfo = false }
         )
@@ -933,19 +1146,93 @@ private fun MasterBottomPanel(
 }
 
 @Composable
+private fun ShareTargetsPicker(
+    players: List<ConnectedPlayer>,
+    selected: Set<String>,
+    onSelect: (Set<String>) -> Unit
+) {
+    if (players.isEmpty()) {
+        Text(
+            text = stringResource(R.string.live_share_no_players),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        return
+    }
+    Column(modifier = Modifier.padding(bottom = 8.dp)) {
+        Text(
+            text = stringResource(R.string.live_share_recipients),
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(bottom = 2.dp)
+        )
+        Text(
+            text = stringResource(R.string.live_share_hint),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        players.forEach { player ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable {
+                        onSelect(
+                            if (selected.contains(player.id)) selected - player.id
+                            else selected + player.id
+                        )
+                    }
+                    .padding(vertical = 1.dp)
+            ) {
+                Checkbox(
+                    checked = selected.contains(player.id),
+                    onCheckedChange = {
+                        onSelect(
+                            if (selected.contains(player.id)) selected - player.id
+                            else selected + player.id
+                        )
+                    }
+                )
+                Text(player.name, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Spacer(modifier = Modifier.weight(1f))
+            TextButton(onClick = { onSelect(players.map { it.id }.toSet()) }) {
+                Text(stringResource(R.string.live_share_all), style = MaterialTheme.typography.labelSmall)
+            }
+            TextButton(onClick = { onSelect(emptySet()) }) {
+                Text(stringResource(R.string.live_share_none), style = MaterialTheme.typography.labelSmall)
+            }
+        }
+    }
+}
+
+@Composable
 private fun ChronicleFileSelector(
     assets: List<MediaAsset>,
+    players: List<ConnectedPlayer>,
     onSelectAsset: (MediaAsset) -> Unit,
+    onShareAsset: (MediaAsset, List<String>) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val selectedTargets = remember(players) { mutableStateOf(players.map { it.id }.toSet()) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Seleziona File dalla Cronaca") },
+        title = { Text(stringResource(R.string.live_select_file_chronicle)) },
         text = {
             Column {
+                ShareTargetsPicker(
+                    players = players,
+                    selected = selectedTargets.value,
+                    onSelect = { selectedTargets.value = it }
+                )
                 if (assets.isEmpty()) {
                     Text(
-                        text = "Nessun file nella cronaca.\nImporta file nella sezione Media della cronaca.",
+                        text = stringResource(R.string.live_no_files_in_chronicle),
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -992,6 +1279,21 @@ private fun ChronicleFileSelector(
                                         onClick = {},
                                         label = { Text(asset.tags.first(), style = MaterialTheme.typography.labelSmall) }
                                     )
+                                }
+                                if (players.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = { onShareAsset(asset, selectedTargets.value.filter { id -> players.any { it.id == id } }) },
+                                        enabled = selectedTargets.value.isNotEmpty(),
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Share,
+                                            contentDescription = stringResource(R.string.live_share_action),
+                                            tint = if (selectedTargets.value.isNotEmpty()) Gold
+                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1179,10 +1481,10 @@ private fun AudioMixerPopup(
                     contentColor = Color(0xFFE91E63)
                 ) {
                     Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }) {
-                        Text("Tracce", modifier = Modifier.padding(12.dp), fontSize = 13.sp)
+                        Text(stringResource(R.string.live_tracks_label), modifier = Modifier.padding(12.dp), fontSize = 13.sp)
                     }
                     Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }) {
-                        Text("Preset", modifier = Modifier.padding(12.dp), fontSize = 13.sp)
+                        Text(stringResource(R.string.live_presets_label), modifier = Modifier.padding(12.dp), fontSize = 13.sp)
                     }
                 }
 
@@ -1192,7 +1494,7 @@ private fun AudioMixerPopup(
                     0 -> {
                         if (audioState.tracks.isEmpty()) {
                             Text(
-                                text = "Nessuna traccia audio.\nImporta audio nella sezione Audio della cronaca.",
+                                text = stringResource(R.string.live_no_audio_tracks),
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                 style = MaterialTheme.typography.bodyMedium
                             )
@@ -1219,7 +1521,7 @@ private fun AudioMixerPopup(
                                 ) {
                                     Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Salva Preset", fontSize = 12.sp)
+                                    Text(stringResource(R.string.audio_save_preset), fontSize = 12.sp)
                                 }
                                 Button(
                                     onClick = onStopAll,
@@ -1228,7 +1530,7 @@ private fun AudioMixerPopup(
                                 ) {
                                     Icon(Icons.Default.Stop, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Ferma Tutto", fontSize = 12.sp)
+                                    Text(stringResource(R.string.live_stop_all), fontSize = 12.sp)
                                 }
                             }
                         }
@@ -1236,7 +1538,7 @@ private fun AudioMixerPopup(
                     1 -> {
                         if (audioState.presets.isEmpty()) {
                             Text(
-                                text = "Nessun preset salvato.\nSeleziona delle tracce attive e salva un preset.",
+                                text = stringResource(R.string.live_no_presets),
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                 style = MaterialTheme.typography.bodyMedium
                             )
@@ -1256,7 +1558,7 @@ private fun AudioMixerPopup(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Chiudi") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) }
         },
         dismissButton = null
     )
@@ -1264,12 +1566,12 @@ private fun AudioMixerPopup(
     if (showSaveDialog) {
         AlertDialog(
             onDismissRequest = { showSaveDialog = false },
-            title = { Text("Salva Preset Audio") },
+            title = { Text(stringResource(R.string.live_save_preset_audio_title)) },
             text = {
                 OutlinedTextField(
                     value = presetName,
                     onValueChange = { presetName = it },
-                    label = { Text("Nome Preset") },
+                    label = { Text(stringResource(R.string.audio_preset_name_hint)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -1281,10 +1583,10 @@ private fun AudioMixerPopup(
                         presetName = ""
                         showSaveDialog = false
                     }
-                }) { Text("Salva") }
+                }) { Text(stringResource(R.string.action_save)) }
             },
             dismissButton = {
-                TextButton(onClick = { showSaveDialog = false; presetName = "" }) { Text("Annulla") }
+                TextButton(onClick = { showSaveDialog = false; presetName = "" }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }
@@ -1309,13 +1611,13 @@ private fun PresetRow(
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(preset.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("${preset.tracks.size} tracce", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                Text(stringResource(R.string.audio_tracks_count, preset.tracks.size), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
             }
             IconButton(onClick = onActivate, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.PlayArrow, contentDescription = "Attiva", tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.audio_activate), tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
             }
             IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.Delete, contentDescription = "Elimina", tint = Color(0xFFFF5722), modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.action_delete), tint = Color(0xFFFF5722), modifier = Modifier.size(18.dp))
             }
         }
     }
@@ -1394,11 +1696,14 @@ private fun ChronicleDeepBrowserPopup(
     chronicleId: String,
     chronicleName: String,
     assets: List<MediaAsset> = emptyList(),
+    players: List<ConnectedPlayer> = emptyList(),
     onPresentAsset: ((String, String, String) -> Unit)? = null,
+    onShareAsset: ((MediaAsset, List<String>) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     var selectedSection by remember { mutableIntStateOf(0) }
-    val sections = listOf("NPC", "Luoghi", "Note", "Scena", "Eventi", "Segreti", "File")
+    val sections = listOf("NPC", stringResource(R.string.chronicle_tab_locations), stringResource(R.string.chronicle_tab_notes), stringResource(R.string.live_section_scene), stringResource(R.string.chronicle_tab_events), stringResource(R.string.chronicle_tab_secrets), "File")
+    val selectedTargets = remember(players) { mutableStateOf(players.map { it.id }.toSet()) }
 
     val npcs by chronicleRepo.getNpcs(chronicleId).collectAsState(initial = emptyList())
     val locations by chronicleRepo.getLocations(chronicleId).collectAsState(initial = emptyList())
@@ -1414,7 +1719,7 @@ private fun ChronicleDeepBrowserPopup(
                 Icon(Icons.Default.Book, contentDescription = null, tint = Gold)
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
-                    Text("Cronaca", color = Gold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(stringResource(R.string.field_chronicle), color = Gold, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     if (chronicleName.isNotBlank()) {
                         Text(chronicleName, color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
                     }
@@ -1445,7 +1750,7 @@ private fun ChronicleDeepBrowserPopup(
                 when (selectedSection) {
                     0 -> {
                         if (npcs.isEmpty()) {
-                            EmptySection("Nessun NPC presente")
+                            EmptySection(stringResource(R.string.live_empty_npc))
                         } else {
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(npcs) { npc ->
@@ -1461,7 +1766,7 @@ private fun ChronicleDeepBrowserPopup(
                     }
                     1 -> {
                         if (locations.isEmpty()) {
-                            EmptySection("Nessun luogo presente")
+                            EmptySection(stringResource(R.string.live_empty_location))
                         } else {
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(locations) { loc ->
@@ -1477,7 +1782,7 @@ private fun ChronicleDeepBrowserPopup(
                     }
                     2 -> {
                         if (notes.isEmpty()) {
-                            EmptySection("Nessuna nota presente")
+                            EmptySection(stringResource(R.string.live_empty_note))
                         } else {
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(notes) { note ->
@@ -1493,7 +1798,7 @@ private fun ChronicleDeepBrowserPopup(
                     }
                     3 -> {
                         if (scenes.isEmpty()) {
-                            EmptySection("Nessuna scena presente")
+                            EmptySection(stringResource(R.string.live_empty_scene))
                         } else {
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(scenes) { scene ->
@@ -1509,7 +1814,7 @@ private fun ChronicleDeepBrowserPopup(
                     }
                     4 -> {
                         if (events.isEmpty()) {
-                            EmptySection("Nessun evento presente")
+                            EmptySection(stringResource(R.string.live_empty_event))
                         } else {
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(events) { event ->
@@ -1525,7 +1830,7 @@ private fun ChronicleDeepBrowserPopup(
                     }
                     5 -> {
                         if (secrets.isEmpty()) {
-                            EmptySection("Nessun segreto presente")
+                            EmptySection(stringResource(R.string.live_empty_secret))
                         } else {
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(secrets) { secret ->
@@ -1541,8 +1846,13 @@ private fun ChronicleDeepBrowserPopup(
                     }
                     6 -> {
                         if (assets.isEmpty()) {
-                            EmptySection("Nessun file nella cronaca")
+                            EmptySection(stringResource(R.string.live_empty_file))
                         } else {
+                            ShareTargetsPicker(
+                                players = players,
+                                selected = selectedTargets.value,
+                                onSelect = { selectedTargets.value = it }
+                            )
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(assets) { asset ->
                                     val mimeType = when {
@@ -1595,8 +1905,28 @@ private fun ChronicleDeepBrowserPopup(
                                                 ) {
                                                     Icon(
                                                         Icons.Default.PresentToAll,
-                                                        contentDescription = "Presenta",
+                                                        contentDescription = stringResource(R.string.viewer_presentation),
                                                         tint = Gold,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
+                                            if (onShareAsset != null && players.isNotEmpty()) {
+                                                IconButton(
+                                                    onClick = {
+                                                        onShareAsset(
+                                                            asset,
+                                                            selectedTargets.value.filter { id -> players.any { it.id == id } }
+                                                        )
+                                                    },
+                                                    enabled = selectedTargets.value.isNotEmpty(),
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Share,
+                                                        contentDescription = stringResource(R.string.live_share_action),
+                                                        tint = if (selectedTargets.value.isNotEmpty()) Gold
+                                                        else Color.White.copy(alpha = 0.3f),
                                                         modifier = Modifier.size(18.dp)
                                                     )
                                                 }
@@ -1611,7 +1941,7 @@ private fun ChronicleDeepBrowserPopup(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Chiudi") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) }
         },
         dismissButton = null
     )
@@ -1658,7 +1988,8 @@ private fun SimpleListItem(
 @Composable
 private fun PlayerBottomPanel(
     uiState: LiveRoomState,
-    onToggleFullscreen: () -> Unit
+    onToggleFullscreen: () -> Unit,
+    onRollClick: () -> Unit = {}
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1675,9 +2006,25 @@ private fun PlayerBottomPanel(
                 }
             }
             Text(
-                text = "connesso",
+                text = stringResource(R.string.live_connected),
                 color = Color(0xFF4CAF50),
                 style = MaterialTheme.typography.labelSmall
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        Button(
+            onClick = onRollClick,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Gold),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(Icons.Default.Casino, contentDescription = null, tint = Color(0xFF1A1A2E), modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.dashboard_roll_dice),
+                color = Color(0xFF1A1A2E),
+                fontWeight = FontWeight.Bold
             )
         }
 
@@ -1718,7 +2065,7 @@ private fun PlayerBottomPanel(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(uiState.presentedFile.name, color = Color.White, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text("Tocca per ingrandire", color = Color.White.copy(alpha = 0.5f), style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.live_tap_zoom), color = Color.White.copy(alpha = 0.5f), style = MaterialTheme.typography.bodySmall)
                     }
                     Icon(Icons.Default.Fullscreen, contentDescription = null, tint = Color.White)
                 }
@@ -1880,7 +2227,7 @@ private fun FullscreenPresentation(
                         Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(120.dp), tint = Color.White)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(file.name, color = Color.White, style = MaterialTheme.typography.titleLarge)
-                        Text("Impossibile visualizzare il PDF", color = Color.White.copy(alpha = 0.5f))
+                        Text(stringResource(R.string.live_pdf_not_viewable), color = Color.White.copy(alpha = 0.5f))
                     }
                 }
             }
@@ -1925,7 +2272,7 @@ private fun FullscreenPresentation(
                     Icon(Icons.Default.InsertDriveFile, contentDescription = null, modifier = Modifier.size(120.dp), tint = Color.White)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(file.name, color = Color.White, style = MaterialTheme.typography.titleLarge)
-                    Text("Formato non visualizzabile direttamente", color = Color.White.copy(alpha = 0.5f))
+                    Text(stringResource(R.string.live_format_not_viewable), color = Color.White.copy(alpha = 0.5f))
                 }
             }
         }
@@ -1936,12 +2283,12 @@ private fun FullscreenPresentation(
         ) {
             if (isMaster) {
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Chiudi presentazione", tint = Color.White)
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.live_cd_close_presentation), tint = Color.White)
                 }
             }
             Spacer(modifier = Modifier.weight(1f))
             IconButton(onClick = onToggleMinimize) {
-                Icon(Icons.Default.FullscreenExit, contentDescription = "Riduci", tint = Color.White)
+                Icon(Icons.Default.FullscreenExit, contentDescription = stringResource(R.string.live_minimize), tint = Color.White)
             }
         }
     }

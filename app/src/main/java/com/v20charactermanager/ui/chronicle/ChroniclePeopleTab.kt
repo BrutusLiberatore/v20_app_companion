@@ -25,6 +25,10 @@ fun ChroniclePeopleTab(
     onCreateNpc: (String, String, CreatureType, String, String?) -> Unit,
     onDeleteNpc: (String) -> Unit,
     onUpdateNpc: (NpcEntry) -> Unit,
+    onBloodChange: (Character, Int) -> Unit = { _, _ -> },
+    onWillpowerChange: (Character, Int) -> Unit = { _, _ -> },
+    onHealthChange: (Character, Int) -> Unit = { _, _ -> },
+    onCreateCharacterFromNpc: (NpcEntry, (String) -> Unit) -> Unit = { _, _ -> },
     onOpenSheet: (String) -> Unit = {},
     onLinkClick: (String, String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
@@ -62,12 +66,39 @@ fun ChroniclePeopleTab(
         }
 
         items(pgCharacters) { character ->
+            var showRemoveConfirm by remember { mutableStateOf(false) }
+
             CharacterLiveCard(
                 character = character,
                 onClick = { onCharacterClick(character.id) },
-                onBloodChange = { /* Handled by live dashboard */ },
-                onWillpowerChange = { /* Handled by live dashboard */ }
+                onBloodChange = { delta -> onBloodChange(character, delta) },
+                onWillpowerChange = { delta -> onWillpowerChange(character, delta) },
+                onHealthChange = { delta -> onHealthChange(character, delta) },
+                onRemove = { showRemoveConfirm = true }
             )
+
+            if (showRemoveConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showRemoveConfirm = false },
+                    title = { Text(stringResource(R.string.action_remove)) },
+                    text = { Text(stringResource(R.string.confirm_delete)) },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            uiState.chronicle?.let { chronicle ->
+                                onRemoveCharacter(chronicle.id, character.id)
+                            }
+                            showRemoveConfirm = false
+                        }) {
+                            Text(stringResource(R.string.action_remove), color = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showRemoveConfirm = false }) {
+                            Text(stringResource(R.string.action_cancel))
+                        }
+                    }
+                )
+            }
         }
 
         // PNG section
@@ -107,12 +138,21 @@ fun ChroniclePeopleTab(
                 onUpdateNpc(updatedNpc)
                 selectedNpc = null
             },
-            onCreateSheet = { /* TODO: create character from NPC */ },
+            onCreateSheet = { sheetNpc ->
+                onCreateCharacterFromNpc(sheetNpc) { newCharacterId ->
+                    selectedNpc = null
+                    onOpenSheet(newCharacterId)
+                }
+            },
             onOpenSheet = { characterId ->
                 onOpenSheet(characterId)
                 selectedNpc = null
             },
             onLinkClick = onLinkClick,
+            onDelete = {
+                onDeleteNpc(npc.id)
+                selectedNpc = null
+            },
             onDismiss = { selectedNpc = null }
         )
     }

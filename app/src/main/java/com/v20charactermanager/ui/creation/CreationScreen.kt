@@ -43,8 +43,27 @@ fun CreationScreen(
     onSave: () -> Unit,
     onBack: () -> Unit,
     onConfirmWarnings: () -> Unit,
-    onDismissWarnings: () -> Unit
+    onDismissWarnings: () -> Unit,
+    onSavedConfirm: () -> Unit = {}
 ) {
+    if (uiState.saved) {
+        AlertDialog(
+            onDismissRequest = onSavedConfirm,
+            title = {
+                Text(
+                    text = stringResource(R.string.msg_character_created),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = { Text(stringResource(R.string.msg_character_created_message)) },
+            confirmButton = {
+                TextButton(onClick = onSavedConfirm) {
+                    Text(stringResource(R.string.action_ok))
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -122,6 +141,28 @@ fun CreationScreen(
         ) {
             // Step indicator
             V20ProgressLine(currentStep = uiState.currentStep, totalSteps = 5)
+
+            // Save failure (e.g. repository error)
+            uiState.error?.let { error ->
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = stringResource(R.string.msg_save_error),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Text(
+                            text = error,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            }
 
             // Validation errors
             uiState.validationResult?.let { result ->

@@ -28,6 +28,8 @@ class SessionViewModel(
     private var characterId: String? = null
     private var collectJob: Job? = null
 
+    var onStatSync: ((field: String, intValue: Int?, stringValue: String?) -> Unit)? = null
+
     fun loadCharacter(id: String) {
         characterId = id
         collectJob?.cancel()
@@ -48,6 +50,7 @@ class SessionViewModel(
             bloodPool = character.bloodPool.copy(current = newCurrent)
         )
         updateCharacterInternal(updated)
+        onStatSync?.invoke("blood", newCurrent, null)
     }
 
     fun refillBlood(amount: Int = 1) {
@@ -57,6 +60,7 @@ class SessionViewModel(
             bloodPool = character.bloodPool.copy(current = newCurrent)
         )
         updateCharacterInternal(updated)
+        onStatSync?.invoke("blood", newCurrent, null)
     }
 
     fun spendWillpower(amount: Int = 1) {
@@ -66,6 +70,7 @@ class SessionViewModel(
             willpower = character.willpower.copy(current = newCurrent)
         )
         updateCharacterInternal(updated)
+        onStatSync?.invoke("willpower", newCurrent, null)
     }
 
     fun recoverWillpower(amount: Int = 1) {
@@ -75,6 +80,7 @@ class SessionViewModel(
             willpower = character.willpower.copy(current = newCurrent)
         )
         updateCharacterInternal(updated)
+        onStatSync?.invoke("willpower", newCurrent, null)
     }
 
     fun applyDamage(index: Int, type: DamageType) {
@@ -83,6 +89,7 @@ class SessionViewModel(
             health = character.health.withDamage(index, type)
         )
         updateCharacterInternal(updated)
+        onStatSync?.invoke("health", null, "$index:${type.name}")
     }
 
     fun healDamage(index: Int) {
@@ -91,27 +98,7 @@ class SessionViewModel(
             health = character.health.heal(index)
         )
         updateCharacterInternal(updated)
-    }
-
-    fun applyHealthDelta(delta: Int) {
-        val character = _uiState.value.character ?: return
-        if (delta > 0) {
-            val damagedIndex = character.health.levels.indexOfFirst { it == DamageType.NONE }
-            if (damagedIndex >= 0) {
-                val updated = character.copy(
-                    health = character.health.withDamage(damagedIndex, DamageType.BASHING)
-                )
-                updateCharacterInternal(updated)
-            }
-        } else if (delta < 0) {
-            val damagedIndex = character.health.levels.indexOfLast { it != DamageType.NONE }
-            if (damagedIndex >= 0) {
-                val updated = character.copy(
-                    health = character.health.heal(damagedIndex)
-                )
-                updateCharacterInternal(updated)
-            }
-        }
+        onStatSync?.invoke("health", null, "$index:HEAL")
     }
 
     fun earnExperience(amount: Int) {

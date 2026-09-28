@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.chronicle
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
@@ -32,6 +34,7 @@ fun ChroniclePlotsTab(
 ) {
     var showAddPlotDialog by remember { mutableStateOf(false) }
     var showAddNoteDialog by remember { mutableStateOf(false) }
+    var showAddCharNoteDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -57,7 +60,39 @@ fun ChroniclePlotsTab(
         }
 
         items(uiState.plotArcs) { plot ->
-            PlotArcCard(plot = plot)
+            var showEditDialog by remember { mutableStateOf(false) }
+            var showDeleteConfirm by remember { mutableStateOf(false) }
+
+            PlotArcCard(
+                plot = plot,
+                onEdit = { showEditDialog = true },
+                onDelete = { showDeleteConfirm = true }
+            )
+
+            if (showEditDialog) {
+                ItemTextDialog(
+                    title = stringResource(R.string.action_edit),
+                    initialName = plot.title,
+                    nameFieldLabel = stringResource(R.string.title_hint),
+                    initialContent = plot.summary,
+                    contentLabel = stringResource(R.string.chronicle_description),
+                    onConfirm = { title, summary ->
+                        onUpdatePlotArc(plot.copy(title = title, summary = summary, updatedAt = System.currentTimeMillis()))
+                        showEditDialog = false
+                    },
+                    onDismiss = { showEditDialog = false }
+                )
+            }
+
+            if (showDeleteConfirm) {
+                ConfirmDeleteDialog(
+                    onConfirm = {
+                        onDeletePlotArc(plot.id)
+                        showDeleteConfirm = false
+                    },
+                    onDismiss = { showDeleteConfirm = false }
+                )
+            }
         }
 
         // Notes section
@@ -87,6 +122,105 @@ fun ChroniclePlotsTab(
                 onDelete = { onDeleteNote(note.id) },
                 onLinkClick = onLinkClick
             )
+        }
+
+        // Character notes
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.chronicle_tab_character_notes),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = { showAddCharNoteDialog = true }) {
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_add))
+                }
+            }
+        }
+
+        if (uiState.characterNotes.isEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.chronicle_no_character_notes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+        }
+
+        items(uiState.characterNotes, key = { it.id }) { note ->
+            var showEditDialog by remember { mutableStateOf(false) }
+            var showDeleteConfirm by remember { mutableStateOf(false) }
+            val charName = uiState.availableCharacters.find { it.id == note.characterId }?.identity?.name ?: "—"
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = charName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = note.text,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    IconButton(onClick = { showEditDialog = true }, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            Icons.Filled.Edit,
+                            contentDescription = stringResource(R.string.action_edit),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(onClick = { showDeleteConfirm = true }, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.action_delete),
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+
+            if (showEditDialog) {
+                ItemTextDialog(
+                    title = stringResource(R.string.action_edit),
+                    initialName = note.text,
+                    nameFieldLabel = stringResource(R.string.chronicle_note_text),
+                    onConfirm = { text, _ ->
+                        onUpdateCharacterNote(note.copy(text = text, updatedAt = System.currentTimeMillis()))
+                        showEditDialog = false
+                    },
+                    onDismiss = { showEditDialog = false }
+                )
+            }
+
+            if (showDeleteConfirm) {
+                ConfirmDeleteDialog(
+                    onConfirm = {
+                        onDeleteCharacterNote(note.id)
+                        showDeleteConfirm = false
+                    },
+                    onDismiss = { showDeleteConfirm = false }
+                )
+            }
         }
 
         // Scenes
@@ -172,6 +306,77 @@ fun ChroniclePlotsTab(
             },
             dismissButton = {
                 TextButton(onClick = { showAddNoteDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
+
+    if (showAddCharNoteDialog) {
+        var selectedCharId by remember { mutableStateOf<String?>(null) }
+        var noteText by remember { mutableStateOf("") }
+        val pgMembers = uiState.members.filter { it.role == ChronicleMemberRole.PLAYER_CHARACTER }
+        val pgCharacters = uiState.availableCharacters.filter { char ->
+            pgMembers.any { it.characterId == char.id }
+        }
+
+        AlertDialog(
+            onDismissRequest = { showAddCharNoteDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.chronicle_new_character_note),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LazyColumn(modifier = Modifier.heightIn(max = 160.dp)) {
+                        items(pgCharacters) { character ->
+                            ListItem(
+                                headlineContent = { Text(character.identity.name) },
+                                supportingContent = {
+                                    Text(character.identity.clan.nameEn, style = MaterialTheme.typography.bodySmall)
+                                },
+                                leadingContent = {
+                                    RadioButton(
+                                        selected = selectedCharId == character.id,
+                                        onClick = { selectedCharId = character.id }
+                                    )
+                                },
+                                modifier = Modifier.clickable { selectedCharId = character.id }
+                            )
+                        }
+                    }
+                    if (pgCharacters.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.chronicle_no_characters_available),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    OutlinedTextField(
+                        value = noteText,
+                        onValueChange = { noteText = it },
+                        label = { Text(stringResource(R.string.chronicle_note_text)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        uiState.chronicle?.let { chronicle ->
+                            selectedCharId?.let { charId ->
+                                onCreateCharacterNote(chronicle.id, charId, noteText)
+                            }
+                        }
+                        showAddCharNoteDialog = false
+                    },
+                    enabled = selectedCharId != null && noteText.isNotBlank()
+                ) { Text(stringResource(R.string.action_create)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddCharNoteDialog = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             }
@@ -287,7 +492,11 @@ private fun EditableNoteCard(
 }
 
 @Composable
-private fun PlotArcCard(plot: PlotArc) {
+private fun PlotArcCard(
+    plot: PlotArc,
+    onEdit: () -> Unit = {},
+    onDelete: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -295,17 +504,39 @@ private fun PlotArcCard(plot: PlotArc) {
         )
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = plot.title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = plot.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        Icons.Filled.Edit,
+                        contentDescription = stringResource(R.string.action_edit),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = stringResource(R.string.action_delete),
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
             if (plot.summary.isNotEmpty()) {
                 Text(
                     text = plot.summary,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    maxLines = 2
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

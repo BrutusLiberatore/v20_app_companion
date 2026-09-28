@@ -92,7 +92,7 @@ fun ChronicleSearchScreen(
         "NPC" to stringResource(R.string.search_filter_npc),
         "LUOGHI" to stringResource(R.string.search_type_locations),
         "TRAME" to stringResource(R.string.search_type_plots),
-        "SESSIONI" to stringResource(R.string.search_type_notes),
+        "SESSIONI" to stringResource(R.string.link_category_sessioni),
         "SEGRETI" to stringResource(R.string.search_type_secrets),
         "INDIZI" to stringResource(R.string.search_type_clues),
         "NOTE" to stringResource(R.string.search_type_notes),

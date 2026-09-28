@@ -1,5 +1,7 @@
 package com.v20charactermanager.data.network
 
+import com.v20charactermanager.R
+import android.content.Context
 import android.util.Log
 import com.v20charactermanager.domain.model.LiveRoomMessage
 import kotlinx.coroutines.*
@@ -9,7 +11,7 @@ import java.io.*
 import java.net.InetSocketAddress
 import java.net.Socket
 
-class LiveRoomClient {
+class LiveRoomClient(private val context: Context) {
     companion object {
         private const val TAG = "LiveRoomClient"
         private const val CONNECT_TIMEOUT_MS = 8000
@@ -99,11 +101,11 @@ class LiveRoomClient {
                     disconnectNotified = true
                     onDisconnected?.invoke()
                 } else if (!isDisconnecting && !connected) {
-                    onError?.invoke("Errore di rete: ${e.localizedMessage ?: "verifica la connessione"}")
+                    onError?.invoke(context.getString(R.string.net_error_fmt, e.localizedMessage ?: context.getString(R.string.net_check_connection)))
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Connection error: $host:$port", e)
-                if (!isDisconnecting) onError?.invoke("Errore di connessione: ${e.localizedMessage ?: "sconosciuto"}")
+                if (!isDisconnecting) onError?.invoke(context.getString(R.string.net_connection_error_fmt, e.localizedMessage ?: context.getString(R.string.net_unknown)))
             } finally {
                 if (!isDisconnecting && connected && !disconnectNotified) {
                     Log.d(TAG, "Notifying disconnection (connected was true)")

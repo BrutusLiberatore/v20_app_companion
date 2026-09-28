@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.io
 
+import com.v20charactermanager.R
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -73,7 +74,7 @@ class ImportExportViewModel(
                     ?: run {
                         _uiState.value = _uiState.value.copy(
                             operationState = IoOperationState.Error(
-                                "Cannot read file",
+                                context.getString(R.string.import_cannot_read),
                                 V20ErrorType.DOCUMENT_IMPORT_FAILED,
                                 "ContentResolver returned null stream for URI: $uri"
                             )
@@ -87,7 +88,7 @@ class ImportExportViewModel(
                 if (!result.success) {
                     _uiState.value = _uiState.value.copy(
                         operationState = IoOperationState.Error(
-                            result.error ?: "Import failed",
+                            result.error ?: context.getString(R.string.import_import_failed_simple),
                             V20ErrorType.IMPORT_FORMAT_ERROR,
                             result.error
                         )
@@ -118,7 +119,7 @@ class ImportExportViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     operationState = IoOperationState.Error(
-                        "Import failed: ${e.message}",
+                        context.getString(R.string.import_import_failed, e.message),
                         V20ErrorType.IMPORT_FORMAT_ERROR,
                         e.message
                     )
@@ -155,7 +156,7 @@ class ImportExportViewModel(
         viewModelScope.launch {
             characterRepository.updateCharacter(newCharacter)
             _uiState.value = _uiState.value.copy(
-                operationState = IoOperationState.Success("Character replaced successfully")
+                operationState = IoOperationState.Success(context.getString(R.string.import_replaced_ok))
             )
         }
     }
@@ -166,13 +167,13 @@ class ImportExportViewModel(
                 characterRepository.insertCharacter(character)
                 _uiState.value = _uiState.value.copy(
                     operationState = IoOperationState.Success(
-                        "Imported: ${character.identity.name.ifEmpty { "Unnamed" }}"
+                        context.getString(R.string.import_success_msg, character.identity.name.ifEmpty { context.getString(R.string.import_unnamed) })
                     )
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     operationState = IoOperationState.Error(
-                        "Save failed: ${e.message}",
+                        context.getString(R.string.import_save_failed, e.message),
                         V20ErrorType.DATABASE_ERROR,
                         e.message
                     )
@@ -191,7 +192,7 @@ class ImportExportViewModel(
                 } ?: run {
                     _uiState.value = _uiState.value.copy(
                         operationState = IoOperationState.Error(
-                            "Cannot write to file",
+                            context.getString(R.string.import_cannot_write),
                             V20ErrorType.EXPORT_FAILED,
                             "ContentResolver returned null output stream for URI: $uri"
                         )
@@ -200,13 +201,13 @@ class ImportExportViewModel(
                 }
                 _uiState.value = _uiState.value.copy(
                     operationState = IoOperationState.Success(
-                        "Exported: ${character.identity.name.ifEmpty { "Unnamed" }}"
+                        "Exported: ${character.identity.name.ifEmpty { context.getString(R.string.import_unnamed) }}"
                     )
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     operationState = IoOperationState.Error(
-                        "Export failed: ${e.message}",
+                        context.getString(R.string.import_export_failed, e.message),
                         V20ErrorType.EXPORT_FAILED,
                         e.message
                     )
@@ -220,7 +221,7 @@ class ImportExportViewModel(
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "application/json"
             putExtra(Intent.EXTRA_STREAM, jsonString)
-            putExtra(Intent.EXTRA_SUBJECT, "V20 Character: ${character.identity.name.ifEmpty { "Unnamed" }}")
+            putExtra(Intent.EXTRA_SUBJECT, "V20 Character: ${character.identity.name.ifEmpty { context.getString(R.string.import_unnamed) }}")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         return Intent.createChooser(shareIntent, "Share V20 Character")
@@ -234,7 +235,7 @@ class ImportExportViewModel(
                     ?: run {
                         _uiState.value = _uiState.value.copy(
                             operationState = IoOperationState.Error(
-                                "Cannot read file",
+                                context.getString(R.string.import_cannot_read),
                                 V20ErrorType.DOCUMENT_IMPORT_FAILED,
                                 "ContentResolver returned null stream for URI: $uri"
                             )
@@ -248,7 +249,7 @@ class ImportExportViewModel(
                 if (!result.success) {
                     _uiState.value = _uiState.value.copy(
                         operationState = IoOperationState.Error(
-                            result.error ?: "Import failed",
+                            result.error ?: context.getString(R.string.import_import_failed_simple),
                             V20ErrorType.IMPORT_FORMAT_ERROR,
                             result.error
                         )
@@ -260,13 +261,13 @@ class ImportExportViewModel(
                 _uiState.value = _uiState.value.copy(
                     operationState = IoOperationState.EquipmentLibraryImported(
                         items = result.items,
-                        libraryName = result.name.ifEmpty { "Equipment Library" }
+                        libraryName = result.name.ifEmpty { context.getString(R.string.import_library_default) }
                     )
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     operationState = IoOperationState.Error(
-                        "Import failed: ${e.message}",
+                        context.getString(R.string.import_import_failed, e.message),
                         V20ErrorType.IMPORT_FORMAT_ERROR,
                         e.message
                     )
@@ -292,13 +293,13 @@ class ImportExportViewModel(
                     _pendingEquipmentItems = null
                     _uiState.value = _uiState.value.copy(
                         operationState = IoOperationState.Success(
-                            "Imported ${items.size} equipment items to ${character.identity.name.ifEmpty { "Unnamed" }}"
+                            "Imported ${items.size} equipment items to ${character.identity.name.ifEmpty { context.getString(R.string.import_unnamed) }}"
                         )
                     )
                 } else {
                     _uiState.value = _uiState.value.copy(
                         operationState = IoOperationState.Error(
-                            "Character not found",
+                            context.getString(R.string.error_character_not_found),
                             V20ErrorType.CHARACTER_NOT_FOUND,
                             "ID: $characterId"
                         )
@@ -307,7 +308,7 @@ class ImportExportViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     operationState = IoOperationState.Error(
-                        "Import failed: ${e.message}",
+                        context.getString(R.string.import_import_failed, e.message),
                         V20ErrorType.DATABASE_ERROR,
                         e.message
                     )
@@ -328,7 +329,7 @@ class ImportExportViewModel(
                 if (!result.success || result.jsonString == null) {
                     _uiState.value = _uiState.value.copy(
                         operationState = IoOperationState.Error(
-                            result.error ?: "Export failed",
+                            result.error ?: context.getString(R.string.import_export_failed_simple),
                             V20ErrorType.EXPORT_FAILED,
                             result.error
                         )
@@ -340,7 +341,7 @@ class ImportExportViewModel(
                 } ?: run {
                     _uiState.value = _uiState.value.copy(
                         operationState = IoOperationState.Error(
-                            "Cannot write to file",
+                            context.getString(R.string.import_cannot_write),
                             V20ErrorType.EXPORT_FAILED,
                             "ContentResolver returned null output stream for URI: $uri"
                         )
@@ -348,12 +349,12 @@ class ImportExportViewModel(
                     return@launch
                 }
                 _uiState.value = _uiState.value.copy(
-                    operationState = IoOperationState.Success("Exported ${items.size} equipment items")
+                    operationState = IoOperationState.Success(context.getString(R.string.import_exported_count, items.size))
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     operationState = IoOperationState.Error(
-                        "Export failed: ${e.message}",
+                        context.getString(R.string.import_export_failed, e.message),
                         V20ErrorType.EXPORT_FAILED,
                         e.message
                     )

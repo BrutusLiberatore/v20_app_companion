@@ -53,114 +53,101 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.v20charactermanager.R
 
 enum class V20ErrorType(
     val icon: ImageVector,
-    val titleKey: String,
-    val title: String,
-    val description: String,
+    val titleRes: Int,
+    val descriptionRes: Int,
     val color: Color
 ) {
     IMAGE_IMPORT_FAILED(
         icon = Icons.Default.BrokenImage,
-        titleKey = "error_image_import",
-        title = "Immagine non leggibile",
-        description = "Il file selezionato non è un'immagine valida o è corrotto.\n\nPossibili cause:\n• Formato non supportato\n• File danneggiato\n• File non è un'immagine",
+        titleRes = R.string.error_image_import,
+        descriptionRes = R.string.error_image_import_desc,
         color = Color(0xFFE57373)
     ),
     IMAGE_SAVE_FAILED(
         icon = Icons.Default.SaveAlt,
-        titleKey = "error_image_save",
-        title = "Salvataggio immagine fallito",
-        description = "Impossibile salvare l'immagine sul dispositivo.\n\nPossibili cause:\n• Spazio su disco esaurito\n• Permessi di scrittura negati\n• File di destinazione protetto",
+        titleRes = R.string.error_image_save,
+        descriptionRes = R.string.error_image_save_desc,
         color = Color(0xFFFFB74D)
     ),
     DOCUMENT_IMPORT_FAILED(
         icon = Icons.Default.InsertDriveFile,
-        titleKey = "error_document_import",
-        title = "Documento non leggibile",
-        description = "Impossibile leggere il file selezionato.\n\nPossibili cause:\n• Formato non supportato\n• File corrotto o danneggiato\n• Permessi di lettura negati",
+        titleRes = R.string.error_document_import,
+        descriptionRes = R.string.error_document_import_desc,
         color = Color(0xFF90CAF9)
     ),
     DOCUMENT_RENDER_FAILED(
         icon = Icons.Default.PictureAsPdf,
-        titleKey = "error_document_render",
-        title = "Errore visualizzazione documento",
-        description = "Impossibile visualizzare il documento.\n\nPossibili cause:\n• PDF corrotto o danneggiato\n• Documento troppo grande per la memoria\n• Formato non completamente supportato",
+        titleRes = R.string.error_document_render,
+        descriptionRes = R.string.error_document_render_desc,
         color = Color(0xFFCE93D8)
     ),
     IMPORT_FORMAT_ERROR(
         icon = Icons.Default.Description,
-        titleKey = "error_import_format",
-        title = "Formato file non valido",
-        description = "Il file non è nel formato corretto per l'importazione.\n\nPossibili cause:\n• File non esportato da questa app\n• Versione del formato incompatibile\n• File corrotto o modificato manualmente",
+        titleRes = R.string.error_import_format,
+        descriptionRes = R.string.error_import_format_desc,
         color = Color(0xFFFFCC80)
     ),
     EXPORT_FAILED(
         icon = Icons.Default.SaveAlt,
-        titleKey = "error_export",
-        title = "Esportazione fallita",
-        description = "Impossibile esportare i dati.\n\nPossibili cause:\n• Spazio su disco esaurito\n• Permessi di scrittura negati\n• Errore interno durante la creazione del file",
+        titleRes = R.string.error_export,
+        descriptionRes = R.string.error_export_desc,
         color = Color(0xFFA5D6A7)
     ),
     DATABASE_ERROR(
         icon = Icons.Default.Storage,
-        titleKey = "error_database",
-        title = "Errore del database",
-        description = "Si è verificato un errore con il database dell'app.\n\nPossibili cause:\n• Database corrotto\n• Aggiornamento non riuscito\n• Spazio su disco esaurito",
+        titleRes = R.string.error_database,
+        descriptionRes = R.string.error_database_desc,
         color = Color(0xFFEF9A9A)
     ),
     MEMORY_ERROR(
         icon = Icons.Default.Memory,
-        titleKey = "error_memory",
-        title = "Memoria esaurita",
-        description = "L'operazione ha esaurito la memoria disponibile.\n\nPossibili cause:\n• Immagine o documento troppo grande\n• Troppi elementi aperti contemporaneamente\n• Memoria del dispositivo insufficiente",
+        titleRes = R.string.error_memory,
+        descriptionRes = R.string.error_memory_desc,
         color = Color(0xFFFFAB91)
     ),
     PERMISSION_DENIED(
         icon = Icons.Default.Security,
-        titleKey = "error_permission",
-        title = "Permesso negato",
-        description = "L'app non ha i permessi necessari per completare l'operazione.\n\nSoluzione:\n• Concedi i permessi di accesso ai file nelle Impostazioni del dispositivo\n• Riavvia l'app dopo aver concesso i permessi",
+        titleRes = R.string.error_permission,
+        descriptionRes = R.string.error_permission_desc,
         color = Color(0xFFB0BEC5)
     ),
     FILE_NOT_FOUND(
         icon = Icons.Default.FolderOff,
-        titleKey = "error_file_not_found",
-        title = "File non trovato",
-        description = "Il file richiesto non esiste o è stato spostato.\n\nPossibili cause:\n• File eliminato dal dispositivo\n• File spostato in un'altra cartella\n• File su un'unità esterna non montata",
+        titleRes = R.string.error_file_not_found,
+        descriptionRes = R.string.error_file_not_found_desc,
         color = Color(0xFFB0BEC5)
     ),
     CHARACTER_NOT_FOUND(
         icon = Icons.Default.LinkOff,
-        titleKey = "error_character_not_found",
-        title = "Personaggio non trovato",
-        description = "Il personaggio richiesto non è stato trovato nel database.\n\nPossibili cause:\n• Personaggio eliminato\n• ID non valido\n• Database corrotto",
+        titleRes = R.string.error_character_not_found,
+        descriptionRes = R.string.error_character_not_found_desc,
         color = Color(0xFFFFF176)
     ),
     VALIDATION_ERROR(
         icon = Icons.Default.ErrorOutline,
-        titleKey = "error_validation",
-        title = "Dati non validi",
-        description = "I dati inseriti non sono validi.\n\nPossibili cause:\n• Valori fuori range consentito\n• Campi obbligatori vuoti\n• Formato dati errato",
+        titleRes = R.string.error_validation,
+        descriptionRes = R.string.error_validation_desc,
         color = Color(0xFFE0E0E0)
     ),
     NETWORK_ERROR(
         icon = Icons.Default.CloudOff,
-        titleKey = "error_network",
-        title = "Connessione non disponibile",
-        description = "Impossibile connettersi a Internet.\n\nPossibili cause:\n• Dispositivo non connesso\n• Problemi con il server\n• Firewall o restrizioni di rete",
+        titleRes = R.string.error_network,
+        descriptionRes = R.string.error_network_desc,
         color = Color(0xFF90A4AE)
     ),
     UNKNOWN_ERROR(
         icon = Icons.Default.ErrorOutline,
-        titleKey = "error_unknown",
-        title = "Errore imprevisto",
-        description = "Si è verificato un errore imprevisto.\n\nSe il problema persiste, prova a:\n• Riavviare l'app\n• Aggiornare l'app\n• Contattare lo sviluppatore",
+        titleRes = R.string.error_unknown,
+        descriptionRes = R.string.error_unknown_desc,
         color = Color(0xFFE0E0E0)
     )
 }
@@ -203,7 +190,7 @@ fun V20ErrorScreen(
         ) {
             Icon(
                 imageVector = errorType.icon,
-                contentDescription = errorType.title,
+                contentDescription = stringResource(errorType.titleRes),
                 tint = errorType.color,
                 modifier = Modifier
                     .size(48.dp)
@@ -214,7 +201,7 @@ fun V20ErrorScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = errorType.title,
+            text = stringResource(errorType.titleRes),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
@@ -224,7 +211,7 @@ fun V20ErrorScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = customMessage ?: errorType.description,
+            text = customMessage ?: stringResource(errorType.descriptionRes),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             textAlign = TextAlign.Center,
@@ -261,7 +248,7 @@ fun V20ErrorScreen(
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(text = "Riprova", modifier = Modifier.padding(vertical = 4.dp))
+                Text(text = stringResource(R.string.error_retry), modifier = Modifier.padding(vertical = 4.dp))
             }
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -272,7 +259,7 @@ fun V20ErrorScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(text = "Indietro", modifier = Modifier.padding(vertical = 4.dp))
+                Text(text = stringResource(R.string.error_back), modifier = Modifier.padding(vertical = 4.dp))
             }
         }
     }
@@ -310,7 +297,7 @@ fun V20ErrorDialog(
             ) {
                 Icon(
                     imageVector = errorType.icon,
-                    contentDescription = errorType.title,
+                    contentDescription = stringResource(errorType.titleRes),
                     tint = errorType.color,
                     modifier = Modifier.size(32.dp)
                 )
@@ -319,7 +306,7 @@ fun V20ErrorDialog(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = errorType.title,
+                text = stringResource(errorType.titleRes),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -328,7 +315,7 @@ fun V20ErrorDialog(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = customMessage ?: errorType.description,
+                text = customMessage ?: stringResource(errorType.descriptionRes),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
@@ -364,7 +351,7 @@ fun V20ErrorDialog(
                     onClick = onDismiss,
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text(text = "Chiudi")
+                    Text(text = stringResource(R.string.error_close))
                 }
 
                 if (onRetry != null) {
@@ -376,7 +363,7 @@ fun V20ErrorDialog(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text(text = "Riprova")
+                        Text(text = stringResource(R.string.error_retry))
                     }
                 }
             }

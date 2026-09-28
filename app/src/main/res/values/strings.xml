@@ -39,6 +39,12 @@
 
     <!-- General -->
     <string name="action_save">Save</string>
+    <string name="action_ok">OK</string>
+    <string name="msg_sheet_saved">Sheet saved</string>
+    <string name="msg_save_error">Save failed</string>
+    <string name="msg_house_rules_saved">House rules saved</string>
+    <string name="msg_character_created">Character created!</string>
+    <string name="msg_character_created_message">Your character has been saved successfully.</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>
     <string name="action_edit">Edit</string>
@@ -550,6 +556,11 @@
     <string name="storyteller_no_scenes">No scenes in this session</string>
     <string name="storyteller_new_scene">New Scene</string>
     <string name="storyteller_scene_title">Scene title</string>
+    <string name="scene_hook">Hook</string>
+    <string name="scene_objective">Objective</string>
+    <string name="scene_conflict">Conflict</string>
+    <string name="scene_mood">Mood</string>
+    <string name="scene_activate">Activate scene</string>
     <string name="storyteller_active_plots">Active Plots</string>
 
     <!-- Bottom Navigation -->
@@ -568,6 +579,10 @@
     <string name="session_blood">Blood</string>
     <string name="chronicle_add_npc">Add NPC</string>
     <string name="chronicle_add_plot">Add Plot</string>
+    <string name="chronicle_add_location">Add Location</string>
+    <string name="chronicle_add_faction">Add Faction</string>
+    <string name="chronicle_add_secret">Add Secret</string>
+    <string name="chronicle_add_clue">Add Clue</string>
     <string name="chronicle_no_characters_available">No characters available to add</string>
     <string name="name_hint">Name</string>
     <string name="location_image_subtitle">Map &amp; Annotations</string>
@@ -802,24 +817,24 @@
     <string name="recap_clone_confirm">Clone this session as a new planned session?</string>
 
     <!-- Live Room -->
-    <string name="live_room">Tavolo Live</string>
-    <string name="live_room_desc">Unisciti al tavolo del Master sulla rete locale.\nIl Master presenta file, i giocatori vedono tutto in tempo reale.</string>
-    <string name="live_room_create_table">Crea Tavolo</string>
-    <string name="live_room_join_table">Unisciti al Tavolo</string>
-    <string name="live_room_find_table">Cerca Tavolo</string>
-    <string name="live_room_scan_desc">Cerca tavoli attivi sulla stessa rete WiFi</string>
-    <string name="live_room_start_scan">Avvia Ricerca</string>
-    <string name="live_room_scanning">Ricerca in corso…</string>
-    <string name="live_room_found_tables">%d tavoli trovati</string>
-    <string name="live_room_no_tables">Nessun tavolo trovato.\nProva ad avviare la ricerca o connettiti manualmente.</string>
-    <string name="live_room_manual_connect">Connessione Manuale</string>
-    <string name="live_room_manual_desc">Inserisci l\'IP del Master per connetterti direttamente</string>
-    <string name="live_room_port">Porta</string>
-    <string name="live_room_share_ip">Condividi con i giocatori:</string>
-    <string name="live_connecting">Connessione in corso…</string>
-    <string name="live_retry">Riprova</string>
-    <string name="live_emulator_warning">Il Master sembra essere su un emulatore (BlueStacks): gli indirizzi 10.0.2.x non sono raggiungibili da altri dispositivi.\n\nConsiglio: usa un telefono fisico come Master sulla stessa rete WiFi dei giocatori.</string>
-    <string name="action_connect">Connetti</string>
+    <string name="live_room">Live Table</string>
+    <string name="live_room_desc">Join the Master\'s table on the local network.\nThe Master presents files, players see everything in real time.</string>
+    <string name="live_room_create_table">Create Table</string>
+    <string name="live_room_join_table">Join Table</string>
+    <string name="live_room_find_table">Find Table</string>
+    <string name="live_room_scan_desc">Scan for active tables on the same WiFi network</string>
+    <string name="live_room_start_scan">Start Scan</string>
+    <string name="live_room_scanning">Scanning…</string>
+    <string name="live_room_found_tables">%d tables found</string>
+    <string name="live_room_no_tables">No tables found.\nStart a scan or connect manually.</string>
+    <string name="live_room_manual_connect">Manual Connection</string>
+    <string name="live_room_manual_desc">Enter the Master\'s IP to connect directly</string>
+    <string name="live_room_port">Port</string>
+    <string name="live_room_share_ip">Share with players:</string>
+    <string name="live_connecting">Connecting…</string>
+    <string name="live_retry">Retry</string>
+    <string name="live_emulator_warning">The Master appears to be on an emulator (BlueStacks): addresses 10.0.2.x cannot be reached from other devices.\n\nTip: use a physical phone as Master on the same WiFi network as the players.</string>
+    <string name="action_connect">Connect</string>
     <string name="live_create_room">Create Room</string>
     <string name="live_join_room">Join Room</string>
     <string name="live_join_manual">Manual Connection</string>
@@ -845,6 +860,24 @@
     <string name="live_close_table">Close Table</string>
     <string name="live_close_table_title">Close the table?</string>
     <string name="live_close_table_message">All players will be disconnected and the table will be closed permanently.</string>
+    <string name="live_leave_title">Leave the table?</string>
+    <string name="live_leave_message_player">Do you want to leave the table? You can rejoin at any time with the table code.</string>
+    <string name="live_leave_message_master">By leaving, the table will be closed and all players will be disconnected.</string>
+    <string name="live_roll_pool">Dice pool</string>
+    <string name="live_roll_difficulty">Difficulty</string>
+    <string name="live_roll_result_successes">%1$d successes</string>
+    <string name="live_roll_result_botch">Botch!</string>
+    <string name="live_roll_result_failure">Failure</string>
+    <string name="live_share_recipients">Recipients</string>
+    <string name="live_share_hint">The file will be saved to each selected player\'s chronicle.</string>
+    <string name="live_share_no_players">No players connected.</string>
+    <string name="live_share_all">All</string>
+    <string name="live_share_none">None</string>
+    <string name="live_share_action">Share</string>
+    <string name="live_share_saved">File \"%1$s\" saved to chronicle \"%2$s\"</string>
+    <string name="live_share_failed">File reception failed.</string>
+    <string name="live_room_stop_scan">Stop scan</string>
+    <string name="house_rules_no_chronicles">Create a chronicle to configure House Rules.</string>
     <string name="live_room_closed_by_master">The table was closed by the Master.</string>
     <string name="live_customize_table">Customize Table</string>
     <string name="live_style_section_table">Table</string>
@@ -858,6 +891,7 @@
     <string name="live_open_sheet">Open character sheet</string>
     <string name="sheet_loading">Loading character sheet…</string>
     <string name="sheet_unavailable">Character sheet not available.</string>
+    <string name="route_not_found">Content not available or deleted.</string>
 
     <!-- Crash Logs -->
     <string name="crash_logs">Crash Logs</string>
@@ -870,9 +904,96 @@
     <string name="crash_clear_all">Clear all logs</string>
     <string name="crash_clear_confirm">Delete all crash logs?</string>
 
-    <string name="select_character_title">Scegli il tuo personaggio</string>
-    <string name="select_character_subtitle">Seleziona un personaggio per unirti al tavolo</string>
-    <string name="select_character_empty">Nessun personaggio trovato.\nCrea un personaggio prima di unirti al tavolo.</string>
-    <string name="select_character_count">%d personaggi disponibili</string>
+    <string name="select_character_title">Choose your character</string>
+    <string name="select_character_subtitle">Select a character to join the table</string>
+    <string name="select_character_empty">No characters found.\nCreate a character before joining the table.</string>
+    <string name="select_character_count">%d characters available</string>
+    <!-- Live Room UI -->
+    <string name="live_free_seat">Free seat</string>
+    <string name="live_in_presentation">Presenting</string>
+    <string name="live_present_from_chronicle">Present from Chronicle</string>
+    <string name="live_select_file_chronicle">Select File from Chronicle</string>
+    <string name="live_no_files_in_chronicle">No files in the chronicle.\nImport files in the chronicle\'s Media section.</string>
+    <string name="live_tracks_label">Tracks</string>
+    <string name="live_presets_label">Presets</string>
+    <string name="live_no_audio_tracks">No audio tracks.\nImport audio in the chronicle\'s Audio section.</string>
+    <string name="live_stop_all">Stop All</string>
+    <string name="live_no_presets">No saved presets.\nSelect active tracks and save a preset.</string>
+    <string name="live_save_preset_audio_title">Save Audio Preset</string>
+    <string name="live_section_scene">Scene</string>
+    <string name="live_empty_npc">No NPCs present</string>
+    <string name="live_empty_location">No locations present</string>
+    <string name="live_empty_note">No notes present</string>
+    <string name="live_empty_scene">No scenes present</string>
+    <string name="live_empty_event">No events present</string>
+    <string name="live_empty_secret">No secrets present</string>
+    <string name="live_empty_file">No files in the chronicle</string>
+    <string name="live_connected">connected</string>
+    <string name="live_tap_zoom">Tap to zoom</string>
+    <string name="live_pdf_not_viewable">Unable to display the PDF</string>
+    <string name="live_format_not_viewable">Format cannot be displayed directly</string>
+    <string name="live_cd_close_presentation">Close presentation</string>
+    <string name="live_create_room_error">Failed to create table: %s</string>
+    <string name="live_file_too_large">File too large (%dMB). Maximum 8MB.</string>
+    <string name="live_file_too_large_mem">File too large for memory. Try a smaller image.</string>
+    <string name="live_connection_lost">Connection lost</string>
+    <string name="live_received_format">Received: %s</string>
+    <!-- Auto session events -->
+    <string name="event_plot_status">Plot: %s</string>
+    <string name="event_npc_added">NPC added to scene: %s</string>
+    <string name="event_npc_removed">NPC removed from scene: %s</string>
+    <string name="event_clue_revealed">Clue revealed: %s</string>
+    <string name="event_session_started">Session %d started</string>
+    <string name="event_session_ended">Session %d ended</string>
+    <string name="event_session_clone">%s (Copy)</string>
+    <string name="event_scene_changed">Scene changed</string>
+    <string name="event_note_created">Note created</string>
+    <string name="event_blood_change">Blood: %s</string>
+    <string name="event_willpower_change">Willpower: %s</string>
+    <string name="event_health_change">Health: %s</string>
+    <!-- Localization batch: import/export, audio, media, viewer -->
+    <string name="xp_not_enough">Not enough XP</string>
+    <string name="import_cannot_read">Cannot read file</string>
+    <string name="import_cannot_write">Cannot write to file</string>
+    <string name="import_import_failed_simple">Import failed</string>
+    <string name="import_import_failed">Import failed: %s</string>
+    <string name="import_export_failed_simple">Export failed</string>
+    <string name="import_export_failed">Export failed: %s</string>
+    <string name="import_save_failed">Save failed: %s</string>
+    <string name="import_replaced_ok">Character replaced successfully</string>
+    <string name="import_success_msg">Imported: %s</string>
+    <string name="import_unnamed">Unnamed</string>
+    <string name="import_library_default">Equipment Library</string>
+    <string name="import_exported_count">Exported %d equipment items</string>
+    <string name="audio_read_error">Unable to read the file</string>
+    <string name="audio_imported">Audio imported</string>
+    <string name="audio_unknown_error">Unknown error</string>
+    <string name="audio_playback_error">Playback error: %s</string>
+    <string name="audio_no_active_tracks">No active tracks to save</string>
+    <string name="audio_preset_saved_msg">Preset \'%s\' saved</string>
+    <string name="audio_preset_activated_msg">Preset \'%s\' activated</string>
+    <string name="media_image_imported">Image imported</string>
+    <string name="media_document_imported">Document imported</string>
+    <string name="media_video_imported">Video imported</string>
+    <string name="doc_not_found_msg">File not found or unsupported format:\n%s</string>
+    <string name="doc_opening">Opening document...</string>
+    <string name="doc_loading_page1">Loading page 1 of %d...</string>
+    <string name="doc_loading_page">Loading page %1$d of %2$d...</string>
+    <string name="doc_ready">Ready!</string>
+    <string name="doc_loading_pdf">Loading PDF</string>
+    <string name="doc_please_wait">Please wait...</string>
+    <string name="copy_named">%s (Copy)</string>
+    <string name="crash_report_title">Crash Report</string>
+    <string name="crash_copy_hint">Copy this text and paste it to the developer:</string>
+    <string name="crash_copy_button">COPY LOG</string>
+    <string name="unknown_error">Unknown error</string>
+    <string name="net_error_fmt">Network error: %s</string>
+    <string name="net_check_connection">check the connection</string>
+    <string name="net_connection_error_fmt">Connection error: %s</string>
+    <string name="net_unknown">unknown</string>
+    <string name="net_discovery_failed_fmt">Discovery failed: %s</string>
+    <string name="name_unknown">Unknown</string>
+    <string name="media_type_image">Image</string>
+    <string name="media_type_video">Video</string>
 
 </resources>

@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.chronicle
 
+import androidx.compose.ui.platform.LocalContext
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.os.Bundle
@@ -87,6 +88,7 @@ private fun PdfPresentationScreen(
     startPage: Int,
     onFinish: () -> Unit
 ) {
+    val context = LocalContext.current
     val file = remember(filePath) { java.io.File(filePath) }
     val pageCache = remember { mutableStateMapOf<Int, Bitmap>() }
     var currentPage by remember { mutableIntStateOf(startPage.coerceAtLeast(0)) }
@@ -138,11 +140,11 @@ private fun PdfPresentationScreen(
         } catch (e: OutOfMemoryError) {
             isLoadingCurrent = false
             isLoadingAll = false
-            error = "Memoria esaurita"
+            error = context.getString(R.string.pdf_error_memory)
         } catch (e: Exception) {
             isLoadingCurrent = false
             isLoadingAll = false
-            error = e.message ?: "Errore sconosciuto"
+            error = e.message ?: context.getString(R.string.pdf_error_unknown)
         }
     }
 

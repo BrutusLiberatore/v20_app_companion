@@ -24,6 +24,7 @@ fun CharacterLiveCard(
     onBloodChange: (Int) -> Unit,
     onWillpowerChange: (Int) -> Unit,
     onHealthChange: (Int) -> Unit = {},
+    onRemove: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val identity = character.identity
@@ -54,10 +55,20 @@ fun CharacterLiveCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "${identity.clan.nameEn} \u2022 ${identity.generation}${stringResource(R.string.generation_suffix)}",
+                        text = "${identity.clan.nameEn} • ${identity.generation}${stringResource(R.string.generation_suffix)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
+                }
+                if (onRemove != null) {
+                    IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.action_remove),
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
 

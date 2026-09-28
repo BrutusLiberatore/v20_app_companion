@@ -33,7 +33,8 @@ fun PortraitPicker(
     onCameraPick: () -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
-    size: Int = 120
+    size: Int = 120,
+    enabled: Boolean = true
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -55,33 +56,37 @@ fun PortraitPicker(
                         .size(size.dp)
                         .clip(CircleShape)
                         .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                        .clickable { showMenu = true },
+                        .clickable(enabled = enabled) { showMenu = true },
                     contentScale = ContentScale.Crop
                 )
-                IconButton(
-                    onClick = { showMenu = true },
-                    modifier = Modifier
-                        .size(32.dp)
-                        .align(Alignment.BottomEnd)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                ) {
-                    Icon(
-                        Icons.Default.CameraAlt,
-                        contentDescription = stringResource(R.string.portrait_pick),
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(16.dp)
-                    )
+                if (enabled) {
+                    IconButton(
+                        onClick = { showMenu = true },
+                        modifier = Modifier
+                            .size(32.dp)
+                            .align(Alignment.BottomEnd)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(
+                            Icons.Default.CameraAlt,
+                            contentDescription = stringResource(R.string.portrait_pick),
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             } else {
                 PortraitPlaceholder(
                     size = size,
+                    enabled = enabled,
                     onClick = { showMenu = true }
                 )
             }
         } else {
             PortraitPlaceholder(
                 size = size,
+                enabled = enabled,
                 onClick = { showMenu = true }
             )
         }
@@ -133,6 +138,7 @@ fun PortraitPicker(
 @Composable
 private fun PortraitPlaceholder(
     size: Int,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Box(
@@ -141,11 +147,11 @@ private fun PortraitPlaceholder(
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .border(2.dp, MaterialTheme.colorScheme.outline, CircleShape)
-            .clickable { onClick() },
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            Icons.Default.Add,
+            if (enabled) Icons.Default.Add else Icons.Default.Person,
             contentDescription = stringResource(R.string.portrait_pick),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size((size / 3).dp)

@@ -1,8 +1,10 @@
 package com.v20charactermanager.ui.chronicle
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
 import com.v20charactermanager.domain.repository.ChronicleRepository
 import com.v20charactermanager.domain.repository.CharacterRepository
@@ -42,7 +44,8 @@ data class ChronicleDetailUiState(
 
 class ChronicleViewModel(
     private val chronicleRepository: ChronicleRepository,
-    private val characterRepository: CharacterRepository
+    private val characterRepository: CharacterRepository,
+    private val application: Application
 ) : ViewModel() {
 
     private val _listUiState = MutableStateFlow(ChronicleListUiState())
@@ -283,6 +286,22 @@ class ChronicleViewModel(
     fun updateNpc(npc: NpcEntry) { viewModelScope.launch { chronicleRepository.updateNpc(npc) } }
     fun deleteNpc(id: String) { viewModelScope.launch { chronicleRepository.deleteNpc(id) } }
 
+    fun createCharacterFromNpc(npc: NpcEntry, onCreated: (String) -> Unit) {
+        viewModelScope.launch {
+            val character = Character(
+                id = UUID.randomUUID().toString(),
+                identity = CharacterIdentity(name = npc.name),
+                notes = npc.narratorNotes
+            )
+            characterRepository.insertCharacter(character)
+            chronicleRepository.addCharacterToChronicle(npc.chronicleId, character.id, ChronicleMemberRole.NPC)
+            chronicleRepository.updateNpc(
+                npc.copy(characterId = character.id, type = NpcType.FULL, updatedAt = System.currentTimeMillis())
+            )
+            onCreated(character.id)
+        }
+    }
+
     // Locations
     fun createLocation(chronicleId: String, name: String, typeId: String = "Generic Location") {
         viewModelScope.launch {
@@ -304,19 +323,6 @@ class ChronicleViewModel(
     fun deleteFaction(id: String) { viewModelScope.launch { chronicleRepository.deleteFaction(id) } }
 
     // Relationships
-    fun createRelationship(chronicleId: String, fromId: String, fromType: String, toId: String, toType: String, typeId: String = "") {
-        viewModelScope.launch {
-            val rel = Relationship(id = UUID.randomUUID().toString(), chronicleId = chronicleId, fromEntityId = fromId, fromEntityType = fromType, toEntityId = toId, toEntityType = toType, typeId = typeId)
-            chronicleRepository.insertRelationship(rel)
-            emitAutoEvent(
-                chronicleId = chronicleId,
-                type = SessionEventType.RELATIONSHIP_CHANGED,
-                title = "Nuova relazione",
-                description = "$fromId → $toId",
-                entityRefs = listOf(rel.id)
-            )
-        }
-    }
     fun deleteRelationship(id: String) { viewModelScope.launch { chronicleRepository.deleteRelationship(id) } }
 
     // Plot Arcs
@@ -334,7 +340,7 @@ class ChronicleViewModel(
                 emitAutoEvent(
                     chronicleId = plotArc.chronicleId,
                     type = SessionEventType.PLOT_STATUS_CHANGED,
-                    title = "Trama: ${plotArc.title}",
+                    title = application.getString(R.string.event_plot_status, plotArc.title),
                     description = "${oldPlot.status} → ${plotArc.status}",
                     entityRefs = listOf(plotArc.id)
                 )
@@ -361,7 +367,7 @@ class ChronicleViewModel(
                     emitAutoEvent(
                         chronicleId = scene.chronicleId,
                         type = SessionEventType.NPC_ADDED_TO_SCENE,
-                        title = "NPC aggiunto alla scena: ${scene.title}",
+                        title = application.getString(R.string.event_npc_added, scene.title),
                         sceneId = scene.id,
                         entityRefs = listOf(npcId)
                     )
@@ -370,7 +376,7 @@ class ChronicleViewModel(
                     emitAutoEvent(
                         chronicleId = scene.chronicleId,
                         type = SessionEventType.NPC_REMOVED_FROM_SCENE,
-                        title = "NPC rimosso dalla scena: ${scene.title}",
+                        title = application.getString(R.string.event_npc_removed, scene.title),
                         sceneId = scene.id,
                         entityRefs = listOf(npcId)
                     )
@@ -407,7 +413,7 @@ class ChronicleViewModel(
                 emitAutoEvent(
                     chronicleId = clue.chronicleId,
                     type = SessionEventType.CLUE_REVEALED,
-                    title = "Indizio rivelato: ${clue.title}",
+                    title = application.getString(R.string.event_clue_revealed, clue.title),
                     entityRefs = listOf(clue.id)
                 )
             }
@@ -426,12 +432,6 @@ class ChronicleViewModel(
     fun deleteEvent(id: String) { viewModelScope.launch { chronicleRepository.deleteEvent(id) } }
 
     // Boons
-    fun createBoon(chronicleId: String, creditorId: String, debtorId: String, description: String) {
-        viewModelScope.launch {
-            val boon = BoonRecord(id = UUID.randomUUID().toString(), chronicleId = chronicleId, creditorEntityId = creditorId, debtorEntityId = debtorId, description = description)
-            chronicleRepository.insertBoon(boon)
-        }
-    }
     fun updateBoon(boon: BoonRecord) { viewModelScope.launch { chronicleRepository.updateBoon(boon) } }
     fun deleteBoon(id: String) { viewModelScope.launch { chronicleRepository.deleteBoon(id) } }
 
@@ -451,7 +451,7 @@ class ChronicleViewModel(
                     sessionId = session.id,
                     timestamp = System.currentTimeMillis(),
                     type = SessionEventType.SESSION_STARTED,
-                    title = "Sessione ${session.number} iniziata",
+                    title = application.getString(R.string.event_session_started, session.number),
                     description = session.title,
                     origin = "AUTO"
                 )
@@ -475,7 +475,7 @@ class ChronicleViewModel(
                     sessionId = session.id,
                     timestamp = System.currentTimeMillis(),
                     type = SessionEventType.SESSION_ENDED,
-                    title = "Sessione ${session.number} terminata",
+                    title = application.getString(R.string.event_session_ended, session.number),
                     description = recap.ifEmpty { session.title },
                     origin = "AUTO"
                 )
@@ -490,7 +490,7 @@ class ChronicleViewModel(
                 id = UUID.randomUUID().toString(),
                 chronicleId = originalSession.chronicleId,
                 number = nextNumber,
-                title = "${originalSession.title} (Copia)",
+                title = application.getString(R.string.event_session_clone, originalSession.title),
                 status = SessionStatus.PLANNED,
                 participantCharacterIds = originalSession.participantCharacterIds,
                 plannedSceneIds = originalSession.plannedSceneIds,
@@ -516,23 +516,11 @@ class ChronicleViewModel(
                         sceneId = sceneId,
                         timestamp = System.currentTimeMillis(),
                         type = SessionEventType.SCENE_CHANGED,
-                        title = "Cambio scena",
+                        title = application.getString(R.string.event_scene_changed),
                         origin = "MANUAL"
                     )
                 )
             }
-        }
-    }
-
-    fun updateSessionLiveNotes(session: Session, liveNotes: String) {
-        viewModelScope.launch {
-            chronicleRepository.updateSession(session.copy(liveNotes = liveNotes))
-        }
-    }
-
-    fun updateSessionPrepNotes(session: Session, preparationNotes: String) {
-        viewModelScope.launch {
-            chronicleRepository.updateSession(session.copy(preparationNotes = preparationNotes))
         }
     }
 
@@ -552,7 +540,7 @@ class ChronicleViewModel(
             emitAutoEvent(
                 chronicleId = chronicleId,
                 type = SessionEventType.NOTE_CREATED,
-                title = "Nota creata",
+                title = application.getString(R.string.event_note_created),
                 description = text.take(80),
                 entityRefs = listOf(note.id)
             )
@@ -582,7 +570,7 @@ class ChronicleViewModel(
             emitAutoEvent(
                 chronicleId = cId,
                 type = SessionEventType.CHARACTER_BLOOD_CHANGED,
-                title = "Sangue: ${character.identity.name}",
+                title = application.getString(R.string.event_blood_change, character.identity.name),
                 description = if (delta > 0) "+$delta PD" else "$delta PD",
                 entityRefs = listOf(characterId)
             )
@@ -599,7 +587,7 @@ class ChronicleViewModel(
             emitAutoEvent(
                 chronicleId = cId,
                 type = SessionEventType.CHARACTER_WILLPOWER_CHANGED,
-                title = "Volontà: ${character.identity.name}",
+                title = application.getString(R.string.event_willpower_change, character.identity.name),
                 description = if (delta > 0) "+$delta punti" else "$delta punti",
                 entityRefs = listOf(characterId)
             )
@@ -622,7 +610,7 @@ class ChronicleViewModel(
             emitAutoEvent(
                 chronicleId = cId,
                 type = SessionEventType.CHARACTER_HEALTH_CHANGED,
-                title = "Salute: ${character.identity.name}",
+                title = application.getString(R.string.event_health_change, character.identity.name),
                 description = if (delta > 0) "Curato" else "Ferito",
                 entityRefs = listOf(characterId)
             )
@@ -676,12 +664,13 @@ class ChronicleViewModel(
 
 class ChronicleViewModelFactory(
     private val chronicleRepository: ChronicleRepository,
-    private val characterRepository: CharacterRepository
+    private val characterRepository: CharacterRepository,
+    private val application: Application
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ChronicleViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ChronicleViewModel(chronicleRepository, characterRepository) as T
+            return ChronicleViewModel(chronicleRepository, characterRepository, application) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

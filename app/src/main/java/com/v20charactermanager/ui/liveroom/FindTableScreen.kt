@@ -41,6 +41,10 @@ fun FindTableScreen(
     var manualHost by remember { mutableStateOf("") }
     var manualPort by remember { mutableStateOf("39641") }
 
+    DisposableEffect(Unit) {
+        onDispose { onStopScan() }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -86,8 +90,7 @@ fun FindTableScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Button(
-                        onClick = onScan,
-                        enabled = !isScanning,
+                        onClick = { if (isScanning) onStopScan() else onScan() },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         if (isScanning) {
@@ -98,7 +101,7 @@ fun FindTableScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }
-                        Text(if (isScanning) stringResource(R.string.live_room_scanning) else stringResource(R.string.live_room_start_scan))
+                        Text(if (isScanning) stringResource(R.string.live_room_stop_scan) else stringResource(R.string.live_room_start_scan))
                     }
                 }
             }

@@ -23,6 +23,7 @@ fun NpcDetailSheet(
     onCreateSheet: (NpcEntry) -> Unit,
     onOpenSheet: (String) -> Unit,
     onLinkClick: (String, String) -> Unit,
+    onDelete: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(npc.name) }
@@ -30,6 +31,7 @@ fun NpcDetailSheet(
     var description by remember { mutableStateOf(npc.description) }
     var notes by remember { mutableStateOf(npc.narratorNotes) }
     var isEditing by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -58,6 +60,15 @@ fun NpcDetailSheet(
                         if (isEditing) Icons.Filled.Check else Icons.Filled.Edit,
                         contentDescription = stringResource(R.string.action_edit)
                     )
+                }
+                if (onDelete != null) {
+                    IconButton(onClick = { showDeleteConfirm = true }) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.action_delete),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
 
@@ -208,5 +219,26 @@ fun NpcDetailSheet(
                 }
             }
         }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text(stringResource(R.string.action_delete)) },
+            text = { Text(stringResource(R.string.confirm_delete)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDelete?.invoke()
+                    showDeleteConfirm = false
+                }) {
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
 }
