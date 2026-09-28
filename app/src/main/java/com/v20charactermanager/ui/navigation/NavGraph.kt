@@ -1579,7 +1579,14 @@ fun V20NavGraph(
                 },
                 onAnswerRollRequest = { accept ->
                     liveRoomViewModel.answerRollRequest(accept)
-                }
+                },
+                onRevealClue = { clue ->
+                    liveRoomViewModel.revealHandout(clue = clue)
+                },
+                onRevealSecret = { secret ->
+                    liveRoomViewModel.revealHandout(secret = secret)
+                },
+                onDismissReveal = { liveRoomViewModel.dismissReveal() }
             )
         }
 

@@ -728,6 +728,10 @@ class LiveRoomViewModel(
             is LiveRoomMessage.FullscreenFile -> {
                 _uiState.update { it.copy(isFileFullscreen = message.isFullscreen) }
             }
+            is LiveRoomMessage.RevealHandout -> {
+                _uiState.update { it.copy(revealedHandout = message) }
+                showToast(application.getString(R.string.live_reveal_received, message.title))
+            }
             is LiveRoomMessage.StatUpdate -> {
                 applyStatUpdate(message)
             }
@@ -751,6 +755,7 @@ class LiveRoomViewModel(
                         isFileFullscreen = false,
                         connectionStatus = "",
                         rollRequest = null,
+                        revealedHandout = null,
                         error = application.getString(com.v20charactermanager.R.string.live_room_closed_by_master)
                     )
                 }
@@ -923,6 +928,57 @@ class LiveRoomViewModel(
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    /**
+     * Master: reveal a handout (clue/secret) to every player at the table.
+     * Clues are marked SHARED and a CLUE_REVEALED session event is logged when a
+     * session is active (Addendum section 63).
+     */
+    fun revealHandout(clue: Clue? = null, secret: Secret? = null) {
+        if (!_uiState.value.isMaster) return
+        val id = clue?.id ?: secret?.id ?: return
+        val title = clue?.title ?: secret?.title ?: return
+        val content = clue?.content ?: secret?.content ?: ""
+        val kind = if (clue != null) "clue" else "secret"
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val repo = chronicleRepository
+                val chronicleId = _uiState.value.room?.chronicleId ?: ""
+                if (clue != null && repo != null && chronicleId.isNotBlank() && clue.status != ClueStatus.SHARED) {
+                    repo.updateClue(
+                        clue.copy(status = ClueStatus.SHARED, updatedAt = System.currentTimeMillis())
+                    )
+                    val activeSession = repo.getActiveSession(chronicleId).first()
+                    if (activeSession != null && activeSession.chronicleId == chronicleId) {
+                        repo.insertSessionEvent(
+                            SessionEvent(
+                                id = UUID.randomUUID().toString(),
+                                chronicleId = chronicleId,
+                                sessionId = activeSession.id,
+                                sceneId = activeSession.activeSceneId,
+                                timestamp = System.currentTimeMillis(),
+                                type = SessionEventType.CLUE_REVEALED,
+                                title = application.getString(R.string.event_clue_revealed, clue.title),
+                                entityRefs = listOf(clue.id),
+                                visibility = Visibility.GM_ONLY,
+                                origin = "AUTO"
+                            )
+                        )
+                    }
+                }
+                server?.broadcast(
+                    LiveRoomMessage.RevealHandout(id = id, title = title, content = content, kind = kind)
+                )
+                showToast(application.getString(R.string.live_reveal_sent))
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to reveal handout", e)
+            }
+        }
+    }
+
+    fun dismissReveal() {
+        _uiState.update { it.copy(revealedHandout = null) }
     }
 
     /** Player: voluntarily push the current sheet to the Master. */

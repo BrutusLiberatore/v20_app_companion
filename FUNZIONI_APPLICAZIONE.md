@@ -174,6 +174,7 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Invio volontario della scheda**: dal proprio foglio aperto al tavolo il giocatore può premere l'icona invio per **inviare la scheda corrente al Narratore** (in aggiunta all'invio automatico alla connessione e alla richiesta del Narratore); arriva un'avviso "Scheda inviata" al giocatore e "Scheda ricevuta da…" al Narratore.
 - **Salvataggio della scheda ricevuta**: il Narratore, aprendo il foglio condiviso di un giocatore, può premere **"Salva sul dispositivo"** per conservarlo nella propria libreria locale (e nella cronaca della tavola, se presente).
 - **Presentazione dei file** dal Narratore (immagini, PDF, video) a schermo intero per tutti.
+- **Rivela (handout)**: dal browser cronaca al tavolo il Narratore può premere **"Rivela"** su un **indizio** o un **segreto**; il contenuto appare a tutti i giocatori con un'avviso, l'indizio passa a "condiviso" e (se la sessione è attiva) viene registrato l'evento "Indizio rivelato" nel diario.
 - **Condivisione di file** verso i giocatori: il file ricevuto viene salvato nella cronaca del giocatore.
 - Il Narratore può **chiudere la tavola**; tutti ricevono l'avviso.
 

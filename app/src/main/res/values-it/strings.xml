@@ -911,6 +911,11 @@
     <string name="sheet_save_shared">Salva sul dispositivo</string>
     <string name="live_sheet_sent_to_master">Scheda inviata al Narratore</string>
     <string name="live_sheet_received">Scheda ricevuta da %1$s</string>
+    <string name="live_reveal">Rivela</string>
+    <string name="live_reveal_sent">Rivelato ai giocatori</string>
+    <string name="live_reveal_received">Rivelato: %1$s</string>
+    <string name="live_reveal_dialog_title">Contenuto rivelato</string>
+    <string name="live_empty_clue">Nessun indizio</string>
     <string name="sheet_roll_hint">Seleziona da 1 a 3 caratteristiche. Il pool di dadi vale la loro somma.</string>
     <string name="sheet_roll_pool">Dadi totali: %1$d</string>
     <string name="live_share_recipients">Destinatari</string>

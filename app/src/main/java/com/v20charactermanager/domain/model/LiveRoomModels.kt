@@ -39,7 +39,8 @@ data class LiveRoomState(
     val chairPack: String = "medievale",
     val diceRolls: List<LiveRoomMessage.DiceRoll> = emptyList(),
     val rollLog: List<LiveRoomMessage.DiceRoll> = emptyList(),
-    val rollRequest: LiveRoomMessage.RollRequest? = null
+    val rollRequest: LiveRoomMessage.RollRequest? = null,
+    val revealedHandout: LiveRoomMessage.RevealHandout? = null
 )
 
 @Serializable
@@ -119,6 +120,15 @@ sealed class LiveRoomMessage {
 
     @Serializable
     data class FullscreenFile(val isFullscreen: Boolean) : LiveRoomMessage()
+
+    /** Master -> players: reveal a handout (clue/secret) to the table (Addendum section 63). */
+    @Serializable
+    data class RevealHandout(
+        val id: String,
+        val title: String,
+        val content: String,
+        val kind: String = "clue"
+    ) : LiveRoomMessage()
 
     @Serializable
     data class Error(val message: String) : LiveRoomMessage()

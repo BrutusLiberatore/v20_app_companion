@@ -103,6 +103,9 @@ fun LiveRoomScreen(
     onRollDice: (RollSpec) -> Unit,
     onRequestRoll: (RollSpec, String) -> Unit = { _, _ -> },
     onAnswerRollRequest: (Boolean) -> Unit = {},
+    onRevealClue: (Clue) -> Unit = {},
+    onRevealSecret: (Secret) -> Unit = {},
+    onDismissReveal: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var autoCreated by remember { mutableStateOf(false) }
@@ -246,6 +249,9 @@ fun LiveRoomScreen(
                     onRollDice = onRollDice,
                     onRequestRoll = onRequestRoll,
                     onAnswerRollRequest = onAnswerRollRequest,
+                    onRevealClue = onRevealClue,
+                    onRevealSecret = onRevealSecret,
+                    onDismissReveal = onDismissReveal,
                     onCloseRoom = onCloseRoom,
                     onTableStyleChange = onTableStyleChange,
                     onOpenSheet = onOpenSheet,
@@ -472,6 +478,9 @@ private fun VirtualTableView(
     onRollDice: (RollSpec) -> Unit,
     onRequestRoll: (RollSpec, String) -> Unit = { _, _ -> },
     onAnswerRollRequest: (Boolean) -> Unit = {},
+    onRevealClue: (Clue) -> Unit = {},
+    onRevealSecret: (Secret) -> Unit = {},
+    onDismissReveal: () -> Unit = {},
     onCloseRoom: () -> Unit = {},
     onTableStyleChange: (String, String) -> Unit = { _, _ -> },
     onOpenSheet: (String) -> Unit = {},
@@ -519,6 +528,12 @@ private fun VirtualTableView(
                 request = request,
                 onAccept = { onAnswerRollRequest(true) },
                 onDecline = { onAnswerRollRequest(false) }
+            )
+        }
+        uiState.revealedHandout?.let { handout ->
+            RevealHandoutDialog(
+                handout = handout,
+                onDismiss = onDismissReveal
             )
         }
     }
@@ -773,6 +788,8 @@ private fun VirtualTableView(
                     onShareAsset = onShareAsset,
                     onDismissFile = onDismissFile,
                     onToggleFullscreen = onToggleFullscreen,
+                    onRevealClue = onRevealClue,
+                    onRevealSecret = onRevealSecret,
                     onCloseRoom = onCloseRoom,
                     onTableStyleChange = onTableStyleChange,
                     onRollClick = { showRollDialog = true }
@@ -981,6 +998,41 @@ private fun DiceRollDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.action_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun RevealHandoutDialog(
+    handout: LiveRoomMessage.RevealHandout,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1A1A2E),
+        icon = {
+            Icon(Icons.Default.Visibility, contentDescription = null, tint = Gold)
+        },
+        title = {
+            Text(stringResource(R.string.live_reveal_dialog_title), color = Gold, fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = 320.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(handout.title, color = Color.White, fontWeight = FontWeight.Bold)
+                if (handout.content.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(handout.content, color = Color.White.copy(alpha = 0.85f))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.ok), color = Gold)
             }
         }
     )
@@ -1427,7 +1479,9 @@ private fun MasterBottomPanel(
     onToggleFullscreen: () -> Unit,
     onCloseRoom: () -> Unit = {},
     onTableStyleChange: (String, String) -> Unit = { _, _ -> },
-    onRollClick: () -> Unit = {}
+    onRollClick: () -> Unit = {},
+    onRevealClue: ((Clue) -> Unit)? = null,
+    onRevealSecret: ((Secret) -> Unit)? = null
 ) {
     var showFileSelector by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
@@ -1609,6 +1663,8 @@ private fun MasterBottomPanel(
                 showChronicleInfo = false
                 onShareAsset(asset.id, asset.title, assetMimeOf(asset), targets)
             },
+            onRevealClue = onRevealClue,
+            onRevealSecret = onRevealSecret,
             onDismiss = { showChronicleInfo = false }
         )
     }
@@ -2168,10 +2224,12 @@ private fun ChronicleDeepBrowserPopup(
     players: List<ConnectedPlayer> = emptyList(),
     onPresentAsset: ((String, String, String) -> Unit)? = null,
     onShareAsset: ((MediaAsset, List<String>) -> Unit)? = null,
+    onRevealClue: ((Clue) -> Unit)? = null,
+    onRevealSecret: ((Secret) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     var selectedSection by remember { mutableIntStateOf(0) }
-    val sections = listOf("NPC", stringResource(R.string.chronicle_tab_locations), stringResource(R.string.chronicle_tab_notes), stringResource(R.string.live_section_scene), stringResource(R.string.chronicle_tab_events), stringResource(R.string.chronicle_tab_secrets), "File")
+    val sections = listOf("NPC", stringResource(R.string.chronicle_tab_locations), stringResource(R.string.chronicle_tab_notes), stringResource(R.string.live_section_scene), stringResource(R.string.chronicle_tab_events), stringResource(R.string.chronicle_tab_secrets), stringResource(R.string.chronicle_tab_clues), "File")
     val selectedTargets = remember(players) { mutableStateOf(players.map { it.id }.toSet()) }
 
     val npcs by chronicleRepo.getNpcs(chronicleId).collectAsState(initial = emptyList())
@@ -2180,6 +2238,7 @@ private fun ChronicleDeepBrowserPopup(
     val scenes by chronicleRepo.getScenes(chronicleId).collectAsState(initial = emptyList())
     val events by chronicleRepo.getEvents(chronicleId).collectAsState(initial = emptyList())
     val secrets by chronicleRepo.getSecrets(chronicleId).collectAsState(initial = emptyList())
+    val clues by chronicleRepo.getClues(chronicleId).collectAsState(initial = emptyList())
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -2303,17 +2362,65 @@ private fun ChronicleDeepBrowserPopup(
                         } else {
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(secrets) { secret ->
-                                    SimpleListItem(
-                                        title = secret.title,
-                                        subtitle = secret.content.take(80),
-                                        icon = Icons.Default.VisibilityOff,
-                                        iconTint = Color(0xFF607D8B)
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            SimpleListItem(
+                                                title = secret.title,
+                                                subtitle = secret.content.take(80),
+                                                icon = Icons.Default.VisibilityOff,
+                                                iconTint = Color(0xFF607D8B)
+                                            )
+                                        }
+                                        if (onRevealSecret != null) {
+                                            TextButton(onClick = { onRevealSecret(secret) }) {
+                                                Text(
+                                                    stringResource(R.string.live_reveal),
+                                                    color = Gold,
+                                                    fontSize = 12.sp
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                     6 -> {
+                        if (clues.isEmpty()) {
+                            EmptySection(stringResource(R.string.live_empty_clue))
+                        } else {
+                            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(clues) { clue ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            SimpleListItem(
+                                                title = clue.title,
+                                                subtitle = clue.content?.take(80) ?: "",
+                                                icon = Icons.Default.Search,
+                                                iconTint = Color(0xFFFFEB3B)
+                                            )
+                                        }
+                                        if (onRevealClue != null) {
+                                            TextButton(onClick = { onRevealClue(clue) }) {
+                                                Text(
+                                                    stringResource(R.string.live_reveal),
+                                                    color = Gold,
+                                                    fontSize = 12.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    7 -> {
                         if (assets.isEmpty()) {
                             EmptySection(stringResource(R.string.live_empty_file))
                         } else {
