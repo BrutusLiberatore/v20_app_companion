@@ -1,5 +1,7 @@
 # V20 Companion — Guida alle funzioni dell'applicazione
 
+Aggiornato alla versione **v34** dell'app.
+
 App Android per gestire le partite di **Vampire: The Masquerade 20th Anniversary (V20)**.
 Può essere usata dal **Giocatore** (per il proprio personaggio) e dal **Narratore** (per gestire la cronaca e la tavola).
 Tutti i dati restano salvati sul telefono. L'interfaccia è disponibile in **italiano** e **inglese**, con possibilità di cambiare lingua dall'app.
@@ -29,25 +31,28 @@ Funzioni di supporto:
 - Contatore punti per **Meriti** e **Difetti**.
 - **Validazione**: elenca gli errori da sistemare prima del salvataggio.
 - **Avviso di punti**: se i punti assegnati non corrispondono al totale standard, chiede se continuare comunque.
-- **Sezioni riordinabili**: dall'icona di riordino in alto è possibile riassegnare l'ordine delle tab della scheda (su/giù), con ripristino all'ordine standard; l'ordine è salvato nell'app.
 - **Suggerimenti di creazione** con le cifre consigliate dal manuale.
 - **Regole della casa della cronaca**: avviando la creazione dal tab Personaggi di una cronaca (pulsante "Crea personaggio"), vengono applicati costi e punti freebie, totali di ripartizione e clan esclusi della cronaca; al salvataggio il PG viene collegato automaticamente alla cronaca.
 
 ## 3. Scheda del personaggio
 
-Schermata principale del personaggio, con cinque schede:
+Schermata principale del personaggio, con otto sezioni:
 
 - **Panoramica**: identità, statistiche rapide, umanità, volontà, serbatoio di sangue.
 - **Attributi**: valori con dettaglio e calcolo del pool di tiro.
 - **Abilità**: abilità apprese con il loro rango.
-- **Vantaggi**: discipline, background, virtù, meriti e difetti (con aggiunta e rimozione).
-- **Dettagli**: equipaggiamento (peso, danno, costo, note) e note libere del personaggio.
+- **Vantaggi**: discipline, background e virtù (con aggiunta e rimozione).
+- **Dettagli**: salute per livelli con danno (contuso, letale, gravato) e tratti derivati.
+- **Pregi & Difetti**: meriti e difetti con contatore punti.
+- **Equipaggiamento**: oggetti con peso, danno, costo e note.
+- **Note**: note libere del personaggio.
 
 Inoltre:
 
 - **Dashboard** con azioni rapide: *Tira i dadi*, *Modalità sessione*, *Modifica personaggio*, stato della **salute**.
 - **Salute** con le tre caselle di danno: contuso (`/`), letale (`X`), gravato (`*`).
 - **Esperienza**: punti guadagnati, spesi e disponibili, con accesso alla spesa.
+- **Sezioni riordinabili**: dall'icona di riordino in alto è possibile riassegnare l'ordine delle sezioni della scheda (su/giù), con ripristino all'ordine standard; l'ordine è salvato nell'app.
 - **Salvataggio automatico** al primo cambiamento, con messaggio di conferma.
 
 ## 4. Sessione di gioco (modalità sessione)
@@ -141,7 +146,9 @@ Pannello di controllo durante la sessione:
 
 - **Scena attiva**: apertura e cambio scena con titolo.
 - **Avvio e fine sessione**.
-- **Nota rapida** ed **evento** da registrare al volo.
+- **PG in scena** e **PNG in scena** (con personaggi e ritratti).
+- **Trame attive** della cronaca.
+- **Barra azioni rapide**: **dadi**, **nota rapida**, **evento** da registrare al volo e **Quick NPC** (crea un PNG al volo con nome, ruolo e tipo).
 - Indicatore **LIVE** quando la tavola è attiva.
 - Pulsanti per creare o unirsi al **tavolo live**.
 
@@ -160,6 +167,7 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 
 - **Tavolo virtuale** con posti a sedere; i giocatori cliccano il proprio posto per entrare.
 - **Stile del tavolo** (fusti e sedie) sincronizzato tra tutti.
+- **Mixer audio al tavolo**: dal menu del Narratore si apre il mixer delle tracce (vedi sezione 13).
 - **Ritratti** dei personaggi sui posti.
 - **Tiri di dadi visibili a tutti** con il risultato in tempo reale.
 - **Modificatori al tavolo**: ogni tiro (finestra dadi o tiro dalla scheda) supporta **modificatore dadi**, **volontà**, **dieci esplosive** e **motivo** del modificatore, oltre a pool e difficoltà.
@@ -185,6 +193,7 @@ Strumento sonoro per l'atmosfera di partita:
 - Import di tracce con categoria: **Ambiente**, **Musica**, **Effetti (SFX)**, **Personalizzate**.
 - Riproduzione con **play**, **pausa**, **loop** e **ferma tutto**.
 - **Preset**: salva le tracce attive con un nome, riattivali, rinominali o eliminiali (es. "Taverna gotica").
+- Accessibile anche **dal tavolo live** (menu del Narratore) durante la partita.
 
 ## 14. Importazione ed esportazione
 
