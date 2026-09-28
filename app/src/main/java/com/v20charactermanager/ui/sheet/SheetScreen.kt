@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
@@ -48,6 +49,7 @@ import com.v20charactermanager.domain.model.AttributeValue
 import com.v20charactermanager.domain.model.Character
 import com.v20charactermanager.domain.model.MeritValue
 import com.v20charactermanager.domain.model.FlawValue
+import com.v20charactermanager.domain.model.RollSpec
 import com.v20charactermanager.ui.components.V20DotRating as V20DotRatingComponent
 import com.v20charactermanager.ui.components.PortraitPicker
 
@@ -85,9 +87,11 @@ fun SheetScreen(
     saveSuccess: Boolean = false,
     saveError: String? = null,
     onClearMessages: () -> Unit = {},
-    canEdit: Boolean = true
+    canEdit: Boolean = true,
+    onRollFromTable: ((RollSpec) -> Unit)? = null
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showTableRoll by remember { mutableStateOf(false) }
     val tabs = listOf(
         stringResource(R.string.sheet_tab_overview),
         stringResource(R.string.sheet_tab_attributes),
@@ -117,6 +121,15 @@ fun SheetScreen(
                     }
                 },
                 actions = {
+                    if (onRollFromTable != null && !isEditing) {
+                        IconButton(onClick = { showTableRoll = true }) {
+                            Icon(
+                                Icons.Default.Casino,
+                                contentDescription = stringResource(R.string.sheet_roll_to_table),
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
                     if (isEditing) {
                         IconButton(onClick = onSave) {
                             Icon(
@@ -285,6 +298,17 @@ fun SheetScreen(
                 7 -> NotesTab(character, onNotesChange, canEdit)
             }
         }
+    }
+
+    if (showTableRoll && onRollFromTable != null) {
+        TableRollDialog(
+            character = character,
+            onRoll = { spec ->
+                showTableRoll = false
+                onRollFromTable(spec)
+            },
+            onDismiss = { showTableRoll = false }
+        )
     }
 }
 

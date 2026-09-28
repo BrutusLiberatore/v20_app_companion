@@ -159,6 +159,13 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Stile del tavolo** (fusti e sedie) sincronizzato tra tutti.
 - **Ritratti** dei personaggi sui posti.
 - **Tiri di dadi visibili a tutti** con il risultato in tempo reale.
+- **Modificatori al tavolo**: ogni tiro (finestra dadi o tiro dalla scheda) supporta **modificatore dadi**, **volontà**, **dieci esplosive** e **motivo** del modificatore, oltre a pool e difficoltà.
+- **Richiesta di tiro del Narratore**: dal pulsante "Richiedi tiro" il Narratore invia un tiro (pool, difficoltà, modificatori, motivo) a **un giocatore specifico o a tutti**; al giocatore compare una finestra "Tiro richiesto da…" con Tira/Annulla, e il tiro eseguito appare a tutti.
+- **Log dei tiri**: cronologia completa di ogni tiro (ora, giocatore, caratteristiche, difficoltà, dadi, esito) leggibile dal **Narratore** con un tocco.
+- **Tiri privati del Narratore**: opzione "Tiro privato" nella finestra dei dadi; solo il Narratore vede pool, dadi ed esito, gli altri vedono solo la notula "privato".
+- **Tiri dalla scheda**: dal proprio foglio aperto al tavolo (icona dadi in alto) si selezionano **1, 2 o 3 caratteristiche** (Attributi/Abilità) e il pool è la loro **somma** (regole V20, difficoltà di default 6); il tiro è visibile a tutti sul tavolo.
+- **Feed riducibile a icona**: i risultati recenti sul tavolo possono essere ridotti a una sola icona dadi e riaperti con un tocco.
+- **Dadi 3D animati**: d10 in marmo a texture reale (volatina, atterraggio sul risultato, tinta rosso/verde per boccia/successo). Mesh e texture dal set gratuito "Low Poly 3D Dice Set" di **eddex** (itch.io), licenza **CC BY-SA 4.0**.
 - **Sincronizzazione dei dati**: aggiornamenti delle statistiche del personaggio condivisi (es. salute, volontà, sangue).
 - **Foglio in sola lettura**: i giocatori possono vedere il foglio condiviso senza modificarlo.
 - **Presentazione dei file** dal Narratore (immagini, PDF, video) a schermo intero per tutti.

@@ -1,5 +1,11 @@
 package com.v20charactermanager.ui.liveroom
 
+// D10 mesh, face geometry and marble face textures come from the free asset pack
+// "Low Poly 3D Dice Set" by eddex (https://eddex.itch.io/low-poly-3d-dice-set-game-assets),
+// licensed under CC BY-SA 4.0. Face albedo tiles are baked from the original UV texture.
+
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Paint
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -18,11 +24,14 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalContext
+import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.LiveRoomMessage
 import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.acos
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.min
@@ -82,10 +91,10 @@ private fun slerp(a: Quat, bIn: Quat, t: Float): Quat {
     }
     if (dot > 0.9995f) {
         return Quat(
-            a.x + (b.x - a.x) * t,
-            a.y + (b.y - a.y) * t,
-            a.z + (b.z - a.z) * t,
-            a.w + (b.w - a.w) * t
+            (b.x - a.x) * t + a.x,
+            (b.y - a.y) * t + a.y,
+            (b.z - a.z) * t + a.z,
+            (b.w - a.w) * t + a.w
         ).normalized()
     }
     val theta = acos(dot.coerceIn(-1f, 1f))
@@ -109,48 +118,53 @@ private fun alignToCamera(n: Vec3): Quat {
     }
 }
 
-private data class DieFace(val indices: IntArray, val normal: Vec3, val value: Int)
+private data class DieFace(
+    val corners: FloatArray,
+    val normal: Vec3,
+    val fracs: FloatArray,
+    val up: Vec3,
+    val value: Int
+)
 
-private class Die10(val vertices: FloatArray, val faces: List<DieFace>) {
-    fun faceFor(value: Int) = faces[(value - 1).coerceIn(0, faces.size - 1)]
+private class Die10(val faces: List<DieFace>) {
+    fun faceFor(value: Int): DieFace = faces.firstOrNull { it.value == value } ?: faces[0]
 }
 
 private val die10: Die10 by lazy {
-    val ringR = 0.88f
-    val ringY = 0.30f
-    val poleY = 1.0f
-    val verts = FloatArray(12 * 3)
-    verts[0] = 0f; verts[1] = poleY; verts[2] = 0f
-    verts[3] = 0f; verts[4] = -poleY; verts[5] = 0f
-    for (i in 0 until 5) {
-        val a = Math.toRadians((i * 72).toDouble())
-        verts[(2 + i) * 3] = (cos(a) * ringR).toFloat()
-        verts[(2 + i) * 3 + 1] = ringY
-        verts[(2 + i) * 3 + 2] = (sin(a) * ringR).toFloat()
-        val b = Math.toRadians((i * 72 + 36).toDouble())
-        verts[(7 + i) * 3] = (cos(b) * ringR).toFloat()
-        verts[(7 + i) * 3 + 1] = -ringY
-        verts[(7 + i) * 3 + 2] = (sin(b) * ringR).toFloat()
-    }
-    fun vAt(idx: Int) = Vec3(verts[idx * 3], verts[idx * 3 + 1], verts[idx * 3 + 2])
-    fun makeFace(idx: IntArray, value: Int): DieFace {
-        val a = vAt(idx[0]); val b = vAt(idx[1]); val c = vAt(idx[2])
-        var n = (b - a).cross(c - a).normalized()
-        val centroid = Vec3(
-            idx.map { vAt(it).x }.average().toFloat(),
-            idx.map { vAt(it).y }.average().toFloat(),
-            idx.map { vAt(it).z }.average().toFloat()
+    val data = floatArrayOf(
+            // f0 value=10
+    0.45695f, 0.62903f, -0.62890f, 0.00522f, 0.98712f, -0.00719f, 0.84410f, 0.10517f, -0.27980f, 0.52371f, -0.10302f, -0.72083f, 0.00527f, 0.10518f, -0.88926f, 0.06140f, 0.82431f, 0.62286f, 0.17569f, 0.93860f, 0.42342f, 0.91928f, 0.82427f, 0.87598f, -0.44101f, 0.19537f,
+    // f1 value=7
+    0.00001f, -0.62895f, -0.77744f, -0.00000f, 0.10222f, -0.89197f, 0.51843f, -0.10599f, -0.72352f, -0.00000f, -0.98800f, -0.00998f, -0.51843f, -0.10599f, -0.72353f, 0.06140f, 0.50000f, 0.22893f, 0.17571f, 0.93860f, 0.50000f, 0.22893f, 0.82429f, 0.99619f, 0.06777f, -0.05481f,
+    // f2 value=3
+    0.73938f, -0.62897f, -0.24025f, 0.52755f, -0.10568f, -0.71652f, 0.84796f, 0.10252f, -0.27552f, 0.84797f, -0.10569f, 0.26959f, 0.00912f, -0.98768f, -0.00296f, 0.15455f, 0.39647f, 0.39229f, 0.06141f, 0.80313f, 0.06140f, 0.84545f, 0.93860f, 0.58309f, 0.77658f, -0.23860f,
+    // f3 value=4
+    -0.45697f, 0.62896f, -0.62896f, -0.00697f, 0.98953f, -0.00960f, -0.00697f, 0.10752f, -0.89160f, -0.52540f, -0.10069f, -0.72316f, -0.84581f, 0.10752f, -0.28215f, 0.06140f, 0.17571f, 0.91926f, 0.17571f, 0.93860f, 0.57655f, 0.62288f, 0.82429f, 0.88610f, 0.38352f, -0.26027f,
+    // f4 value=5
+    -0.00000f, 0.62896f, 0.77744f, -0.00000f, -0.10220f, 0.89201f, 0.51843f, 0.10602f, 0.72356f, -0.00000f, 0.98802f, 0.01000f, -0.51843f, 0.10602f, 0.72356f, 0.06140f, 0.50000f, 0.22893f, 0.17571f, 0.93860f, 0.50000f, 0.22893f, 0.82429f, 0.98481f, -0.13500f, 0.10922f,
+    // f5 value=2
+    0.45697f, -0.62896f, 0.62896f, 0.00518f, -0.98706f, 0.00713f, 0.84402f, -0.10506f, 0.27969f, 0.52361f, 0.10316f, 0.72069f, 0.00518f, -0.10506f, 0.88914f, 0.06140f, 0.82429f, 0.62288f, 0.17571f, 0.93860f, 0.42344f, 0.91926f, 0.82429f, 0.44474f, 0.77394f, 0.45081f,
+    // f6 value=9
+    -0.45697f, -0.62896f, 0.62896f, -0.00433f, -0.98589f, 0.00596f, -0.00433f, -0.10388f, 0.88796f, -0.52276f, 0.10433f, 0.71951f, -0.84316f, -0.10388f, 0.27851f, 0.06140f, 0.17571f, 0.91926f, 0.17571f, 0.93860f, 0.57656f, 0.62288f, 0.82429f, 0.68138f, -0.70205f, -0.20699f,
+    // f7 value=6
+    -0.73939f, 0.62896f, 0.24024f, -0.52609f, 0.10444f, 0.71604f, -0.00766f, 0.98644f, 0.00249f, -0.84649f, 0.10444f, -0.27007f, -0.84649f, -0.10378f, 0.27504f, 0.15455f, 0.60354f, 0.84545f, 0.06140f, 0.80313f, 0.93860f, 0.39229f, 0.93860f, 0.61020f, 0.77680f, -0.15569f,
+    // f8 value=1
+    -0.73939f, -0.62896f, -0.24024f, -0.52741f, -0.10556f, -0.71647f, -0.00898f, -0.98757f, -0.00292f, -0.84782f, -0.10557f, 0.26964f, -0.84782f, 0.10265f, -0.27547f, 0.15455f, 0.60354f, 0.84545f, 0.06140f, 0.80313f, 0.93860f, 0.39229f, 0.93860f, 0.66305f, -0.74218f, -0.09760f,
+    // f9 value=8
+    0.73257f, 0.62932f, 0.25942f, 0.52063f, 0.09970f, 0.71391f, 0.84889f, -0.10177f, 0.27569f, 0.85649f, 0.11297f, -0.26673f, 0.00941f, 0.98789f, 0.00291f, 0.14902f, 0.40920f, 0.38048f, 0.06928f, 0.79166f, 0.06140f, 0.85098f, 0.93860f, 0.67035f, -0.60081f, -0.43549f
+    )
+    val values = intArrayOf(10, 7, 3, 4, 5, 2, 9, 6, 1, 8)
+    val faces = (0 until 10).map { fi ->
+        val o = fi * 26
+        DieFace(
+            corners = data.copyOfRange(o + 3, o + 15),
+            normal = Vec3(data[o], data[o + 1], data[o + 2]),
+            fracs = data.copyOfRange(o + 15, o + 23),
+            up = Vec3(data[o + 23], data[o + 24], data[o + 25]),
+            value = values[fi]
         )
-        if (n.dot(centroid) < 0f) n = Vec3(-n.x, -n.y, -n.z)
-        return DieFace(idx, n, value)
     }
-    val faces = buildList {
-        for (i in 0 until 5) {
-            add(makeFace(intArrayOf(0, 2 + i, 7 + i, 2 + ((i + 1) % 5)), i + 1))
-            add(makeFace(intArrayOf(1, 7 + i, 2 + ((i + 1) % 5), 7 + ((i + 1) % 5)), i + 6))
-        }
-    }
-    Die10(verts, faces)
+    Die10(faces)
 }
 
 private val lightDir = Vec3(-0.35f, 0.72f, 0.60f).normalized()
@@ -163,73 +177,96 @@ private fun DrawScope.drawDie(
     difficulty: Int,
     settle: Float,
     alpha: Float,
-    numberPaint: Paint
+    tiles: List<Bitmap>,
+    texPaint: Paint
 ) {
     val g = die10
     val camDist = 3.6f
     val focal = 2.4f
-    val vertCount = g.vertices.size / 3
-    val rot = FloatArray(g.vertices.size)
-    for (vi in 0 until vertCount) {
-        val r = q.rotate(Vec3(g.vertices[vi * 3], g.vertices[vi * 3 + 1], g.vertices[vi * 3 + 2]))
-        rot[vi * 3] = r.x
-        rot[vi * 3 + 1] = r.y
-        rot[vi * 3 + 2] = r.z
-    }
     val tintTarget = when {
         value == 1 -> Color(0xFFCF6679)
         value >= difficulty -> Color(0xFF4CAF50)
         else -> Color(0xFF3A3226)
     }
     val strokeColor = lerp(Color(0xFF3A3226), tintTarget, settle)
-    val order = g.faces.indices.sortedBy { fi ->
-        g.faces[fi].indices.map { rot[it * 3 + 2] }.average().toFloat()
-    }
-    for (fi in order) {
+    val ptsAll = Array(10) { FloatArray(8) }
+    val normals = arrayOfNulls<Vec3>(10)
+    val zAvg = FloatArray(10)
+    val visible = ArrayList<Int>(10)
+    for (fi in 0 until 10) {
         val face = g.faces[fi]
         val n = q.rotate(face.normal)
+        normals[fi] = n
         if (n.z <= 0.02f) continue
-        val path = Path()
-        var centroidX = 0f
-        var centroidY = 0f
-        var centroidZ = 0f
-        face.indices.forEachIndexed { k, vi ->
-            val z = rot[vi * 3 + 2]
-            val proj = focal / (camDist - z)
-            val sx = center.x + rot[vi * 3] * proj * radiusPx
-            val sy = center.y - rot[vi * 3 + 1] * proj * radiusPx
-            if (k == 0) path.moveTo(sx, sy) else path.lineTo(sx, sy)
-            centroidX += rot[vi * 3]
-            centroidY += rot[vi * 3 + 1]
-            centroidZ += z
+        val pts = ptsAll[fi]
+        var zs = 0f
+        for (k in 0 until 4) {
+            val r = q.rotate(
+                Vec3(face.corners[k * 3], face.corners[k * 3 + 1], face.corners[k * 3 + 2])
+            )
+            zs += r.z
+            val proj = focal / (camDist - r.z)
+            pts[k * 2] = center.x + r.x * proj * radiusPx
+            pts[k * 2 + 1] = center.y - r.y * proj * radiusPx
         }
-        path.close()
+        zAvg[fi] = zs / 4f
+        visible.add(fi)
+    }
+    visible.sortBy { zAvg[it] }
+    val nativeCanvas = drawContext.canvas.nativeCanvas
+    val clipPath = android.graphics.Path()
+    val xform = android.graphics.Matrix()
+    val srcPts = FloatArray(8)
+    for (fi in visible) {
+        val face = g.faces[fi]
+        val n = normals[fi] ?: continue
+        val pts = ptsAll[fi]
         val lam = n.dot(lightDir).coerceIn(0f, 1f)
         val shade = 0.45f + 0.55f * lam
-        val base = Color(0xFFF4ECDC)
-        drawPath(
-            path = path,
-            color = Color(base.red * shade, base.green * shade, base.blue * shade, alpha),
-            style = Fill
-        )
+        val path = Path()
+        path.moveTo(pts[0], pts[1])
+        for (k in 1 until 4) path.lineTo(pts[k * 2], pts[k * 2 + 1])
+        path.close()
+        clipPath.reset()
+        clipPath.moveTo(pts[0], pts[1])
+        for (k in 1 until 4) clipPath.lineTo(pts[k * 2], pts[k * 2 + 1])
+        clipPath.close()
+        val tile = tiles[fi]
+        for (k in 0 until 4) {
+            srcPts[k * 2] = face.fracs[k * 2] * tile.width
+            srcPts[k * 2 + 1] = face.fracs[k * 2 + 1] * tile.height
+        }
+        xform.reset()
+        if (xform.setPolyToPoly(srcPts, 0, pts, 0, 4)) {
+            nativeCanvas.save()
+            nativeCanvas.clipPath(clipPath)
+            val sr = (shade * 255f).toInt().coerceIn(0, 255)
+            texPaint.colorFilter = android.graphics.LightingColorFilter(
+                (0xFF shl 24) or (sr shl 16) or (sr shl 8) or sr,
+                0
+            )
+            texPaint.alpha = (alpha * 255f).toInt().coerceIn(0, 255)
+            nativeCanvas.drawBitmap(tile, xform, texPaint)
+            nativeCanvas.restore()
+        } else {
+            val base = Color(0xFFF4ECDC)
+            drawPath(
+                path = path,
+                color = Color(base.red * shade, base.green * shade, base.blue * shade, alpha),
+                style = Fill
+            )
+        }
         drawPath(
             path = path,
             color = strokeColor.copy(alpha = alpha * 0.9f),
             style = Stroke(width = radiusPx * 0.05f)
         )
-        if (n.z > 0.32f) {
-            val cx = center.x + (centroidX / face.indices.size) * (focal / (camDist - centroidZ / face.indices.size)) * radiusPx
-            val cy = center.y - (centroidY / face.indices.size) * (focal / (camDist - centroidZ / face.indices.size)) * radiusPx
-            numberPaint.textSize = radiusPx * 0.55f
-            numberPaint.color = android.graphics.Color.argb(
-                (alpha * 255f).toInt().coerceIn(0, 255),
-                if (face.value == 1) 179 else 26,
-                if (face.value == 1) 38 else 22,
-                if (face.value == 1) 30 else 18
+        if (settle > 0f) {
+            drawPath(
+                path = path,
+                color = tintTarget.copy(alpha = alpha * 0.16f * settle),
+                style = Fill
             )
-            val fm = numberPaint.fontMetrics
-            val baseline = cy - (fm.ascent + fm.descent) / 2f
-            drawContext.canvas.nativeCanvas.drawText(face.value.toString(), cx, baseline, numberPaint)
         }
     }
 }
@@ -242,15 +279,25 @@ fun Dice3DOverlay(
 ) {
     val dice = roll.dice
     if (dice.isEmpty()) return
-    val numberPaint = remember(roll) {
-        Paint().apply {
-            textAlign = Paint.Align.CENTER
-            typeface = android.graphics.Typeface.create(
-                android.graphics.Typeface.SERIF,
-                android.graphics.Typeface.BOLD
-            )
-            setShadowLayer(4f, 0f, 2f, 0x66000000)
-        }
+    val context = LocalContext.current
+    val tiles = remember {
+        val ids = intArrayOf(
+            R.drawable.d10_face_0,
+            R.drawable.d10_face_1,
+            R.drawable.d10_face_2,
+            R.drawable.d10_face_3,
+            R.drawable.d10_face_4,
+            R.drawable.d10_face_5,
+            R.drawable.d10_face_6,
+            R.drawable.d10_face_7,
+            R.drawable.d10_face_8,
+            R.drawable.d10_face_9
+        )
+        val opts = BitmapFactory.Options().apply { inScaled = false }
+        ids.map { BitmapFactory.decodeResource(context.resources, it, opts) }
+    }
+    val texPaint = remember {
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
     }
     val progress = remember(roll) { Animatable(0f) }
     val fade = remember(roll) { Animatable(1f) }
@@ -271,7 +318,11 @@ fun Dice3DOverlay(
             }
             val spins = (4.0 + rng.nextDouble() * 5.0) * PI
             val start = axisAngle(axisSafe, spins.toFloat())
-            val end = alignToCamera(die10.faceFor(value).normal)
+            val face = die10.faceFor(value)
+            val base = alignToCamera(face.normal)
+            val up = base.rotate(face.up)
+            val phi = atan2(up.x, up.y)
+            val end = axisAngle(Vec3(0f, 0f, 1f), phi).mul(base)
             start to end
         }
     }
@@ -312,7 +363,8 @@ fun Dice3DOverlay(
                 difficulty = roll.difficulty,
                 settle = settle,
                 alpha = alpha,
-                numberPaint = numberPaint
+                tiles = tiles,
+                texPaint = texPaint
             )
         }
     }

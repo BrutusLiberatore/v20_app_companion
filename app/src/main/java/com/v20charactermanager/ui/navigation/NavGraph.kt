@@ -378,6 +378,7 @@ fun V20NavGraph(
             )
             val uiState by editViewModel.uiState.collectAsState()
             val sharedCharacters by liveRoomViewModel.sharedCharacters.collectAsState()
+            val liveUiState by liveRoomViewModel.uiState.collectAsState()
             var sheetUnavailable by remember { mutableStateOf(false) }
 
             LaunchedEffect(characterId) {
@@ -477,7 +478,15 @@ fun V20NavGraph(
                     saveSuccess = isLocalChar && uiState.successMessage != null,
                     saveError = if (isLocalChar) uiState.error else null,
                     onClearMessages = { editViewModel.clearMessages() },
-                    canEdit = isLocalChar
+                    canEdit = isLocalChar,
+                    onRollFromTable = if (liveUiState.isConnected) {
+                        { spec ->
+                            liveRoomViewModel.rollWith(spec)
+                            navController.popBackStack()
+                        }
+                    } else {
+                        null
+                    }
                 )
                 }
                 sheetUnavailable -> RouteEmptyState(
@@ -1510,8 +1519,14 @@ fun V20NavGraph(
                 },
                 onBack = { navController.popBackStack() },
                 onClearError = { liveRoomViewModel.clearError() },
-                onRollDice = { pool, difficulty ->
-                    liveRoomViewModel.rollDice(pool, difficulty)
+                onRollDice = { spec ->
+                    liveRoomViewModel.rollWith(spec)
+                },
+                onRequestRoll = { spec, targetId ->
+                    liveRoomViewModel.requestRoll(spec, targetId)
+                },
+                onAnswerRollRequest = { accept ->
+                    liveRoomViewModel.answerRollRequest(accept)
                 }
             )
         }

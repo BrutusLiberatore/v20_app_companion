@@ -37,7 +37,9 @@ data class LiveRoomState(
     val characterPortraits: Map<String, String> = emptyMap(),
     val tablePack: String = "medievale",
     val chairPack: String = "medievale",
-    val diceRolls: List<LiveRoomMessage.DiceRoll> = emptyList()
+    val diceRolls: List<LiveRoomMessage.DiceRoll> = emptyList(),
+    val rollLog: List<LiveRoomMessage.DiceRoll> = emptyList(),
+    val rollRequest: LiveRoomMessage.RollRequest? = null
 )
 
 @Serializable
@@ -80,7 +82,31 @@ sealed class LiveRoomMessage {
     data class StatUpdate(val characterId: String, val field: String, val intValue: Int? = null, val stringValue: String? = null) : LiveRoomMessage()
 
     @Serializable
-    data class DiceRoll(val characterId: String, val playerName: String, val pool: String, val result: String, val dice: List<Int> = emptyList(), val difficulty: Int = 6) : LiveRoomMessage()
+    data class DiceRoll(
+        val characterId: String,
+        val playerName: String,
+        val pool: String,
+        val result: String,
+        val dice: List<Int> = emptyList(),
+        val difficulty: Int = 6,
+        val label: String = "",
+        val isPrivate: Boolean = false,
+        val timestamp: Long = 0L
+    ) : LiveRoomMessage()
+
+    /** Master -> player roll request (Master Spec section 34). */
+    @Serializable
+    data class RollRequest(
+        val targetPlayerId: String = "",
+        val requesterName: String = "",
+        val pool: Int = 0,
+        val difficulty: Int = 6,
+        val diceModifier: Int = 0,
+        val willpowerUsed: Boolean = false,
+        val explodingTens: Boolean = false,
+        val reason: String = "",
+        val label: String = ""
+    ) : LiveRoomMessage()
 
     @Serializable
     data class PresentFile(val fileName: String, val mimeType: String, val base64Data: String) : LiveRoomMessage()
@@ -121,3 +147,14 @@ sealed class LiveRoomMessage {
     @Serializable
     data class PortraitData(val characterId: String, val base64Thumb: String) : LiveRoomMessage()
 }
+
+/** UI -> ViewModel roll specification (Master Spec sections 33/34). */
+data class RollSpec(
+    val pool: Int,
+    val difficulty: Int = 6,
+    val diceModifier: Int = 0,
+    val willpowerUsed: Boolean = false,
+    val explodingTens: Boolean = false,
+    val reason: String = "",
+    val isPrivate: Boolean = false
+)

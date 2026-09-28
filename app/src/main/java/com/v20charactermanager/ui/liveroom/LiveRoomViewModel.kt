@@ -200,6 +200,10 @@ class LiveRoomViewModel(
                 server?.broadcast(message, excludeId = clientId)
                 appendDiceRoll(message)
             }
+            is LiveRoomMessage.RollRequest -> {
+                // Only the Master originates requests; relay to everybody else
+                server?.broadcast(message, excludeId = clientId)
+            }
             is LiveRoomMessage.PortraitData -> {
                 // Server already cached + broadcast it; just refresh master's own view
                 viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
@@ -368,28 +372,110 @@ class LiveRoomViewModel(
         }
     }
 
-    fun rollDice(pool: Int, difficulty: Int) {
-        val result = com.v20charactermanager.domain.engine.DiceEngine.roll(pool, difficulty)
+    fun rollDice(pool: Int, difficulty: Int, isPrivate: Boolean = false, label: String = "") {
+        rollWith(
+            com.v20charactermanager.domain.model.RollSpec(
+                pool = pool,
+                difficulty = difficulty,
+                isPrivate = isPrivate,
+                reason = label
+            )
+        )
+    }
+
+    fun rollWith(spec: com.v20charactermanager.domain.model.RollSpec) {
+        val result = com.v20charactermanager.domain.engine.DiceEngine.roll(
+            pool = spec.pool,
+            difficulty = spec.difficulty,
+            diceModifier = spec.diceModifier,
+            willpowerUsed = spec.willpowerUsed,
+            explodingTens = spec.explodingTens
+        )
         val summary = when {
             result.isBotch -> application.getString(com.v20charactermanager.R.string.live_roll_result_botch)
             result.isSuccess -> application.getString(com.v20charactermanager.R.string.live_roll_result_successes, result.netSuccesses)
             else -> application.getString(com.v20charactermanager.R.string.live_roll_result_failure)
         }
         val state = _uiState.value
+        val privateRoll = spec.isPrivate && state.isMaster
+        val finalPool = (spec.pool + spec.diceModifier + if (spec.willpowerUsed) 1 else 0).coerceAtLeast(1)
         val roll = LiveRoomMessage.DiceRoll(
             characterId = state.localPlayer?.characterId ?: "",
             playerName = state.localPlayer?.name ?: state.room?.masterName ?: "Master",
-            pool = pool.toString(),
+            pool = finalPool.toString(),
             result = summary,
             dice = result.individualResults,
-            difficulty = difficulty
+            difficulty = spec.difficulty,
+            label = composeRollLabel(spec),
+            isPrivate = privateRoll,
+            timestamp = System.currentTimeMillis()
         )
+        // Local copy keeps full details (the Master sees his own private rolls)
         appendDiceRoll(roll)
-        if (state.isMaster) {
-            server?.broadcast(roll)
+        // Wire copy is redacted for private rolls: nobody else learns pool, dice or result
+        val outgoing = if (privateRoll) {
+            roll.copy(
+                dice = emptyList(),
+                pool = "",
+                label = "",
+                result = application.getString(com.v20charactermanager.R.string.live_roll_private_result)
+            )
         } else {
-            client?.sendMessage(roll)
+            roll
         }
+        if (state.isMaster) {
+            server?.broadcast(outgoing)
+        } else {
+            client?.sendMessage(outgoing)
+        }
+    }
+
+    private fun composeRollLabel(spec: com.v20charactermanager.domain.model.RollSpec): String {
+        val flags = mutableListOf<String>()
+        if (spec.diceModifier != 0) {
+            flags += if (spec.diceModifier > 0) "+${spec.diceModifier}" else spec.diceModifier.toString()
+        }
+        if (spec.willpowerUsed) flags += application.getString(com.v20charactermanager.R.string.dice_willpower)
+        if (spec.explodingTens) flags += application.getString(com.v20charactermanager.R.string.dice_exploding_tens)
+        val flagText = flags.joinToString(" · ")
+        return when {
+            spec.reason.isNotBlank() && flagText.isNotBlank() -> "${spec.reason} · $flagText"
+            else -> spec.reason.ifBlank { flagText }
+        }
+    }
+
+    /** Master: send a roll request to one player (or everyone when targetPlayerId is blank). */
+    fun requestRoll(spec: com.v20charactermanager.domain.model.RollSpec, targetPlayerId: String) {
+        val state = _uiState.value
+        if (!state.isMaster) return
+        val request = LiveRoomMessage.RollRequest(
+            targetPlayerId = targetPlayerId,
+            requesterName = state.localPlayer?.name ?: state.room?.masterName ?: "Master",
+            pool = spec.pool,
+            difficulty = spec.difficulty,
+            diceModifier = spec.diceModifier,
+            willpowerUsed = spec.willpowerUsed,
+            explodingTens = spec.explodingTens,
+            reason = spec.reason
+        )
+        server?.broadcast(request)
+    }
+
+    /** Player: execute (or decline) a roll request received from the Master. */
+    fun answerRollRequest(accept: Boolean) {
+        val request = _uiState.value.rollRequest ?: return
+        _uiState.update { it.copy(rollRequest = null) }
+        if (!accept) return
+        rollWith(
+            com.v20charactermanager.domain.model.RollSpec(
+                pool = request.pool,
+                difficulty = request.difficulty,
+                diceModifier = request.diceModifier,
+                willpowerUsed = request.willpowerUsed,
+                explodingTens = request.explodingTens,
+                reason = request.reason
+            )
+        )
     }
 
     // --- PLAYER (Client) ---
@@ -640,6 +726,12 @@ class LiveRoomViewModel(
             is LiveRoomMessage.DiceRoll -> {
                 appendDiceRoll(message)
             }
+            is LiveRoomMessage.RollRequest -> {
+                val localId = _uiState.value.localPlayer?.id
+                if (message.targetPlayerId.isBlank() || message.targetPlayerId == localId) {
+                    _uiState.update { it.copy(rollRequest = message) }
+                }
+            }
             is LiveRoomMessage.RoomClosed -> {
                 _uiState.update { state ->
                     state.copy(
@@ -650,6 +742,7 @@ class LiveRoomViewModel(
                         presentedFile = null,
                         isFileFullscreen = false,
                         connectionStatus = "",
+                        rollRequest = null,
                         error = application.getString(com.v20charactermanager.R.string.live_room_closed_by_master)
                     )
                 }
@@ -770,7 +863,12 @@ class LiveRoomViewModel(
     }
 
     private fun appendDiceRoll(roll: LiveRoomMessage.DiceRoll) {
-        _uiState.update { it.copy(diceRolls = (it.diceRolls + roll).takeLast(8)) }
+        _uiState.update {
+            it.copy(
+                diceRolls = (it.diceRolls + roll).takeLast(8),
+                rollLog = (it.rollLog + roll).takeLast(200)
+            )
+        }
     }
 
     private fun applyStatUpdate(message: LiveRoomMessage.StatUpdate) {

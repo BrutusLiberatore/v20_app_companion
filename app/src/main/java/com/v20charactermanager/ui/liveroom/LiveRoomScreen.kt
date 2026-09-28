@@ -19,6 +19,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -28,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -97,7 +100,9 @@ fun LiveRoomScreen(
     onOpenSheet: (String) -> Unit,
     onBack: () -> Unit,
     onClearError: () -> Unit,
-    onRollDice: (Int, Int) -> Unit,
+    onRollDice: (RollSpec) -> Unit,
+    onRequestRoll: (RollSpec, String) -> Unit = { _, _ -> },
+    onAnswerRollRequest: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var autoCreated by remember { mutableStateOf(false) }
@@ -239,6 +244,8 @@ fun LiveRoomScreen(
                     onDismissFile = onDismissFile,
                     onToggleFullscreen = onToggleFullscreen,
                     onRollDice = onRollDice,
+                    onRequestRoll = onRequestRoll,
+                    onAnswerRollRequest = onAnswerRollRequest,
                     onCloseRoom = onCloseRoom,
                     onTableStyleChange = onTableStyleChange,
                     onOpenSheet = onOpenSheet,
@@ -462,7 +469,9 @@ private fun VirtualTableView(
     onShareAsset: (String, String, String, List<String>) -> Unit,
     onDismissFile: () -> Unit,
     onToggleFullscreen: () -> Unit,
-    onRollDice: (Int, Int) -> Unit,
+    onRollDice: (RollSpec) -> Unit,
+    onRequestRoll: (RollSpec, String) -> Unit = { _, _ -> },
+    onAnswerRollRequest: (Boolean) -> Unit = {},
     onCloseRoom: () -> Unit = {},
     onTableStyleChange: (String, String) -> Unit = { _, _ -> },
     onOpenSheet: (String) -> Unit = {},
@@ -477,6 +486,8 @@ private fun VirtualTableView(
 
     var tableBoxSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     var showRollDialog by remember { mutableStateOf(false) }
+    var showLogDialog by remember { mutableStateOf(false) }
+    var feedCollapsed by rememberSaveable { mutableStateOf(false) }
     var diceAnimRoll by remember { mutableStateOf<LiveRoomMessage.DiceRoll?>(null) }
 
     LaunchedEffect(uiState.diceRolls.lastOrNull()) {
@@ -489,10 +500,33 @@ private fun VirtualTableView(
     if (showRollDialog) {
         DiceRollDialog(
             onDismiss = { showRollDialog = false },
-            onRoll = { pool, difficulty ->
+            showPrivateOption = uiState.isMaster,
+            players = uiState.connectedPlayers,
+            onRoll = { spec ->
                 showRollDialog = false
-                onRollDice(pool, difficulty)
-            }
+                onRollDice(spec)
+            },
+            onRequest = if (uiState.isMaster) ({ spec, targetId ->
+                showRollDialog = false
+                onRequestRoll(spec, targetId)
+            }) else null
+        )
+    }
+
+    if (!uiState.isMaster) {
+        uiState.rollRequest?.let { request ->
+            RollRequestDialog(
+                request = request,
+                onAccept = { onAnswerRollRequest(true) },
+                onDecline = { onAnswerRollRequest(false) }
+            )
+        }
+    }
+
+    if (showLogDialog) {
+        RollLogDialog(
+            log = uiState.rollLog,
+            onDismiss = { showLogDialog = false }
         )
     }
 
@@ -601,8 +635,26 @@ private fun VirtualTableView(
                 }
             }
 
-            // Recent dice rolls feed (all participants)
-            if (uiState.diceRolls.isNotEmpty()) {
+            // Roll results feed: can be reduced to a single icon and restored with a tap
+            if (feedCollapsed) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.Black.copy(alpha = 0.72f),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(4.dp)
+                        .clickable { feedCollapsed = false }
+                ) {
+                    Icon(
+                        Icons.Default.Casino,
+                        contentDescription = stringResource(R.string.live_feed_expand),
+                        tint = Gold,
+                        modifier = Modifier
+                            .padding(6.dp)
+                            .size(20.dp)
+                    )
+                }
+            } else {
                 Column(
                     modifier = Modifier
                         .align(Alignment.TopStart)
@@ -610,6 +662,57 @@ private fun VirtualTableView(
                         .widthIn(max = 240.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    if (uiState.isMaster || uiState.diceRolls.isNotEmpty()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            if (uiState.isMaster) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color.Black.copy(alpha = 0.72f),
+                                    modifier = Modifier
+                                        .weight(1f, fill = false)
+                                        .clickable { showLogDialog = true }
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Default.History,
+                                            contentDescription = stringResource(R.string.live_log_open),
+                                            tint = Gold,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = stringResource(R.string.live_log_title),
+                                            color = Gold,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                            if (uiState.diceRolls.isNotEmpty()) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color.Black.copy(alpha = 0.72f),
+                                    modifier = Modifier.clickable { feedCollapsed = true }
+                                ) {
+                                    Icon(
+                                        Icons.Default.ExpandLess,
+                                        contentDescription = stringResource(R.string.live_feed_minimize),
+                                        tint = Gold,
+                                        modifier = Modifier
+                                            .padding(6.dp)
+                                            .size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                     uiState.diceRolls.takeLast(5).asReversed().forEach { roll ->
                         DiceRollFeedItem(roll)
                     }
@@ -688,10 +791,32 @@ private fun VirtualTableView(
 @Composable
 private fun DiceRollDialog(
     onDismiss: () -> Unit,
-    onRoll: (Int, Int) -> Unit
+    showPrivateOption: Boolean = false,
+    players: List<ConnectedPlayer> = emptyList(),
+    onRoll: (RollSpec) -> Unit,
+    onRequest: ((RollSpec, String) -> Unit)? = null
 ) {
-    var pool by remember { mutableStateOf(4) }
-    var difficulty by remember { mutableStateOf(com.v20charactermanager.domain.definition.RuleSet.DIFFICULTY_STANDARD) }
+    var pool by remember { mutableIntStateOf(4) }
+    var difficulty by remember { mutableIntStateOf(com.v20charactermanager.domain.definition.RuleSet.DIFFICULTY_STANDARD) }
+    var diceModifier by remember { mutableIntStateOf(0) }
+    var willpowerUsed by remember { mutableStateOf(false) }
+    var explodingTens by remember { mutableStateOf(false) }
+    var privateRoll by remember { mutableStateOf(false) }
+    var reason by remember { mutableStateOf("") }
+    var targetPlayerId by remember { mutableStateOf("") }
+    var targetExpanded by remember { mutableStateOf(false) }
+
+    val spec = RollSpec(
+        pool = pool,
+        difficulty = difficulty,
+        diceModifier = diceModifier,
+        willpowerUsed = willpowerUsed,
+        explodingTens = explodingTens,
+        reason = reason.trim(),
+        isPrivate = privateRoll
+    )
+    val targetName = players.find { it.id == targetPlayerId }?.name
+        ?: stringResource(R.string.live_roll_target_all)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -702,7 +827,10 @@ private fun DiceRollDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 DicePickerRow(
                     label = stringResource(R.string.live_roll_pool),
                     value = pool,
@@ -717,10 +845,197 @@ private fun DiceRollDialog(
                     max = 10,
                     onChange = { difficulty = it }
                 )
+                DicePickerRow(
+                    label = stringResource(R.string.dice_modifier),
+                    value = diceModifier,
+                    min = -5,
+                    max = 10,
+                    onChange = { diceModifier = it }
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { willpowerUsed = !willpowerUsed }
+                ) {
+                    Checkbox(checked = willpowerUsed, onCheckedChange = { willpowerUsed = it })
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = stringResource(R.string.dice_willpower),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { explodingTens = !explodingTens }
+                ) {
+                    Checkbox(checked = explodingTens, onCheckedChange = { explodingTens = it })
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = stringResource(R.string.dice_exploding_tens),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                if (showPrivateOption) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { privateRoll = !privateRoll }
+                    ) {
+                        Checkbox(checked = privateRoll, onCheckedChange = { privateRoll = it })
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.live_roll_private_option),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+                OutlinedTextField(
+                    value = reason,
+                    onValueChange = { reason = it },
+                    label = { Text(stringResource(R.string.dice_modifier_reason)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (onRequest != null) {
+                    Box {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { targetExpanded = true }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.live_roll_target),
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = targetName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Icon(
+                                Icons.Default.ExpandMore,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = targetExpanded,
+                            onDismissRequest = { targetExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.live_roll_target_all)) },
+                                onClick = {
+                                    targetPlayerId = ""
+                                    targetExpanded = false
+                                }
+                            )
+                            players.forEach { player ->
+                                DropdownMenuItem(
+                                    text = { Text(player.name) },
+                                    onClick = {
+                                        targetPlayerId = player.id
+                                        targetExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onRoll(pool, difficulty) }) {
+            Row {
+                TextButton(onClick = { onRoll(spec) }) {
+                    Text(
+                        text = stringResource(R.string.dashboard_roll_dice),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                if (onRequest != null) {
+                    TextButton(onClick = { onRequest(spec, targetPlayerId) }) {
+                        Text(
+                            text = stringResource(R.string.live_roll_request),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun RollRequestDialog(
+    request: LiveRoomMessage.RollRequest,
+    onAccept: () -> Unit,
+    onDecline: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDecline,
+        title = {
+            Text(
+                text = stringResource(R.string.live_roll_request_title, request.requesterName),
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "${stringResource(R.string.live_roll_pool)}: ${request.pool}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "${stringResource(R.string.live_roll_difficulty)}: ${request.difficulty}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                if (request.diceModifier != 0) {
+                    val mod = request.diceModifier
+                    Text(
+                        text = "${stringResource(R.string.dice_modifier)}: " +
+                            (if (mod > 0) "+$mod" else mod.toString()),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                if (request.willpowerUsed) {
+                    Text(
+                        text = stringResource(R.string.dice_willpower),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                if (request.explodingTens) {
+                    Text(
+                        text = stringResource(R.string.dice_exploding_tens),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                if (request.reason.isNotBlank()) {
+                    Text(
+                        text = stringResource(R.string.live_roll_request_reason, request.reason),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onAccept) {
                 Text(
                     text = stringResource(R.string.dashboard_roll_dice),
                     fontWeight = FontWeight.Bold
@@ -728,7 +1043,7 @@ private fun DiceRollDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDecline) {
                 Text(stringResource(R.string.action_cancel))
             }
         }
@@ -772,10 +1087,12 @@ private fun DicePickerRow(
 
 @Composable
 private fun DiceRollFeedItem(roll: LiveRoomMessage.DiceRoll) {
+    val redacted = roll.isPrivate && roll.dice.isEmpty()
     val successes = roll.dice.count { it >= roll.difficulty }
     val ones = roll.dice.count { it == 1 }
     val net = successes - ones
     val resultColor = when {
+        redacted -> Gold
         net <= 0 && ones > 0 -> Color(0xFFCF6679)
         net > 0 -> Color(0xFF4CAF50)
         else -> Color.White.copy(alpha = 0.7f)
@@ -787,16 +1104,162 @@ private fun DiceRollFeedItem(roll: LiveRoomMessage.DiceRoll) {
     ) {
         Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
             Text(
-                text = "${roll.playerName} · ${roll.pool}d10",
+                text = if (redacted) {
+                    "${roll.playerName} · ${stringResource(R.string.live_roll_private_badge)}"
+                } else {
+                    "${roll.playerName} · ${roll.pool}d10"
+                },
                 color = Gold,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            if (roll.label.isNotBlank()) {
+                Text(
+                    text = roll.label,
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             if (roll.dice.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                     roll.dice.take(15).forEach { die ->
+                        Text(
+                            text = die.toString(),
+                            color = when {
+                                die == 1 -> Color(0xFFCF6679)
+                                die >= roll.difficulty -> Color(0xFF4CAF50)
+                                else -> Color.White.copy(alpha = 0.8f)
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            Text(
+                text = roll.result,
+                color = resultColor,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun RollLogDialog(
+    log: List<LiveRoomMessage.DiceRoll>,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.live_log_title),
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            if (log.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.live_log_empty),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 440.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(log.asReversed()) { roll ->
+                        RollLogRow(roll)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_close))
+            }
+        }
+    )
+}
+
+@Composable
+private fun RollLogRow(roll: LiveRoomMessage.DiceRoll) {
+    val time = remember(roll.timestamp) {
+        if (roll.timestamp > 0) {
+            java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+                .format(java.util.Date(roll.timestamp))
+        } else {
+            ""
+        }
+    }
+    val redacted = roll.isPrivate && roll.dice.isEmpty()
+    val successes = roll.dice.count { it >= roll.difficulty }
+    val ones = roll.dice.count { it == 1 }
+    val net = successes - ones
+    val resultColor = when {
+        redacted -> Gold
+        net <= 0 && ones > 0 -> Color(0xFFCF6679)
+        net > 0 -> Color(0xFF4CAF50)
+        else -> Color.White.copy(alpha = 0.7f)
+    }
+
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = Color.Black.copy(alpha = 0.6f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (time.isNotEmpty()) {
+                    Text(
+                        text = time,
+                        color = Gold,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
+                Text(
+                    text = roll.playerName,
+                    color = Gold,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (roll.isPrivate) {
+                    Text(
+                        text = "· ${stringResource(R.string.live_roll_private_badge)}",
+                        color = Gold,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            if (roll.label.isNotBlank()) {
+                Text(
+                    text = roll.label,
+                    color = Color.White.copy(alpha = 0.9f),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            if (roll.pool.isNotBlank()) {
+                Text(
+                    text = "${roll.pool}d10 · ${stringResource(R.string.live_roll_difficulty)} ${roll.difficulty}",
+                    color = Color.White.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            if (roll.dice.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    roll.dice.take(30).forEach { die ->
                         Text(
                             text = die.toString(),
                             color = when {
