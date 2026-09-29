@@ -1,210 +1,130 @@
 # V20 Character Manager
 
-A companion application for Vampire: The Masquerade 20th Anniversary Edition, designed for both players and storytellers. Built as a native Android application with offline-first architecture, it manages character sheets, chronicle data, and provides a dedicated storyteller workspace with live session tools.
-
----
-
-## Architecture
-
-The application follows a layered architecture with clear separation of concerns:
-
-```
-UI Layer (Jetpack Compose)
-    |
-Domain Layer (Models, Repository Interfaces, Engine)
-    |
-Data Layer (Room DAOs, Entity Mappers, File Managers)
-```
-
-- **Domain layer** contains pure Kotlin models with no Android dependencies, making them testable and portable
-- **Data layer** uses Room for persistence with manual dependency injection via `AppContainer`
-- **UI layer** is built entirely with Jetpack Compose, no XML layouts
-
-All user edits persist immediately to the Room database. There is no "save" button for character data -- every change writes through to storage on first modification.
+A native Android companion app for *Vampire: The Masquerade 20th Anniversary Edition*, for both players and the Storyteller. It manages characters, chronicles, and live tabletop sessions with an offline-first architecture: no account, no server, no data collection. The interface is fully bilingual (Italian and English).
 
 ---
 
 ## Features
 
-### Character Management
+### Characters
 
-Full V20 character sheet support across seven tabs: Identity, Attributes, Abilities, Advantages, Morality, Resources/Equipment, and Notes. Includes:
-
-- 5-step character creation wizard (Identity, Attributes, Abilities, Advantages, Final Touches)
-- Attribute presets (7/5/3 distribution: Combat, Stealth, Social)
-- Ability presets (13/9/5 distribution)
+- Five-step creation wizard (Identity, Attributes, Abilities, Advantages, Final Touches) with V20 rules validation
+- Thirteen clans with starting disciplines and backgrounds
 - Sect-aware creation paths (Camarilla, Anarch, Independent, Sabbat, Caitiff/Pander)
-- Character randomizer (random name, attribute allocation, ability allocation)
-- Portrait system with gallery/camera import and internal storage
-- Character duplication
-- Import/Export in `.v20` JSON format with duplicate detection
+- Attribute presets (7/5/3) and ability presets (13/9/5), plus a full randomizer
+- Character sheet in eight reorderable sections: Overview, Attributes, Abilities, Advantages, Details, Merits & Flaws, Equipment, Notes
+- Portrait import from gallery or camera, character duplication
+- Import/export in `.v20` JSON format with duplicate detection
 
-### Chronicle System
+### Chronicle
 
-A dedicated chronicle management system separate from individual character files:
-
-- Chronicle CRUD with name, setting, and theme
-- Character membership with role assignment (Player Character, Storyteller, Retired)
-- Session management with numbered sessions, status tracking (Planned, Active, Completed), and lifecycle events
-- Plot arcs, secrets, clues, events, factions, locations
-- Relationships and boons tracking
+- Chronicles with characters, roles, sessions, XP, factions, locations, relationships and boons
+- Plot arcs, secrets, clues, events, and session lifecycle tracking
+- Scenes with variants (default variant selectable per scene)
+- Media library: images, PDF documents, video, with categories and tags
+- Notes with `@` autocomplete cross-references to any chronicle entity (PCs, NPCs, locations, secrets, sessions, and so on)
 
 ### Storyteller Workspace
 
-A mobile-first storyteller interface organized around a six-tab bottom navigation:
+Six-tab mobile interface:
 
-**Live** -- Active session dashboard with real-time controls:
-- Session status display with start/end controls
-- Active scene card with participant tracking
-- Character quick cards with inline Blood Pool and Willpower +/- controls
-- Quick action bar for dice, notes, and event logging
-- Scene deck bottom sheet for scene switching
+- **Live**: active session dashboard, scene deck, character quick cards with blood pool and willpower controls, quick action bar with Quick NPC
+- **People**: player characters and NPCs, NPC creation with optional link to a full sheet
+- **Plots**: plot arcs, notes, scenes with hooks
+- **Visual**: media library and annotation board
+- **Audio**: multi-track audio mixer (ambience, music, SFX, custom) with presets
+- **More**: dice roller, locations, factions, sessions, secrets, clues
 
-**People** -- Character and NPC management:
-- Player character list with quick-view cards
-- NPC creation with optional PG linking (promote NPC to full character sheet)
-- NPC detail sheet with editable role, description, and narrator notes
+### Live Table
 
-**Plots** -- Narrative management:
-- Plot arc cards
-- Full note CRUD with `@` autocomplete cross-referencing (see LinkedTextEditor below)
-- Scene list with hooks
+The Storyteller creates a room; players join and pick a character. Three connection modes:
 
-**Visual** -- Media library (navigates to full Media Library screen):
-- Image import with automatic thumbnail generation (JPEG, PNG, GIF, WebP, SVG)
-- PDF/document import with built-in viewer and presentation mode
-- Video import with thumbnail generation and ExoPlayer playback
-- Category filtering (Maps, NPC, Locations, Clues, Documents)
-- Tag system for organizing media assets
+| Mode | Requirements |
+|------|--------------|
+| LAN discovery | Both devices on the same Wi-Fi network |
+| WiFi Direct | No router needed; proximity and permission only |
+| Manual | Enter IP and port (default port 39641) |
 
-**Audio** -- Audio mix board for live session soundscapes:
-- Multi-track layered playback (multiple sounds simultaneously)
-- Per-track volume, loop, play/pause controls
-- Audio categories: Ambience, Music, SFX, Custom
-- Audio presets: save current mix as named preset, one-tap activation
-- Import MP3, WAV, OGG, FLAC, AAC, M4A
+During a live session:
 
-**More** -- Utility section:
-- Dice roller
-- Locations with image attachment
-- Factions, Sessions (full CRUD), Secrets, Clues
+- Real-time stat sync (blood pool, willpower) between master and players
+- Dice with a 3D renderer, roll log, private rolls, roll requests from the Storyteller, and modifiers
+- Dice engine: dice pools, difficulty, attribute-ability pairing, botch detection, willpower and blood expenditure, specialties, automatic successes
+- House rules applied to dice, XP, and creation (exploding tens, XP costs, chronicle freebies, content filters)
+- Reveal handouts (clues and secrets) to selected players
+- Targeted file sharing and full-screen asset presentation
+- Voluntary character sheet push to the Storyteller, who can save it into the chronicle
+- Scene deck and audio mixer usable from the table
 
-### LinkedTextEditor
+### Visual Board
 
-A custom composable that adds `@` autocomplete to any note field. Typing `@` followed by a category keyword triggers a popup menu showing matching chronicle entities:
+Layered annotation over maps and images: pen, highlighter, line, arrow, circle, rectangle, text, pin, and eraser tools; layer create/rename/delete/reorder; pins linked to chronicle entities (locations, NPCs, events, secrets, clues); snapshot revision history with restore; presentation mode that hides editor tools.
 
-| Italiano | English | Category |
-|----------|---------|----------|
-| `@PG` | `@PC` | Player Characters |
-| `@NPC` | `@NPC` | NPCs |
-| `@LUOGHI` | `@LOC` | Locations |
-| `@MAPPE` | `@MAP` | Maps |
-| `@SEGRETI` | `@SECRET` | Secrets |
-| `@INDIZI` | `@CLUE` | Clues |
-| `@NOTE` | `@NOTE` | Notes |
-| `@SESSIONI` | `@SESSION` | Sessions |
-| `@FAZIONI` | `@FACTION` | Factions |
-| `@EVENTI` | `@EVENT` | Events |
-| `@SCENE` | `@SCENE` | Scenes |
-| `@OGGETTI` | `@ITEM` | Items |
+### Media Viewers
 
-Selecting an item inserts a `[TYPE:ID:Name]` reference that renders as a clickable chip in read mode. The system supports both Italian and English keywords. Typing `@` alone shows all available entities.
+- PDF viewer with lazy page rendering, page slider, zoom, and fullscreen presentation
+- Video player (ExoPlayer) with loop and fullscreen controls
+- Audio mixer with multi-track playback, per-track volume and loop, presets, and import of MP3, WAV, OGG, FLAC, AAC, M4A
 
-### Visual Board & Annotation System
+### Tools
 
-A layered image annotation system for maps, location plans, and visual references:
-
-- **Canvas tools**: Pen, highlighter, line, arrow, circle, rectangle, text, pin, eraser
-- **Layer system**: Create, rename, delete, toggle visibility, reorder layers
-- **Pin types**: Location, NPC, Event, Secret, Clue -- each linkable to chronicle entities
-- **Revision history**: Snapshot-based versioning with restore capability
-- **Presentation mode**: Fullscreen display with GM tools hidden, public layers only
-- **Image management**: Rename, category filtering, internal storage with 1920px max resolution
-
-### PDF Viewer & Presentation
-
-Built-in PDF viewer with:
-- Page-by-page lazy rendering (shows first page instantly)
-- Fast page navigation via slider
-- Last page memory (per PDF, saved in SharedPreferences)
-- Fullscreen presentation mode with rotation support
-- Pinch-to-zoom with double-tap toggle
-
-### Video Player
-
-Video playback with:
-- ExoPlayer-based player with Material 3 UI
-- Automatic loop by default (toggle on/off)
-- Fullscreen with system controls
-- MP4, WebM, 3GPP, AVI, MOV support
-
-### Dice Engine
-
-V20 tabletop dice roller supporting:
-- Standard rolls with custom dice count and difficulty
-- Attribute-ability pairing with correct V20 defaults (e.g., Athletics→Dexterity, Investigation→Perception)
-- Botch detection
-- Willpower and blood expenditure dice
-- Specialty and automatic success rules
-
-### Equipment Library
-
-Import/export system for equipment libraries in a structured JSON format, mergeable into character equipment lists.
-
-### Bilingual Support
-
-Full Italian and English localization (~600+ strings). Language can be switched at runtime from Settings.
+- Equipment library import/export in structured JSON
+- Localisation: 950 strings in Italian and English, switchable at runtime
 
 ---
 
-## Technical Details
+## Installation
 
-| Component | Technology |
-|-----------|-----------|
-| Language | Kotlin 2.0.0 |
-| UI | Jetpack Compose with Material 3 |
-| Database | Room (currently v11, 10 migrations) |
-| DI | Manual via `AppContainer` |
-| Images | Coil 2.6.0 (JPEG, PNG, GIF, WebP, SVG) |
-| PDF | Android `PdfRenderer` (built-in) |
-| Video | Media3 ExoPlayer 1.4.1 |
-| Audio | Android `MediaPlayer` (multi-track) |
-| Serialization | `kotlinx.serialization` |
-| Min SDK | 26 (Android 8.0) |
-| Target SDK | 34 |
-| Build | Gradle 8.5.0, AGP 8.5.0 |
+Download `app-debug.apk` from the [Releases](https://github.com/BrutusLiberatore/v20_app_companion/releases) page, open it, and allow installation from unknown sources when prompted.
 
-### Database
-
-Room database with 17+ entities covering characters, chronicles, sessions, scenes, NPCs, locations, factions, relationships, plot arcs, secrets, clues, events, media assets, annotations, layers, revisions, quick notes, session events, audio tracks, and audio presets.
-
-Migrations are versioned and tested. A `fallbackToDestructiveMigration` is configured as a safety net.
+The current build is signed with the debug key. It installs and updates normally from the same machine.
 
 ---
 
 ## Building
 
 Prerequisites:
-- JDK 21
+
+- JDK 17 or 21
 - Android SDK with compileSdk 34
-- Gradle 8.5+
+- Gradle 8.9 (wrapper included)
 
 ```bash
-cd V20CharacterManager
-./gradlew assembleDebug
+gradlew assembleDebug
 ```
 
-The debug APK will be at `app/build/outputs/apk/debug/app-debug.apk`.
+The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 
 ---
 
 ## Testing
 
 ```bash
-./gradlew test
+gradlew test
 ```
 
-Test coverage includes character CRUD, import/export engine, dice engine, database migrations, and repository operations.
+The suite contains 256 unit tests covering character CRUD, import/export, the dice engine, migrations, repositories, live room messages, and scene variants.
+
+---
+
+## Technology
+
+| Component | Technology |
+|-----------|-----------|
+| Language | Kotlin 2.0.0 |
+| UI | Jetpack Compose, Material 3 |
+| Database | Room v13, 12 migrations, 27 entities |
+| Dependency injection | Manual, via `AppContainer` |
+| Images | Coil 2.6.0 |
+| PDF | Android `PdfRenderer` |
+| Video | Media3 ExoPlayer 1.4.1 |
+| Networking (live table) | Raw TCP/UDP sockets, WiFi Direct |
+| Serialization | `kotlinx.serialization` |
+| Min SDK | 26 (Android 8.0) |
+| Target SDK | 34 |
+| Build | Gradle 8.9, AGP 8.5.0 |
+
+Every character edit is written to the database on first modification; there is no separate save step. Migrations are versioned, with destructive migration configured only as a last-resort fallback.
 
 ---
 
@@ -215,30 +135,53 @@ app/src/main/java/com/v20charactermanager/
   data/
     di/AppContainer.kt              -- Manual dependency injection
     local/
-      V20Database.kt                -- Room database + migrations
+      V20Database.kt                -- Room database and migrations
       ChronicleImageManager.kt      -- Image storage and thumbnails
-      dao/                          -- 17+ Room DAOs
-      entity/                       -- 17+ Room entities
-    repository/                     -- Repository implementations + mappers
+      dao/                          -- Room DAOs
+      entity/                       -- Room entities
+    network/
+      LiveRoomServer.kt             -- TCP server for the live table (port 39641)
+      LiveRoomClient.kt             -- TCP client
+      TableDiscoveryManager.kt      -- LAN discovery (UDP broadcast)
+      WifiDirectManager.kt          -- WiFi Direct group and peer discovery
+    repository/                     -- Repository implementations and mappers
   domain/
     definition/                     -- AbilityId, AttributeId, RuleSet enums
-    engine/                         -- DiceEngine, DicePoolBuilder, Import/Export engines
+    engine/                         -- DiceEngine, DicePoolBuilder, import/export engines
     model/                          -- Pure Kotlin domain models
     repository/                     -- Repository interfaces
   ui/
-    chronicle/                      -- Chronicle + Storyteller screens
+    chronicle/                      -- Chronicle and Storyteller screens
     compendium/                     -- V20 rules reference
     creation/                       -- Character creation wizard
     io/                             -- Import/export UI
+    liveroom/                       -- Live table screens, dice renderer, discovery
     navigation/NavGraph.kt          -- Single navigation graph
     settings/                       -- App settings
-    sheet/                          -- Character sheet tabs
+    sheet/                          -- Character sheet sections
     components/                     -- Shared UI components
-  util/                             -- Helpers (locale, etc.)
+  util/                             -- Helpers (locale, and others)
+
+app/src/test/                       -- JVM unit tests (256)
 ```
 
 ---
 
-## License
+## Documentation
 
-This application is a fan-made companion tool for Vampire: The Masquerade. Vampire: The Masquerade and all related properties are trademarks of Paradox Interactive AB.
+- `FUNZIONI_APPLICAZIONE.md` — function-by-function guide to the application (Italian)
+- `V20_AGENT_MASTER_SPEC_v2.1.md` — master specification
+- `V20_Agent_Addendum_Session_Manager_Adaptive_UX_VisualBoard_v1.0.md` — session manager and visual board addendum
+- `V20_Clan_Data_Character_Creator_IT.md` — clan data and creation rules
+
+---
+
+## Credits
+
+The 3D dice use the model set "Low Poly 3D Dice Set" by [eddex](https://eddex.itch.io/low-poly-3d-dice-set-game-assets), licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Face textures are baked from the original UV texture.
+
+---
+
+## Disclaimer
+
+This is an unofficial, fan-made companion tool. *Vampire: The Masquerade* and all related properties are trademarks of Paradox Interactive AB. This project is not affiliated with or endorsed by Paradox Interactive.
