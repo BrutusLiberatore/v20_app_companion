@@ -62,7 +62,9 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.compose.ui.viewinterop.AndroidView
 import com.v20charactermanager.R
+import com.v20charactermanager.domain.definition.DamageType
 import com.v20charactermanager.domain.model.*
+import com.v20charactermanager.ui.components.QuickStatusPanel
 import java.io.File
 import kotlin.math.cos
 import kotlin.math.min
@@ -113,6 +115,15 @@ fun LiveRoomScreen(
     onCombatEnd: () -> Unit = {},
     onCombatToggleReroll: (Boolean) -> Unit = { _ -> },
     onRollInitiative: () -> Unit = {},
+    localCharacter: Character? = null,
+    sharedCharacters: Map<String, Character> = emptyMap(),
+    onStatusSpendBlood: () -> Unit = {},
+    onStatusRefillBlood: () -> Unit = {},
+    onStatusSpendWillpower: () -> Unit = {},
+    onStatusRecoverWillpower: () -> Unit = {},
+    onStatusApplyDamage: (Int, DamageType) -> Unit = { _, _ -> },
+    onStatusHealDamage: (Int) -> Unit = {},
+    onMasterStatusEdit: (String, String, Int?, String?) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     var autoCreated by remember { mutableStateOf(false) }
@@ -266,6 +277,15 @@ fun LiveRoomScreen(
                     onCombatEnd = onCombatEnd,
                     onCombatToggleReroll = onCombatToggleReroll,
                     onRollInitiative = onRollInitiative,
+                    localCharacter = localCharacter,
+                    sharedCharacters = sharedCharacters,
+                    onStatusSpendBlood = onStatusSpendBlood,
+                    onStatusRefillBlood = onStatusRefillBlood,
+                    onStatusSpendWillpower = onStatusSpendWillpower,
+                    onStatusRecoverWillpower = onStatusRecoverWillpower,
+                    onStatusApplyDamage = onStatusApplyDamage,
+                    onStatusHealDamage = onStatusHealDamage,
+                    onMasterStatusEdit = onMasterStatusEdit,
                     onCloseRoom = onCloseRoom,
                     onTableStyleChange = onTableStyleChange,
                     onOpenSheet = onOpenSheet,
@@ -502,6 +522,15 @@ private fun VirtualTableView(
     onCombatEnd: () -> Unit = {},
     onCombatToggleReroll: (Boolean) -> Unit = { _ -> },
     onRollInitiative: () -> Unit = {},
+    localCharacter: Character? = null,
+    sharedCharacters: Map<String, Character> = emptyMap(),
+    onStatusSpendBlood: () -> Unit = {},
+    onStatusRefillBlood: () -> Unit = {},
+    onStatusSpendWillpower: () -> Unit = {},
+    onStatusRecoverWillpower: () -> Unit = {},
+    onStatusApplyDamage: (Int, DamageType) -> Unit = { _, _ -> },
+    onStatusHealDamage: (Int) -> Unit = {},
+    onMasterStatusEdit: (String, String, Int?, String?) -> Unit = { _, _, _, _ -> },
     onCloseRoom: () -> Unit = {},
     onTableStyleChange: (String, String) -> Unit = { _, _ -> },
     onOpenSheet: (String) -> Unit = {},
@@ -518,6 +547,7 @@ private fun VirtualTableView(
     var showRollDialog by remember { mutableStateOf(false) }
     var showCombatDialog by remember { mutableStateOf(false) }
     var showRevealDialog by remember { mutableStateOf(false) }
+    var showPlayersDialog by remember { mutableStateOf(false) }
     val revealContext = LocalContext.current
     var revealMode by remember {
         mutableStateOf(com.v20charactermanager.ui.dice.DiceRevealPrefs.load(revealContext))
@@ -621,6 +651,15 @@ private fun VirtualTableView(
                     Text(stringResource(R.string.action_close))
                 }
             }
+        )
+    }
+
+    if (showPlayersDialog) {
+        PlayersStatusDialog(
+            players = uiState.connectedPlayers,
+            sharedCharacters = sharedCharacters,
+            onStatusEdit = onMasterStatusEdit,
+            onDismiss = { showPlayersDialog = false }
         )
     }
 
@@ -905,18 +944,124 @@ private fun VirtualTableView(
                     onTableStyleChange = onTableStyleChange,
                     onRollClick = { showRollDialog = true },
                     onOpenCombat = { showCombatDialog = true },
-                    onOpenRevealSettings = { showRevealDialog = true }
+                    onOpenRevealSettings = { showRevealDialog = true },
+                    onOpenPlayersStatus = { showPlayersDialog = true }
                 )
             } else {
                 PlayerBottomPanel(
                     uiState = uiState,
+                    localCharacter = localCharacter,
                     onToggleFullscreen = onToggleFullscreen,
                     onRollClick = { showRollDialog = true },
-                    onRollInitiative = onRollInitiative
+                    onRollInitiative = onRollInitiative,
+                    onSpendBlood = onStatusSpendBlood,
+                    onRefillBlood = onStatusRefillBlood,
+                    onSpendWillpower = onStatusSpendWillpower,
+                    onRecoverWillpower = onStatusRecoverWillpower,
+                    onApplyDamage = onStatusApplyDamage,
+                    onHealDamage = onStatusHealDamage
                 )
             }
         }
     }
+}
+
+@Composable
+private fun PlayersStatusDialog(
+    players: List<ConnectedPlayer>,
+    sharedCharacters: Map<String, Character>,
+    onStatusEdit: (String, String, Int?, String?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.status_players_title),
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                if (players.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.status_no_players),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                players.forEach { player ->
+                    val char = player.characterId?.let { sharedCharacters[it] }
+                    if (char == null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = player.name, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = stringResource(R.string.status_no_character),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = char.identity.name.ifEmpty { player.name },
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        QuickStatusPanel(
+                            character = char,
+                            onSpendBlood = {
+                                onStatusEdit(
+                                    char.id, "blood",
+                                    (char.bloodPool.current - 1).coerceIn(0, char.bloodPool.maximum),
+                                    null
+                                )
+                            },
+                            onRefillBlood = {
+                                onStatusEdit(
+                                    char.id, "blood",
+                                    (char.bloodPool.current + 1).coerceIn(0, char.bloodPool.maximum),
+                                    null
+                                )
+                            },
+                            onSpendWillpower = {
+                                onStatusEdit(
+                                    char.id, "willpower",
+                                    (char.willpower.current - 1).coerceIn(0, char.willpower.permanent),
+                                    null
+                                )
+                            },
+                            onRecoverWillpower = {
+                                onStatusEdit(
+                                    char.id, "willpower",
+                                    (char.willpower.current + 1).coerceIn(0, char.willpower.permanent),
+                                    null
+                                )
+                            },
+                            onCycleHealth = { index, type ->
+                                if (type == DamageType.NONE) {
+                                    onStatusEdit(char.id, "health", null, "$index:HEAL")
+                                } else {
+                                    onStatusEdit(char.id, "health", null, "$index:${type.name}")
+                                }
+                            }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_close))
+            }
+        }
+    )
 }
 
 @Composable
@@ -1596,6 +1741,7 @@ private fun MasterBottomPanel(
     onRollClick: () -> Unit = {},
     onOpenCombat: () -> Unit = {},
     onOpenRevealSettings: () -> Unit = {},
+    onOpenPlayersStatus: () -> Unit = {},
     onRevealClue: ((Clue) -> Unit)? = null,
     onRevealSecret: ((Secret) -> Unit)? = null
 ) {
@@ -1667,6 +1813,11 @@ private fun MasterBottomPanel(
                         text = { Text(stringResource(R.string.dice_reveal_title)) },
                         leadingIcon = { Icon(Icons.Default.Visibility, contentDescription = null) },
                         onClick = { showMenu = false; onOpenRevealSettings() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.status_players_title)) },
+                        leadingIcon = { Icon(Icons.Default.Favorite, contentDescription = null) },
+                        onClick = { showMenu = false; onOpenPlayersStatus() }
                     )
                     DropdownMenuItem(
                         text = {
@@ -2690,11 +2841,19 @@ private fun SimpleListItem(
 @Composable
 private fun PlayerBottomPanel(
     uiState: LiveRoomState,
+    localCharacter: Character? = null,
     onToggleFullscreen: () -> Unit,
     onRollClick: () -> Unit = {},
-    onRollInitiative: () -> Unit = {}
+    onRollInitiative: () -> Unit = {},
+    onSpendBlood: () -> Unit = {},
+    onRefillBlood: () -> Unit = {},
+    onSpendWillpower: () -> Unit = {},
+    onRecoverWillpower: () -> Unit = {},
+    onApplyDamage: (Int, DamageType) -> Unit = { _, _ -> },
+    onHealDamage: (Int) -> Unit = {}
 ) {
     var showCombat by remember { mutableStateOf(false) }
+    var showStatus by remember { mutableStateOf(false) }
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
@@ -2730,6 +2889,43 @@ private fun PlayerBottomPanel(
                 color = Color(0xFF1A1A2E),
                 fontWeight = FontWeight.Bold
             )
+        }
+
+        if (localCharacter != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { showStatus = true },
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF37474F))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = Color(0xFFCF6679),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.status_title),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    val healthy = localCharacter.health.levels.count { it == DamageType.NONE }
+                    Text(
+                        text = "${localCharacter.bloodPool.current}/${localCharacter.bloodPool.maximum}" +
+                            " · ${localCharacter.willpower.current}/${localCharacter.willpower.permanent}" +
+                            " · $healthy/7",
+                        color = Gold,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
         }
 
         if (uiState.combat.active) {
@@ -2802,6 +2998,38 @@ private fun PlayerBottomPanel(
                 },
                 confirmButton = {
                     TextButton(onClick = { showCombat = false }) {
+                        Text(stringResource(R.string.action_close))
+                    }
+                }
+            )
+        }
+
+        if (showStatus && localCharacter != null) {
+            AlertDialog(
+                onDismissRequest = { showStatus = false },
+                title = {
+                    Text(
+                        text = stringResource(R.string.status_title),
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        QuickStatusPanel(
+                            character = localCharacter,
+                            onSpendBlood = onSpendBlood,
+                            onRefillBlood = onRefillBlood,
+                            onSpendWillpower = onSpendWillpower,
+                            onRecoverWillpower = onRecoverWillpower,
+                            onCycleHealth = { index, type ->
+                                if (type == DamageType.NONE) onHealDamage(index)
+                                else onApplyDamage(index, type)
+                            }
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showStatus = false }) {
                         Text(stringResource(R.string.action_close))
                     }
                 }

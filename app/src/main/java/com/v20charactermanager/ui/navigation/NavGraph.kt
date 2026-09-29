@@ -69,6 +69,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.v20charactermanager.R
 import com.v20charactermanager.data.di.AppContainer
+import com.v20charactermanager.domain.definition.DamageType
 import com.v20charactermanager.domain.model.LiveRoomState
 import com.v20charactermanager.util.LocaleHelper
 import com.v20charactermanager.domain.model.CharacterRandomizer
@@ -399,6 +400,11 @@ fun V20NavGraph(
             val uiState by editViewModel.uiState.collectAsState()
             val sharedCharacters by liveRoomViewModel.sharedCharacters.collectAsState()
             val liveUiState by liveRoomViewModel.uiState.collectAsState()
+
+            editViewModel.onStatSync = { field, intValue, stringValue ->
+                liveRoomViewModel.sendStatUpdate(characterId, field, intValue, stringValue)
+            }
+
             var sheetUnavailable by remember { mutableStateOf(false) }
 
             LaunchedEffect(characterId) {
@@ -499,6 +505,16 @@ fun V20NavGraph(
                     },
                     onNavigateToXpSpending = {
                         if (isLocalChar) navController.navigate(Routes.xpSpending(characterId))
+                    },
+                    onSpendBlood = { if (isLocalChar) editViewModel.spendBlood() },
+                    onRefillBlood = { if (isLocalChar) editViewModel.refillBlood() },
+                    onSpendWillpower = { if (isLocalChar) editViewModel.spendWillpower() },
+                    onRecoverWillpower = { if (isLocalChar) editViewModel.recoverWillpower() },
+                    onCycleHealth = { index, type ->
+                        if (isLocalChar) {
+                            if (type == DamageType.NONE) editViewModel.healDamage(index)
+                            else editViewModel.applyDamage(index, type)
+                        }
                     },
                     saveSuccess = isLocalChar && uiState.successMessage != null,
                     saveError = if (isLocalChar) uiState.error else null,
@@ -1521,6 +1537,8 @@ fun V20NavGraph(
             val autoCharacterId = backStackEntry.arguments?.getString("characterId") ?: ""
             
             val liveRoomState by liveRoomViewModel.uiState.collectAsState()
+            val liveLocalCharacter by liveRoomViewModel.localCharacter.collectAsState()
+            val liveSharedCharacters by liveRoomViewModel.sharedCharacters.collectAsState()
 
             // WiFi Direct (master): createGroup requires the nearby/position permission at runtime.
             // If denied, the room still starts as LAN-only (WifiDirectManager falls back gracefully).
@@ -1640,7 +1658,18 @@ fun V20NavGraph(
                 onCombatAdvance = { liveRoomViewModel.advanceCombatTurn() },
                 onCombatEnd = { liveRoomViewModel.endCombat() },
                 onCombatToggleReroll = { enabled -> liveRoomViewModel.setCombatReroll(enabled) },
-                onRollInitiative = { liveRoomViewModel.rollInitiative() }
+                onRollInitiative = { liveRoomViewModel.rollInitiative() },
+                localCharacter = liveLocalCharacter,
+                sharedCharacters = liveSharedCharacters,
+                onStatusSpendBlood = { liveRoomViewModel.tableSpendBlood() },
+                onStatusRefillBlood = { liveRoomViewModel.tableRefillBlood() },
+                onStatusSpendWillpower = { liveRoomViewModel.tableSpendWillpower() },
+                onStatusRecoverWillpower = { liveRoomViewModel.tableRecoverWillpower() },
+                onStatusApplyDamage = { index, type -> liveRoomViewModel.tableApplyDamage(index, type) },
+                onStatusHealDamage = { index -> liveRoomViewModel.tableHealDamage(index) },
+                onMasterStatusEdit = { charId, field, intValue, stringValue ->
+                    liveRoomViewModel.masterEditStatus(charId, field, intValue, stringValue)
+                }
             )
         }
 

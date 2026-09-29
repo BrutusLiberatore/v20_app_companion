@@ -47,6 +47,7 @@ import com.v20charactermanager.R
 import com.v20charactermanager.ui.theme.*
 import com.v20charactermanager.ui.components.V20BloodButton
 import com.v20charactermanager.ui.components.V20IvoryButton
+import com.v20charactermanager.ui.components.QuickStatusPanel
 import com.v20charactermanager.domain.definition.*
 import com.v20charactermanager.domain.model.AbilityValue
 import com.v20charactermanager.domain.model.AttributeValue
@@ -88,6 +89,11 @@ fun SheetScreen(
     onEquipmentRemove: (String) -> Unit = {},
     onEquipmentClone: (com.v20charactermanager.domain.model.EquipmentItem) -> Unit = {},
     onNavigateToXpSpending: () -> Unit = {},
+    onSpendBlood: () -> Unit = {},
+    onRefillBlood: () -> Unit = {},
+    onSpendWillpower: () -> Unit = {},
+    onRecoverWillpower: () -> Unit = {},
+    onCycleHealth: (Int, DamageType) -> Unit = { _, _ -> },
     saveSuccess: Boolean = false,
     saveError: String? = null,
     onClearMessages: () -> Unit = {},
@@ -278,7 +284,12 @@ fun SheetScreen(
                     onPortraitChange = onPortraitChange,
                     onNavigateToDice = onNavigateToDice,
                     onNavigateToSession = onNavigateToSession,
-                    onNavigateToXpSpending = onNavigateToXpSpending
+                    onNavigateToXpSpending = onNavigateToXpSpending,
+                    onSpendBlood = onSpendBlood,
+                    onRefillBlood = onRefillBlood,
+                    onSpendWillpower = onSpendWillpower,
+                    onRecoverWillpower = onRecoverWillpower,
+                    onCycleHealth = onCycleHealth
                 )
                 SheetSection.ATTRIBUTES -> AttributesTab(
                     character = character,
@@ -468,7 +479,12 @@ fun OverviewTab(
     onPortraitChange: (String?) -> Unit = {},
     onNavigateToDice: (Int) -> Unit,
     onNavigateToSession: () -> Unit,
-    onNavigateToXpSpending: () -> Unit = {}
+    onNavigateToXpSpending: () -> Unit = {},
+    onSpendBlood: () -> Unit = {},
+    onRefillBlood: () -> Unit = {},
+    onSpendWillpower: () -> Unit = {},
+    onRecoverWillpower: () -> Unit = {},
+    onCycleHealth: (Int, DamageType) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
     var showGalleryPicker by remember { mutableStateOf(false) }
@@ -578,57 +594,18 @@ fun OverviewTab(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Blood Pool with dots
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_blood_pool),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.Unspecified
-                    )
-                    Text(
-                        text = stringResource(R.string.sheet_blood_pool, character.bloodPool.current, character.bloodPool.maximum),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                V20DotRatingComponent(
-                    currentValue = character.bloodPool.current,
-                    maxValue = character.bloodPool.maximum.coerceAtMost(15),
-                    modifier = Modifier.fillMaxWidth()
+                // Unified status panel: blood pool, willpower, health
+                QuickStatusPanel(
+                    character = character,
+                    onSpendBlood = onSpendBlood,
+                    onRefillBlood = onRefillBlood,
+                    onSpendWillpower = onSpendWillpower,
+                    onRecoverWillpower = onRecoverWillpower,
+                    onCycleHealth = onCycleHealth,
+                    canEdit = canEdit
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Willpower with dots
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_humanity),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.Unspecified
-                    )
-                    Text(
-                        text = stringResource(R.string.sheet_willpower, character.willpower.current, character.willpower.permanent),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                V20DotRatingComponent(
-                    currentValue = character.willpower.current,
-                    maxValue = character.willpower.permanent,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Humanity
                 Row(
@@ -653,28 +630,6 @@ fun OverviewTab(
                     maxValue = 10,
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Health Status
-                val healthyLevels = character.health.levels.count { it == DamageType.NONE }
-                val totalLevels = 7
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_health),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.Unspecified
-                    )
-                    Text(
-                        text = "${stringResource(R.string.dashboard_health)}: $healthyLevels/$totalLevels ${stringResource(R.string.dashboard_healthy)}",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
             }
         }
 

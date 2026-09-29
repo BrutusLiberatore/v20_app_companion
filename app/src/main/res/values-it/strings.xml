@@ -874,6 +874,10 @@
     <string name="live_disconnect">Disconnetti</string>
     <string name="live_connected_as">Connesso come: %s</string>
     <string name="live_players">giocatori</string>
+    <string name="status_title">Stato rapido</string>
+    <string name="status_players_title">Stato dei giocatori</string>
+    <string name="status_no_character">Nessun personaggio condiviso</string>
+    <string name="status_no_players">Nessun giocatore connesso.</string>
     <string name="live_tap_fullscreen">Tocca per schermo intero</string>
     <string name="live_waiting_master">In attesa che il Master presenti…</string>
     <string name="live_minimize">Riduci</string>

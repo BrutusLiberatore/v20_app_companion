@@ -39,7 +39,7 @@ Funzioni di supporto:
 
 Schermata principale del personaggio, con otto sezioni:
 
-- **Panoramica**: identità, statistiche rapide, umanità, volontà, serbatoio di sangue.
+- **Panoramica**: identità, statistiche rapide, umanità e **pannello stato rapido**.
 - **Attributi**: valori con dettaglio e calcolo del pool di tiro.
 - **Abilità**: abilità apprese con il loro rango.
 - **Vantaggi**: discipline, background e virtù (con aggiunta e rimozione).
@@ -54,15 +54,14 @@ Inoltre:
 - **Salute** con le tre caselle di danno: contuso (`/`), letale (`X`), gravato (`*`).
 - **Esperienza**: punti guadagnati, spesi e disponibili, con accesso alla spesa.
 - **Sezioni riordinabili**: dall'icona di riordino in alto è possibile riassegnare l'ordine delle sezioni della scheda (su/giù), con ripristino all'ordine standard; l'ordine è salvato nell'app.
+- **Pannello stato rapido** (sangue, volontà, salute) interattivo: caselle sangue con −/+, punti volontà con −/+, 7 livelli di salute da toccare per ciclare il danno (contuso → letale → gravato → nessuno); le modifiche di stato sono **salvate subito** senza premere Salva e, al tavolo, sono sincronizzate in tempo reale (vedi sezione 12). In sola lettura (foglio condiviso) i controlli sono nascosti.
 - **Salvataggio automatico** al primo cambiamento, con messaggio di conferma.
 
 ## 4. Sessione di gioco (modalità sessione)
 
 Pannello da usare durante la partita per aggiornare il personaggio al volo:
 
-- **Serbatoio di sangue**: prelievo e ricarica.
-- **Volontà**: spesa e recupero.
-- **Salute**: infliggere danni e recuperare.
+- **Pannello stato rapido unificato**: serbatoio di sangue (prelievo e ricarica), volontà (spesa e recupero) e salute (7 livelli, tocca per cambiare tipo di danno) in un unico pannello — lo stesso usato nella scheda e al tavolo live.
 - **Esperienza**: guadagnare e spendere punti.
 - **Note di sessione** libere.
 
@@ -182,7 +181,9 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Feed riducibile a icona**: i risultati recenti sul tavolo possono essere ridotti a una sola icona dadi e riaperti con un tocco.
 - **Dadi 3D animati**: d10 in marmo a texture reale (volatina, atterraggio sul risultato, tinta rosso/verde per boccia/successo). Mesh e texture dal set gratuito "Low Poly 3D Dice Set" di **eddex** (itch.io), licenza **CC BY-SA 4.0**.
 - **Reveal cinematografico al tavolo**: dal menu del Narratore (voce "Reveal cinematografico dei dadi") si sceglie quando mostrare il reveal a schermo intero — **disattivato**, **solo momenti critici** (predefinito) o **ogni tiro**; i giocatori possono cambiare la stessa preferenza da Impostazioni. I tiri privati non attivano mai il reveal per gli altri.
-- **Sincronizzazione dei dati**: aggiornamenti delle statistiche del personaggio condivisi (es. salute, volontà, sangue).
+- **Stato rapido al tavolo**: il giocatore vede una card "Stato rapido" con il riepilogo (sangue · volontà · salute); toccandola si apre il pannello stato interattivo per modificare il proprio stato. Ogni modifica è **salvata in locale** e **sincronizzata a tutti in tempo reale** (protocollo StatUpdate).
+- **Stato dei giocatori (Narratore)**: dal menu del Narratore (voce "Stato dei giocatori") si apre l'elenco dei PG condivisi con il pannello stato di ciascuno; il Narratore può **correggere** sangue, volontà e salute di qualunque giocatore e la modifica viene replicata a tutti e **salvata sul dispositivo del giocatore**. I giocatori senza scheda condivisa sono elencati con l'avviso "Nessun personaggio condiviso".
+- **Sincronizzazione dei dati**: aggiornamenti delle statistiche del personaggio condivisi (salute, volontà, sangue) sia dalla sessione che dalla scheda al tavolo.
 - **Foglio in sola lettura**: i giocatori possono vedere il foglio condiviso senza modificarlo.
 - **Invio volontario della scheda**: dal proprio foglio aperto al tavolo il giocatore può premere l'icona invio per **inviare la scheda corrente al Narratore** (in aggiunta all'invio automatico alla connessione e alla richiesta del Narratore); arriva un'avviso "Scheda inviata" al giocatore e "Scheda ricevuta da…" al Narratore.
 - **Salvataggio della scheda ricevuta**: il Narratore, aprendo il foglio condiviso di un giocatore, può premere **"Salva sul dispositivo"** per conservarlo nella propria libreria locale (e nella cronaca della tavola, se presente).

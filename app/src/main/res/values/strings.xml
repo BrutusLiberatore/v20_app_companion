@@ -874,6 +874,10 @@
     <string name="live_disconnect">Disconnect</string>
     <string name="live_connected_as">Connected as: %s</string>
     <string name="live_players">players</string>
+    <string name="status_title">Quick status</string>
+    <string name="status_players_title">Player status</string>
+    <string name="status_no_character">No shared character</string>
+    <string name="status_no_players">No players connected.</string>
     <string name="live_tap_fullscreen">Tap to view fullscreen</string>
     <string name="live_waiting_master">Waiting for Master to present…</string>
     <string name="live_minimize">Minimize</string>

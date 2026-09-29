@@ -192,6 +192,80 @@ class EditCharacterViewModel(
         }
     }
 
+    /** Live-table sync hook (set by NavGraph when a room session is active). */
+    var onStatSync: ((field: String, intValue: Int?, stringValue: String?) -> Unit)? = null
+
+    private fun persistStatus(
+        updated: Character,
+        field: String,
+        intValue: Int?,
+        stringValue: String?
+    ) {
+        val stamped = updated.copy(updatedAt = System.currentTimeMillis())
+        _uiState.value = _uiState.value.copy(
+            character = stamped,
+            hasChanges = true
+        )
+        viewModelScope.launch {
+            characterRepository.updateCharacter(stamped)
+        }
+        onStatSync?.invoke(field, intValue, stringValue)
+    }
+
+    fun spendBlood(amount: Int = 1) {
+        val current = _uiState.value.character ?: return
+        val newValue = (current.bloodPool.current - amount).coerceIn(0, current.bloodPool.maximum)
+        persistStatus(
+            current.copy(bloodPool = current.bloodPool.copy(current = newValue)),
+            "blood", newValue, null
+        )
+    }
+
+    fun refillBlood(amount: Int = 1) {
+        val current = _uiState.value.character ?: return
+        val newValue = (current.bloodPool.current + amount).coerceIn(0, current.bloodPool.maximum)
+        persistStatus(
+            current.copy(bloodPool = current.bloodPool.copy(current = newValue)),
+            "blood", newValue, null
+        )
+    }
+
+    fun spendWillpower(amount: Int = 1) {
+        val current = _uiState.value.character ?: return
+        val newValue = (current.willpower.current - amount).coerceIn(0, current.willpower.permanent)
+        persistStatus(
+            current.copy(willpower = current.willpower.copy(current = newValue)),
+            "willpower", newValue, null
+        )
+    }
+
+    fun recoverWillpower(amount: Int = 1) {
+        val current = _uiState.value.character ?: return
+        val newValue = (current.willpower.current + amount).coerceIn(0, current.willpower.permanent)
+        persistStatus(
+            current.copy(willpower = current.willpower.copy(current = newValue)),
+            "willpower", newValue, null
+        )
+    }
+
+    fun applyDamage(index: Int, type: DamageType) {
+        val current = _uiState.value.character ?: return
+        if (index !in current.health.levels.indices) return
+        persistStatus(
+            current.copy(health = current.health.withDamage(index, type)),
+            "health", null, "$index:${type.name}"
+        )
+    }
+
+    fun healDamage(index: Int) {
+        val current = _uiState.value.character ?: return
+        if (index !in current.health.levels.indices) return
+        persistStatus(
+            current.copy(health = current.health.heal(index)),
+            "health", null, "$index:HEAL"
+        )
+    }
+
     fun addMerit(merit: MeritValue) {
         val current = _uiState.value.character ?: return
         _uiState.value = _uiState.value.copy(

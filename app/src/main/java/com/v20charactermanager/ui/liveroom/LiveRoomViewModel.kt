@@ -16,7 +16,9 @@ import com.v20charactermanager.domain.repository.MediaRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -47,6 +49,33 @@ class LiveRoomViewModel(
     private val _sharedCharacters = MutableStateFlow<Map<String, Character>>(emptyMap())
     val sharedCharacters: StateFlow<Map<String, Character>> = _sharedCharacters.asStateFlow()
     private val requestedSheets = mutableSetOf<String>()
+
+    // Local player's own character (reactive, DB-driven) for the quick status panel
+    private val _localCharacter = MutableStateFlow<Character?>(null)
+    val localCharacter: StateFlow<Character?> = _localCharacter.asStateFlow()
+    private var localCharJob: kotlinx.coroutines.Job? = null
+
+    init {
+        viewModelScope.launch {
+            _uiState.map { it.localPlayer?.characterId }
+                .distinctUntilChanged()
+                .collect { id ->
+                    localCharJob?.cancel()
+                    _localCharacter.value = null
+                    val repo = characterRepository
+                    if (id.isNullOrBlank() || repo == null) return@collect
+                    localCharJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        try {
+                            repo.getCharacterById(id).collect { char ->
+                                _localCharacter.value = char
+                            }
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to observe local character $id", e)
+                        }
+                    }
+                }
+        }
+    }
 
     private var server: LiveRoomServer? = null
     private var client: LiveRoomClient? = null
@@ -761,6 +790,7 @@ class LiveRoomViewModel(
             }
             is LiveRoomMessage.StatUpdate -> {
                 applyStatUpdate(message)
+                persistOwnStat(message)
             }
             is LiveRoomMessage.DiceRoll -> {
                 appendDiceRoll(message)
@@ -827,7 +857,100 @@ class LiveRoomViewModel(
 
     fun sendStatUpdate(characterId: String, field: String, intValue: Int?, stringValue: String? = null) {
         val update = LiveRoomMessage.StatUpdate(characterId, field, intValue, stringValue)
-        client?.sendMessage(update)
+        if (_uiState.value.isMaster && server != null) {
+            applyStatUpdate(update)
+            server?.broadcast(update)
+        } else {
+            client?.sendMessage(update)
+        }
+    }
+
+    /** Client: persists a status change received for the local player's own character. */
+    private fun persistOwnStat(message: LiveRoomMessage.StatUpdate) {
+        val repo = characterRepository ?: return
+        val ownId = _uiState.value.localPlayer?.characterId ?: return
+        if (message.characterId != ownId) return
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val char = repo.getCharacterByIdOnce(ownId) ?: return@launch
+                val updated = char.applyStatUpdate(message.field, message.intValue, message.stringValue)
+                    ?: return@launch
+                repo.updateCharacter(updated)
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to persist stat update", e)
+            }
+        }
+    }
+
+    // --- QUICK STATUS (player edits own character; persisted locally + broadcast) ---
+
+    private fun editOwnStatus(
+        field: String,
+        intValue: Int?,
+        stringValue: String?,
+        transform: (Character) -> Character
+    ) {
+        val char = _localCharacter.value ?: return
+        val updated = transform(char)
+        if (updated == char) return
+        val stamped = updated.copy(updatedAt = System.currentTimeMillis())
+        _localCharacter.value = stamped
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                characterRepository?.updateCharacter(stamped)
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to save status change", e)
+            }
+        }
+        sendStatUpdate(char.id, field, intValue, stringValue)
+    }
+
+    fun tableSpendBlood() {
+        val c = _localCharacter.value ?: return
+        val v = (c.bloodPool.current - 1).coerceIn(0, c.bloodPool.maximum)
+        editOwnStatus("blood", v, null) { it.copy(bloodPool = it.bloodPool.copy(current = v)) }
+    }
+
+    fun tableRefillBlood() {
+        val c = _localCharacter.value ?: return
+        val v = (c.bloodPool.current + 1).coerceIn(0, c.bloodPool.maximum)
+        editOwnStatus("blood", v, null) { it.copy(bloodPool = it.bloodPool.copy(current = v)) }
+    }
+
+    fun tableSpendWillpower() {
+        val c = _localCharacter.value ?: return
+        val v = (c.willpower.current - 1).coerceIn(0, c.willpower.permanent)
+        editOwnStatus("willpower", v, null) { it.copy(willpower = it.willpower.copy(current = v)) }
+    }
+
+    fun tableRecoverWillpower() {
+        val c = _localCharacter.value ?: return
+        val v = (c.willpower.current + 1).coerceIn(0, c.willpower.permanent)
+        editOwnStatus("willpower", v, null) { it.copy(willpower = it.willpower.copy(current = v)) }
+    }
+
+    fun tableApplyDamage(index: Int, type: DamageType) {
+        val c = _localCharacter.value ?: return
+        if (index !in c.health.levels.indices) return
+        editOwnStatus("health", null, "$index:${type.name}") {
+            it.copy(health = it.health.withDamage(index, type))
+        }
+    }
+
+    fun tableHealDamage(index: Int) {
+        val c = _localCharacter.value ?: return
+        if (index !in c.health.levels.indices) return
+        editOwnStatus("health", null, "$index:HEAL") {
+            it.copy(health = it.health.heal(index))
+        }
+    }
+
+    /** Master: corrects any player's status directly (shared map + broadcast). */
+    fun masterEditStatus(characterId: String, field: String, intValue: Int?, stringValue: String?) {
+        if (!_uiState.value.isMaster) return
+        val update = LiveRoomMessage.StatUpdate(characterId, field, intValue, stringValue)
+        applyStatUpdate(update)
+        server?.broadcast(update)
     }
 
     /**
@@ -918,33 +1041,8 @@ class LiveRoomViewModel(
     private fun applyStatUpdate(message: LiveRoomMessage.StatUpdate) {
         _sharedCharacters.update { map ->
             val char = map[message.characterId] ?: return@update map
-            val updated = when (message.field) {
-                "blood" -> {
-                    val v = message.intValue ?: return@update map
-                    char.copy(bloodPool = char.bloodPool.copy(current = v.coerceIn(0, char.bloodPool.maximum)))
-                }
-                "willpower" -> {
-                    val v = message.intValue ?: return@update map
-                    char.copy(willpower = char.willpower.copy(current = v.coerceIn(0, char.willpower.permanent)))
-                }
-                "health" -> {
-                    val raw = message.stringValue ?: return@update map
-                    val idx = raw.substringBefore(':').toIntOrNull() ?: return@update map
-                    if (idx !in char.health.levels.indices) return@update map
-                    val kind = raw.substringAfter(':', "")
-                    if (kind == "HEAL") {
-                        char.copy(health = char.health.heal(idx))
-                    } else {
-                        val type = try {
-                            DamageType.valueOf(kind)
-                        } catch (_: Exception) {
-                            return@update map
-                        }
-                        char.copy(health = char.health.withDamage(idx, type))
-                    }
-                }
-                else -> return@update map
-            }
+            val updated = char.applyStatUpdate(message.field, message.intValue, message.stringValue)
+                ?: return@update map
             map + (message.characterId to updated)
         }
     }
