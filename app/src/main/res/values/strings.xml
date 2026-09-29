@@ -1056,4 +1056,35 @@
     <string name="media_type_image">Image</string>
     <string name="media_type_video">Video</string>
 
+    <!-- Combat tracker -->
+    <string name="combat_title">Combat</string>
+    <string name="combat_start">Start combat</string>
+    <string name="combat_add">Add combatant</string>
+    <string name="combat_remove">Remove combatant</string>
+    <string name="combat_name_hint">Name</string>
+    <string name="combat_initiative_hint">Initiative</string>
+    <string name="combat_round">Round %1$d</string>
+    <string name="combat_next">Next</string>
+    <string name="combat_end">End combat</string>
+    <string name="combat_current_turn">Current turn: %1$s</string>
+    <string name="combat_your_turn">Your turn</string>
+    <string name="combat_roll_initiative">Roll initiative</string>
+    <string name="combat_reroll_toggle">Re-roll each round</string>
+    <string name="combat_started">Combat started</string>
+    <string name="combat_round_new">Round %1$d — roll initiative!</string>
+    <string name="combat_roll_result">Initiative %1$d (d10: %2$d + Dexterity %3$d + Wits %4$d)</string>
+    <string name="combat_no_character">Join the table with a character to roll initiative</string>
+    <string name="combat_empty">No combatants yet</string>
+    <string name="combat_waiting">No active combat</string>
+    <string name="combat_standalone_hint">Local tracker: add combatants and their initiative manually.</string>
+
+    <!-- Cinematic dice reveal -->
+    <string name="dice_reveal_title">Cinematic dice reveal</string>
+    <string name="dice_reveal_description">Choose when the full-screen dice reveal appears.</string>
+    <string name="dice_reveal_off">Off</string>
+    <string name="dice_reveal_critical">Critical moments only</string>
+    <string name="dice_reveal_every">Every roll</string>
+    <string name="dice_reveal_total_success">TOTAL SUCCESS!</string>
+    <string name="dice_reveal_local">Your roll</string>
+
 </resources>

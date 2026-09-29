@@ -1056,4 +1056,35 @@
     <string name="media_type_image">Immagine</string>
     <string name="media_type_video">Video</string>
 
+    <!-- Combat tracker -->
+    <string name="combat_title">Combattimento</string>
+    <string name="combat_start">Avvia combattimento</string>
+    <string name="combat_add">Aggiungi combattente</string>
+    <string name="combat_remove">Rimuovi combattente</string>
+    <string name="combat_name_hint">Nome</string>
+    <string name="combat_initiative_hint">Iniziativa</string>
+    <string name="combat_round">Round %1$d</string>
+    <string name="combat_next">Prossimo</string>
+    <string name="combat_end">Termina combattimento</string>
+    <string name="combat_current_turn">Turno corrente: %1$s</string>
+    <string name="combat_your_turn">Tuo turno</string>
+    <string name="combat_roll_initiative">Tira iniziativa</string>
+    <string name="combat_reroll_toggle">Rilancia a ogni round</string>
+    <string name="combat_started">Combattimento avviato</string>
+    <string name="combat_round_new">Round %1$d — tira l\'iniziativa!</string>
+    <string name="combat_roll_result">Iniziativa %1$d (d10: %2$d + Destrezza %3$d + Prontezza %4$d)</string>
+    <string name="combat_no_character">Unisciti al tavolo con un PG per tirare l\'iniziativa</string>
+    <string name="combat_empty">Nessun combattente</string>
+    <string name="combat_waiting">Nessun combattimento attivo</string>
+    <string name="combat_standalone_hint">Tracker locale: aggiungi i combattenti e la loro iniziativa manualmente.</string>
+
+    <!-- Cinematic dice reveal -->
+    <string name="dice_reveal_title">Reveal cinematografico dei dadi</string>
+    <string name="dice_reveal_description">Scegli quando appare il reveal a schermo intero dei dadi.</string>
+    <string name="dice_reveal_off">Disattivato</string>
+    <string name="dice_reveal_critical">Solo momenti critici</string>
+    <string name="dice_reveal_every">Ogni tiro</string>
+    <string name="dice_reveal_total_success">SUCCESSO TOTALE!</string>
+    <string name="dice_reveal_local">Il tuo tiro</string>
+
 </resources>

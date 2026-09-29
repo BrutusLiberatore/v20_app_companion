@@ -106,6 +106,13 @@ fun LiveRoomScreen(
     onRevealClue: (Clue) -> Unit = {},
     onRevealSecret: (Secret) -> Unit = {},
     onDismissReveal: () -> Unit = {},
+    onCombatStart: (Boolean) -> Unit = { _ -> },
+    onCombatAdd: (String, Int) -> Unit = { _, _ -> },
+    onCombatRemove: (String) -> Unit = {},
+    onCombatAdvance: () -> Unit = {},
+    onCombatEnd: () -> Unit = {},
+    onCombatToggleReroll: (Boolean) -> Unit = { _ -> },
+    onRollInitiative: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var autoCreated by remember { mutableStateOf(false) }
@@ -252,6 +259,13 @@ fun LiveRoomScreen(
                     onRevealClue = onRevealClue,
                     onRevealSecret = onRevealSecret,
                     onDismissReveal = onDismissReveal,
+                    onCombatStart = onCombatStart,
+                    onCombatAdd = onCombatAdd,
+                    onCombatRemove = onCombatRemove,
+                    onCombatAdvance = onCombatAdvance,
+                    onCombatEnd = onCombatEnd,
+                    onCombatToggleReroll = onCombatToggleReroll,
+                    onRollInitiative = onRollInitiative,
                     onCloseRoom = onCloseRoom,
                     onTableStyleChange = onTableStyleChange,
                     onOpenSheet = onOpenSheet,
@@ -481,6 +495,13 @@ private fun VirtualTableView(
     onRevealClue: (Clue) -> Unit = {},
     onRevealSecret: (Secret) -> Unit = {},
     onDismissReveal: () -> Unit = {},
+    onCombatStart: (Boolean) -> Unit = { _ -> },
+    onCombatAdd: (String, Int) -> Unit = { _, _ -> },
+    onCombatRemove: (String) -> Unit = {},
+    onCombatAdvance: () -> Unit = {},
+    onCombatEnd: () -> Unit = {},
+    onCombatToggleReroll: (Boolean) -> Unit = { _ -> },
+    onRollInitiative: () -> Unit = {},
     onCloseRoom: () -> Unit = {},
     onTableStyleChange: (String, String) -> Unit = { _, _ -> },
     onOpenSheet: (String) -> Unit = {},
@@ -495,12 +516,19 @@ private fun VirtualTableView(
 
     var tableBoxSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     var showRollDialog by remember { mutableStateOf(false) }
+    var showCombatDialog by remember { mutableStateOf(false) }
+    var showRevealDialog by remember { mutableStateOf(false) }
+    val revealContext = LocalContext.current
+    var revealMode by remember {
+        mutableStateOf(com.v20charactermanager.ui.dice.DiceRevealPrefs.load(revealContext))
+    }
     var showLogDialog by remember { mutableStateOf(false) }
     var feedCollapsed by rememberSaveable { mutableStateOf(false) }
     var diceAnimRoll by remember { mutableStateOf<LiveRoomMessage.DiceRoll?>(null) }
 
     LaunchedEffect(uiState.diceRolls.lastOrNull()) {
         val latest = uiState.diceRolls.lastOrNull()
+        // Redacted private rolls carry no dice: nothing to animate (privacy)
         if (latest != null && latest.dice.isNotEmpty()) {
             diceAnimRoll = latest
         }
@@ -536,6 +564,64 @@ private fun VirtualTableView(
                 onDismiss = onDismissReveal
             )
         }
+    }
+
+    if (showCombatDialog) {
+        AlertDialog(
+            onDismissRequest = { showCombatDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.combat_title),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                com.v20charactermanager.ui.combat.CombatTrackerContent(
+                    combat = uiState.combat,
+                    canControl = uiState.isMaster,
+                    onStart = { onCombatStart(true) },
+                    onAdd = onCombatAdd,
+                    onRemove = onCombatRemove,
+                    onAdvance = onCombatAdvance,
+                    onEnd = {
+                        showCombatDialog = false
+                        onCombatEnd()
+                    },
+                    onToggleReroll = onCombatToggleReroll
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showCombatDialog = false }) {
+                    Text(stringResource(R.string.action_close))
+                }
+            }
+        )
+    }
+
+    if (showRevealDialog) {
+        AlertDialog(
+            onDismissRequest = { showRevealDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.dice_reveal_title),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                com.v20charactermanager.ui.dice.DiceRevealModePicker(
+                    current = revealMode,
+                    onSelect = { mode ->
+                        revealMode = mode
+                        com.v20charactermanager.ui.dice.DiceRevealPrefs.save(revealContext, mode)
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showRevealDialog = false }) {
+                    Text(stringResource(R.string.action_close))
+                }
+            }
+        )
     }
 
     if (showLogDialog) {
@@ -762,11 +848,36 @@ private fun VirtualTableView(
             }
 
             diceAnimRoll?.let { activeRoll ->
-                Dice3DOverlay(
-                    roll = activeRoll,
-                    modifier = Modifier.fillMaxSize(),
-                    onFinished = { diceAnimRoll = null }
-                )
+                val critical = com.v20charactermanager.domain.model.DiceReveal.isCritical(activeRoll)
+                if (activeRoll.dice.isNotEmpty() && revealMode.triggersOn(critical)) {
+                    val verdict = when {
+                        activeRoll.isBotch == true -> stringResource(R.string.dice_botch)
+                        critical -> stringResource(R.string.dice_reveal_total_success)
+                        else -> activeRoll.result
+                    }
+                    val revealData = remember(activeRoll, verdict) {
+                        com.v20charactermanager.ui.dice.DiceRevealData(
+                            playerName = activeRoll.playerName,
+                            label = activeRoll.label,
+                            verdict = verdict,
+                            dice = activeRoll.dice,
+                            difficulty = activeRoll.difficulty,
+                            isBotch = activeRoll.isBotch == true,
+                            isCritical = critical
+                        )
+                    }
+                    com.v20charactermanager.ui.dice.DiceRevealOverlay(
+                        data = revealData,
+                        modifier = Modifier.fillMaxSize(),
+                        onFinished = { diceAnimRoll = null }
+                    )
+                } else {
+                    Dice3DOverlay(
+                        roll = activeRoll,
+                        modifier = Modifier.fillMaxSize(),
+                        onFinished = { diceAnimRoll = null }
+                    )
+                }
             }
         }
 
@@ -792,13 +903,16 @@ private fun VirtualTableView(
                     onRevealSecret = onRevealSecret,
                     onCloseRoom = onCloseRoom,
                     onTableStyleChange = onTableStyleChange,
-                    onRollClick = { showRollDialog = true }
+                    onRollClick = { showRollDialog = true },
+                    onOpenCombat = { showCombatDialog = true },
+                    onOpenRevealSettings = { showRevealDialog = true }
                 )
             } else {
                 PlayerBottomPanel(
                     uiState = uiState,
                     onToggleFullscreen = onToggleFullscreen,
-                    onRollClick = { showRollDialog = true }
+                    onRollClick = { showRollDialog = true },
+                    onRollInitiative = onRollInitiative
                 )
             }
         }
@@ -1480,6 +1594,8 @@ private fun MasterBottomPanel(
     onCloseRoom: () -> Unit = {},
     onTableStyleChange: (String, String) -> Unit = { _, _ -> },
     onRollClick: () -> Unit = {},
+    onOpenCombat: () -> Unit = {},
+    onOpenRevealSettings: () -> Unit = {},
     onRevealClue: ((Clue) -> Unit)? = null,
     onRevealSecret: ((Secret) -> Unit)? = null
 ) {
@@ -1541,6 +1657,16 @@ private fun MasterBottomPanel(
                         text = { Text(stringResource(R.string.dashboard_roll_dice)) },
                         leadingIcon = { Icon(Icons.Default.Casino, contentDescription = null) },
                         onClick = { showMenu = false; onRollClick() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.combat_title)) },
+                        leadingIcon = { Icon(Icons.Default.Shield, contentDescription = null) },
+                        onClick = { showMenu = false; onOpenCombat() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.dice_reveal_title)) },
+                        leadingIcon = { Icon(Icons.Default.Visibility, contentDescription = null) },
+                        onClick = { showMenu = false; onOpenRevealSettings() }
                     )
                     DropdownMenuItem(
                         text = {
@@ -2565,8 +2691,10 @@ private fun SimpleListItem(
 private fun PlayerBottomPanel(
     uiState: LiveRoomState,
     onToggleFullscreen: () -> Unit,
-    onRollClick: () -> Unit = {}
+    onRollClick: () -> Unit = {},
+    onRollInitiative: () -> Unit = {}
 ) {
+    var showCombat by remember { mutableStateOf(false) }
     Column(modifier = Modifier.padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
@@ -2601,6 +2729,82 @@ private fun PlayerBottomPanel(
                 text = stringResource(R.string.dashboard_roll_dice),
                 color = Color(0xFF1A1A2E),
                 fontWeight = FontWeight.Bold
+            )
+        }
+
+        if (uiState.combat.active) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { showCombat = true },
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF37474F))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Shield, contentDescription = null, tint = Gold, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.combat_title),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        val currentName = uiState.combat.combatants
+                            .getOrNull(uiState.combat.currentIndex)?.name
+                        if (currentName != null) {
+                            Text(
+                                text = stringResource(R.string.combat_current_turn, currentName),
+                                color = Color.White.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                    Text(
+                        text = stringResource(R.string.combat_round, uiState.combat.round),
+                        color = Gold,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+            if (uiState.combat.reRollEachRound) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onRollInitiative,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.Casino, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.combat_roll_initiative), fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        if (showCombat) {
+            AlertDialog(
+                onDismissRequest = { showCombat = false },
+                title = {
+                    Text(
+                        text = stringResource(R.string.combat_title),
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    com.v20charactermanager.ui.combat.CombatTrackerContent(
+                        combat = uiState.combat,
+                        canControl = false,
+                        localCharacterId = uiState.localPlayer?.characterId,
+                        onRollInitiative = onRollInitiative
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { showCombat = false }) {
+                        Text(stringResource(R.string.action_close))
+                    }
+                }
             )
         }
 

@@ -93,6 +93,10 @@ class LiveRoomViewModel(
                         // Push current table style to the new player
                         val style = _uiState.value
                         server?.sendToPlayer(id, LiveRoomMessage.TableStyle(style.tablePack, style.chairPack))
+                        // Push the combat tracker if a fight is running
+                        if (style.combat.active) {
+                            server?.sendToPlayer(id, LiveRoomMessage.CombatUpdate(style.combat))
+                        }
                         // Share character portrait from master's DB (re-encoded so other devices can read it)
                         if (charId != null && characterRepository != null) {
                             viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
@@ -240,6 +244,24 @@ class LiveRoomViewModel(
                         Log.w(TAG, "Failed to import shared character sheet", e)
                     }
                 }
+            }
+            is LiveRoomMessage.InitiativeRoll -> {
+                // Master: merge the player's initiative into the tracker and re-broadcast
+                val playerId = _uiState.value.connectedPlayers
+                    .firstOrNull { it.id == clientId }?.id
+                val combatantId = message.characterId.ifBlank { "player:$clientId" }
+                val updated = CombatEngine.upsert(
+                    _uiState.value.combat,
+                    Combatant(
+                        id = combatantId,
+                        name = message.playerName,
+                        initiative = message.initiative,
+                        characterId = message.characterId.ifBlank { null },
+                        playerId = playerId ?: clientId
+                    )
+                )
+                _uiState.update { it.copy(combat = updated) }
+                server?.broadcast(LiveRoomMessage.CombatUpdate(updated))
             }
             else -> {}
         }
@@ -416,7 +438,9 @@ class LiveRoomViewModel(
             difficulty = spec.difficulty,
             label = composeRollLabel(spec),
             isPrivate = privateRoll,
-            timestamp = System.currentTimeMillis()
+            timestamp = System.currentTimeMillis(),
+            isBotch = result.isBotch,
+            netSuccesses = result.netSuccesses
         )
         // Local copy keeps full details (the Master sees his own private rolls)
         appendDiceRoll(roll)
@@ -426,7 +450,9 @@ class LiveRoomViewModel(
                 dice = emptyList(),
                 pool = "",
                 label = "",
-                result = application.getString(com.v20charactermanager.R.string.live_roll_private_result)
+                result = application.getString(com.v20charactermanager.R.string.live_roll_private_result),
+                isBotch = null,
+                netSuccesses = null
             )
         } else {
             roll
@@ -745,6 +771,9 @@ class LiveRoomViewModel(
                     _uiState.update { it.copy(rollRequest = message) }
                 }
             }
+            is LiveRoomMessage.CombatUpdate -> {
+                _uiState.update { it.copy(combat = message.state) }
+            }
             is LiveRoomMessage.RoomClosed -> {
                 _uiState.update { state ->
                     state.copy(
@@ -757,6 +786,7 @@ class LiveRoomViewModel(
                         connectionStatus = "",
                         rollRequest = null,
                         revealedHandout = null,
+                        combat = CombatState(),
                         error = application.getString(com.v20charactermanager.R.string.live_room_closed_by_master)
                     )
                 }
@@ -980,6 +1010,104 @@ class LiveRoomViewModel(
 
     fun dismissReveal() {
         _uiState.update { it.copy(revealedHandout = null) }
+    }
+
+    // --- COMBAT TRACKER (V20: initiative = 1d10 + Dexterity + Wits) ---
+
+    private fun publishCombat() {
+        server?.broadcast(LiveRoomMessage.CombatUpdate(_uiState.value.combat))
+    }
+
+    /** Master: start the combat keeping anyone who already rolled initiative. */
+    fun startCombat(reRollEachRound: Boolean = true) {
+        if (!_uiState.value.isMaster) return
+        _uiState.update { it.copy(combat = CombatEngine.start(it.combat.combatants, reRollEachRound)) }
+        publishCombat()
+        showToast(application.getString(R.string.combat_started))
+    }
+
+    fun addCombatant(name: String, initiative: Int) {
+        if (!_uiState.value.isMaster) return
+        val trimmed = name.trim().ifBlank { return }
+        _uiState.update {
+            it.copy(
+                combat = CombatEngine.upsert(
+                    it.combat,
+                    Combatant(
+                        id = UUID.randomUUID().toString(),
+                        name = trimmed,
+                        initiative = initiative
+                    )
+                )
+            )
+        }
+        publishCombat()
+    }
+
+    fun removeCombatant(id: String) {
+        if (!_uiState.value.isMaster) return
+        _uiState.update { it.copy(combat = CombatEngine.remove(it.combat, id)) }
+        publishCombat()
+    }
+
+    fun advanceCombatTurn() {
+        if (!_uiState.value.isMaster) return
+        val before = _uiState.value.combat
+        val after = CombatEngine.advance(before)
+        _uiState.update { it.copy(combat = after) }
+        publishCombat()
+        if (after.round > before.round && after.reRollEachRound) {
+            showToast(application.getString(R.string.combat_round_new, after.round))
+        }
+    }
+
+    fun setCombatReroll(enabled: Boolean) {
+        if (!_uiState.value.isMaster) return
+        _uiState.update { it.copy(combat = CombatEngine.setReroll(it.combat, enabled)) }
+        publishCombat()
+    }
+
+    fun endCombat() {
+        if (!_uiState.value.isMaster) return
+        _uiState.update { it.copy(combat = CombatEngine.end()) }
+        publishCombat()
+    }
+
+    /** Player: roll initiative (1d10 + Dexterity + Wits) and send it to the master. */
+    fun rollInitiative() {
+        val state = _uiState.value
+        if (state.isMaster) return
+        val charId = state.localPlayer?.characterId
+        if (charId.isNullOrBlank()) {
+            showToast(application.getString(R.string.combat_no_character))
+            return
+        }
+        val playerName = state.localPlayer?.name ?: ""
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val character = characterRepository?.getCharacterByIdOnce(charId)
+                if (character == null) {
+                    showToast(application.getString(R.string.combat_no_character))
+                    return@launch
+                }
+                val dex = character.getAttributeValue(com.v20charactermanager.domain.definition.AttributeId.DEXTERITY)
+                val wits = character.getAttributeValue(com.v20charactermanager.domain.definition.AttributeId.WITS)
+                val d10 = kotlin.random.Random.nextInt(1, 11)
+                val initiative = d10 + dex + wits
+                client?.sendMessage(
+                    LiveRoomMessage.InitiativeRoll(
+                        characterId = charId,
+                        playerName = playerName,
+                        initiative = initiative
+                    )
+                )
+                showToast(
+                    application.getString(R.string.combat_roll_result, initiative, d10, dex, wits)
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to roll initiative", e)
+            }
+        }
     }
 
     /** Player: voluntarily push the current sheet to the Master. */

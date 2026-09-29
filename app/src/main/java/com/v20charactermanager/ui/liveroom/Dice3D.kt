@@ -271,13 +271,18 @@ private fun DrawScope.drawDie(
     }
 }
 
+/**
+ * Core 3D dice animation: the dice tumble, settle on their faces (tinted per
+ * difficulty), hold, then fade out. Reused by [Dice3DOverlay] and by the
+ * cinematic reveal.
+ */
 @Composable
-fun Dice3DOverlay(
-    roll: LiveRoomMessage.DiceRoll,
+fun Dice3DCanvas(
+    dice: List<Int>,
+    difficulty: Int,
     modifier: Modifier = Modifier,
     onFinished: () -> Unit = {}
 ) {
-    val dice = roll.dice
     if (dice.isEmpty()) return
     val context = LocalContext.current
     val tiles = remember {
@@ -299,11 +304,10 @@ fun Dice3DOverlay(
     val texPaint = remember {
         Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
     }
-    val progress = remember(roll) { Animatable(0f) }
-    val fade = remember(roll) { Animatable(1f) }
-    val transforms = remember(roll) {
-        val seedBase = roll.playerName.hashCode().toLong() * 31L +
-            dice.fold(0L) { acc, d -> acc * 31L + d }
+    val progress = remember(dice) { Animatable(0f) }
+    val fade = remember(dice) { Animatable(1f) }
+    val transforms = remember(dice) {
+        val seedBase = dice.fold(0L) { acc, d -> acc * 31L + d }
         dice.mapIndexed { i, value ->
             val rng = Random(seedBase + i * 977L)
             val axis = Vec3(
@@ -326,7 +330,7 @@ fun Dice3DOverlay(
             start to end
         }
     }
-    LaunchedEffect(roll) {
+    LaunchedEffect(dice) {
         progress.animateTo(1f, tween(durationMillis = 1100, easing = FastOutSlowInEasing))
         delay(700)
         fade.animateTo(0f, tween(durationMillis = 320))
@@ -360,7 +364,7 @@ fun Dice3DOverlay(
                 radiusPx = radiusPx,
                 q = q,
                 value = dice[i],
-                difficulty = roll.difficulty,
+                difficulty = difficulty,
                 settle = settle,
                 alpha = alpha,
                 tiles = tiles,
@@ -368,4 +372,20 @@ fun Dice3DOverlay(
             )
         }
     }
+}
+
+/** Lightweight transparent overlay used for ordinary live rolls. */
+@Composable
+fun Dice3DOverlay(
+    roll: LiveRoomMessage.DiceRoll,
+    modifier: Modifier = Modifier,
+    onFinished: () -> Unit = {}
+) {
+    if (roll.dice.isEmpty()) return
+    Dice3DCanvas(
+        dice = roll.dice,
+        difficulty = roll.difficulty,
+        modifier = modifier,
+        onFinished = onFinished
+    )
 }

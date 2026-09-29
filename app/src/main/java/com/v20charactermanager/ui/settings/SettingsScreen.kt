@@ -9,10 +9,14 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
+import com.v20charactermanager.domain.model.DiceRevealMode
+import com.v20charactermanager.ui.dice.DiceRevealModePicker
+import com.v20charactermanager.ui.dice.DiceRevealPrefs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,6 +99,32 @@ fun SettingsScreen(
                             }
                         }
                     }
+                }
+            }
+
+            Card {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.dice_reveal_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.dice_reveal_description),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val revealContext = LocalContext.current
+                    var revealMode by remember { mutableStateOf(DiceRevealPrefs.load(revealContext)) }
+                    DiceRevealModePicker(
+                        current = revealMode,
+                        onSelect = { mode ->
+                            revealMode = mode
+                            DiceRevealPrefs.save(revealContext, mode)
+                        }
+                    )
                 }
             }
 

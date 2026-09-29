@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,7 +40,8 @@ fun HomeScreen(
     onDiceClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onRandomCharacterClick: () -> Unit,
-    onChronicleClick: () -> Unit = {}
+    onChronicleClick: () -> Unit = {},
+    onCombatClick: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -153,6 +155,16 @@ fun HomeScreen(
                             icon = Icons.Default.Settings,
                             label = stringResource(R.string.home_settings),
                             onClick = onSettingsClick
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        NavigationButton(
+                            icon = Icons.Default.Shield,
+                            label = stringResource(R.string.combat_title),
+                            onClick = onCombatClick
                         )
                     }
                     if (uiState.characters.isNotEmpty()) {

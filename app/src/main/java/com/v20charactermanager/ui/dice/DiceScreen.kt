@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,6 +27,38 @@ fun DiceScreen(
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    var revealData by remember { mutableStateOf<DiceRevealData?>(null) }
+
+    LaunchedEffect(uiState.result) {
+        val result = uiState.result ?: return@LaunchedEffect
+        if (result.individualResults.isEmpty()) return@LaunchedEffect
+        val mode = DiceRevealPrefs.load(context)
+        val pool = (uiState.pool + uiState.diceModifier + uiState.extraDice +
+            if (uiState.useWillpower) 1 else 0).coerceAtLeast(1)
+        val difficulty = (uiState.difficulty + uiState.difficultyModifier).coerceIn(2, 10)
+        val critical = com.v20charactermanager.domain.model.DiceReveal.isCritical(
+            isBotch = result.isBotch,
+            netSuccesses = result.netSuccesses,
+            pool = pool
+        )
+        if (!mode.triggersOn(critical)) return@LaunchedEffect
+        revealData = DiceRevealData(
+            playerName = context.getString(R.string.dice_reveal_local),
+            label = context.getString(R.string.dice_final_pool, pool) + " • " +
+                context.getString(R.string.dice_final_difficulty, difficulty),
+            verdict = when {
+                result.isBotch -> context.getString(R.string.dice_botch)
+                critical -> context.getString(R.string.dice_reveal_total_success)
+                result.isSuccess -> context.getString(R.string.dice_successes, result.netSuccesses)
+                else -> context.getString(R.string.dice_failure)
+            },
+            dice = result.individualResults,
+            difficulty = difficulty,
+            isBotch = result.isBotch,
+            isCritical = critical
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -49,6 +82,7 @@ fun DiceScreen(
             )
         }
     ) { padding ->
+        Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -277,6 +311,15 @@ fun DiceScreen(
                     }
                 }
             }
+        }
+
+        revealData?.let { data ->
+            DiceRevealOverlay(
+                data = data,
+                modifier = Modifier.fillMaxSize(),
+                onFinished = { revealData = null }
+            )
+        }
         }
     }
 }

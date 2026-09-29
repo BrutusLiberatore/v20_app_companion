@@ -14,6 +14,7 @@ Tutti i dati restano salvati sul telefono. L'interfaccia è disponibile in **ita
 - **Crea personaggio**: avvia la creazione guidata.
 - **Tiro rapido dei dadi**: tiro veloce senza entrare nel dettaglio.
 - Sezione **Strumenti**: Cronache, Compendio, Tiri di dadi, Impostazioni.
+- **Tracker di combattimento**: pulsante scudo con l'inseguitore di iniziativa locale (vedi sezione 17).
 - Se la lista è vuota, mostra un invito a creare il primo personaggio.
 
 ## 2. Creazione del personaggio (5 passi)
@@ -80,6 +81,7 @@ Schermata dedicata alla spesa dei punti esperienza:
 - Opzioni: dado extra, attivazione della **volontà**, modificatore di tiri, modificatore di difficoltà, **decine esplosive**, motivo del modificatore.
 - I valori predefiniti di difficoltà e decine esplosive seguono le **Regole della casa** quando configurate (vedi sezione 15).
 - Risultato con **successi**, **falle**, **botch** e riepilogo (successi e 1).
+- **Reveal cinematografico**: quando attivo, il risultato appare a schermo intero con dado 3D, nome del tiro, verdict in grande e flash rosso su boccia (oro su successo totale); chiude da solo dopo ~3 secondi o con un tocco. Modalità: disattivato, **solo momenti critici** (boccia o successo totale, predefinito), ogni tiro (vedi Impostazioni, sezione 15).
 
 ## 7. Compendio
 
@@ -179,6 +181,7 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Tiri dalla scheda**: dal proprio foglio aperto al tavolo (icona dadi in alto) si selezionano **1, 2 o 3 caratteristiche** (Attributi/Abilità) e il pool è la loro **somma** (regole V20, difficoltà di default 6); il tiro è visibile a tutti sul tavolo.
 - **Feed riducibile a icona**: i risultati recenti sul tavolo possono essere ridotti a una sola icona dadi e riaperti con un tocco.
 - **Dadi 3D animati**: d10 in marmo a texture reale (volatina, atterraggio sul risultato, tinta rosso/verde per boccia/successo). Mesh e texture dal set gratuito "Low Poly 3D Dice Set" di **eddex** (itch.io), licenza **CC BY-SA 4.0**.
+- **Reveal cinematografico al tavolo**: dal menu del Narratore (voce "Reveal cinematografico dei dadi") si sceglie quando mostrare il reveal a schermo intero — **disattivato**, **solo momenti critici** (predefinito) o **ogni tiro**; i giocatori possono cambiare la stessa preferenza da Impostazioni. I tiri privati non attivano mai il reveal per gli altri.
 - **Sincronizzazione dei dati**: aggiornamenti delle statistiche del personaggio condivisi (es. salute, volontà, sangue).
 - **Foglio in sola lettura**: i giocatori possono vedere il foglio condiviso senza modificarlo.
 - **Invio volontario della scheda**: dal proprio foglio aperto al tavolo il giocatore può premere l'icona invio per **inviare la scheda corrente al Narratore** (in aggiunta all'invio automatico alla connessione e alla richiesta del Narratore); arriva un'avviso "Scheda inviata" al giocatore e "Scheda ricevuta da…" al Narratore.
@@ -186,6 +189,7 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Presentazione dei file** dal Narratore (immagini, PDF, video) a schermo intero per tutti.
 - **Rivela (handout)**: dal browser cronaca al tavolo il Narratore può premere **"Rivela"** su un **indizio** o un **segreto**; il contenuto appare a tutti i giocatori con un'avviso, l'indizio passa a "condiviso" e (se la sessione è attiva) viene registrato l'evento "Indizio rivelato" nel diario.
 - **Condivisione di file** verso i giocatori: il file ricevuto viene salvato nella cronaca del giocatore.
+- **Tracker di combattimento**: dal menu del Narratore (voce "Combattimento") si apre l'inseguitore di iniziativa e round; i giocatori premono **"Tira iniziativa"** (1d10 + Destrezza + Prontezza del loro personaggio), l'ordine si ricalcola e viene mostrato a tutti, il turno corrente è evidenziato (chi ci si trova vede "Tuo turno"); il Narratore aggiunge/rimuove combattenti, avanza i round e può disattivare il rilancio a ogni round (vedi sezione 17).
 - Il Narratore può **chiudere la tavola**; tutti ricevono l'avviso.
 
 ## 13. Mixer audio
@@ -217,6 +221,7 @@ Strumento sonoro per l'atmosfera di partita:
   - **Costi XP**: attributi, abilità, background, virtù, umanità, volontà e discipline (in clan, fuori clan, Caitiff) — applicati alla schermata **Esperienza**.
   - **Regole dei dadi**: difficoltà predefinita e **decine esplosive** (consentite, attive per default, a cascata) — applicate a tutti i tiri.
   - **Contenuti ammessi**: clan esclusi non appaiono nella tendina di creazione (e un clan escluso blocca il salvataggio).
+- **Reveal cinematografico dei dadi**: quando appare il reveal a schermo intero — disattivato, solo momenti critici (predefinito) o ogni tiro (vedi sezione 6); stessa preferenza del menu del tavolo (sezione 12).
 - **Log di errore**.
 
 ## 16. Log di errore
@@ -225,7 +230,21 @@ Strumento sonoro per l'atmosfera di partita:
 - **Copia log**: copia il testo completo del crash per inviarlo allo sviluppatore.
 - Dialogo di crash con titolo, istruzioni e pulsante per copiare.
 
-## 17. Note e limiti noti
+## 17. Tracker di combattimento
+
+- Accessibile dal **pulsante scudo** nella home (tracker locale) e dal **menu del Narratore** al tavolo live (voce "Combattimento").
+- **Iniziativa V20**: 1d10 + Destrezza + Prontezza; chi ha il valore più alto agisce per primo, a parità vale l'ordine di inserimento.
+- **Round**: il pulsante "Prossimo" passa al combattente successivo; superato l'ultimo si passa al round successivo.
+- **Rilancio a ogni round**: di default (regole ufficiali) l'iniziativa va rilanciata a ogni round; il Narratore può disattivarlo dallo switch per congelare l'ordine.
+- **Al tavolo live**:
+  - Solo il Narratore avvia/termina il combattimento, aggiunge e rimuove combattenti (es. NPC) e avanza i round.
+  - I giocatori premono "Tira iniziativa" per inviare il proprio valore (dalla scheda connessa) al Narratore.
+  - L'ordine viene ricalcolato e mostrato a tutti; il turno corrente è evidenziato.
+  - Il tracker viene inviato automaticamente ai giocatori che si collegano durante un combattimento.
+- **Tracker locale**: stato solo in memoria (alla chiusura dell'app si azzera); non è collegato al tavolo live.
+- Limite: non gestisce azioni per round, Ferite, Celerità o turni multipli: è un inseguitore di iniziativa e round fedele alle regole base.
+
+## 18. Note e limiti noti
 
 - Le stringhe tecniche dei file di importazione (es. "formato non valido", errori interni) restano in inglese.
 - Il tavolo live funziona solo se tutti i dispositivi sono sulla **stessa rete WiFi**.

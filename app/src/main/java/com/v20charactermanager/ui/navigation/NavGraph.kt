@@ -154,6 +154,7 @@ object Routes {
     const val LIVE_ROOM = "live_room/{chronicleId}/{asMaster}?host={host}&port={port}&playerName={playerName}&characterId={characterId}"
     const val SELECT_CHARACTER = "select_character?host={host}&port={port}&roomName={roomName}&masterName={masterName}"
     const val FIND_TABLE = "find_table"
+    const val COMBAT = "combat"
     const val CRASH_LOGS = "crash_logs"
 
     fun xpSpending(characterId: String) = "xp_spending/$characterId"
@@ -286,6 +287,9 @@ fun V20NavGraph(
                 },
                 onChronicleClick = {
                     navController.navigate(Routes.CHRONICLES)
+                },
+                onCombatClick = {
+                    navController.navigate(Routes.COMBAT)
                 }
             )
         }
@@ -1629,7 +1633,14 @@ fun V20NavGraph(
                 onRevealSecret = { secret ->
                     liveRoomViewModel.revealHandout(secret = secret)
                 },
-                onDismissReveal = { liveRoomViewModel.dismissReveal() }
+                onDismissReveal = { liveRoomViewModel.dismissReveal() },
+                onCombatStart = { reRoll -> liveRoomViewModel.startCombat(reRoll) },
+                onCombatAdd = { name, initiative -> liveRoomViewModel.addCombatant(name, initiative) },
+                onCombatRemove = { id -> liveRoomViewModel.removeCombatant(id) },
+                onCombatAdvance = { liveRoomViewModel.advanceCombatTurn() },
+                onCombatEnd = { liveRoomViewModel.endCombat() },
+                onCombatToggleReroll = { enabled -> liveRoomViewModel.setCombatReroll(enabled) },
+                onRollInitiative = { liveRoomViewModel.rollInitiative() }
             )
         }
 
@@ -1678,6 +1689,21 @@ fun V20NavGraph(
                 p2pError = findTableState.p2pError,
                 onP2pScan = { findTableViewModel.startP2pScan() },
                 onP2pConnect = { peer -> findTableViewModel.connectP2p(peer) },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.COMBAT) {
+            val combatViewModel: com.v20charactermanager.ui.combat.CombatViewModel = viewModel()
+            val combatState by combatViewModel.state.collectAsState()
+            com.v20charactermanager.ui.combat.CombatTrackerScreen(
+                state = combatState,
+                onStart = { combatViewModel.start() },
+                onAdd = { name, initiative -> combatViewModel.add(name, initiative) },
+                onRemove = { id -> combatViewModel.remove(id) },
+                onAdvance = { combatViewModel.advance() },
+                onEnd = { combatViewModel.end() },
+                onToggleReroll = { enabled -> combatViewModel.toggleReroll(enabled) },
                 onBack = { navController.popBackStack() }
             )
         }

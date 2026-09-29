@@ -40,7 +40,8 @@ data class LiveRoomState(
     val diceRolls: List<LiveRoomMessage.DiceRoll> = emptyList(),
     val rollLog: List<LiveRoomMessage.DiceRoll> = emptyList(),
     val rollRequest: LiveRoomMessage.RollRequest? = null,
-    val revealedHandout: LiveRoomMessage.RevealHandout? = null
+    val revealedHandout: LiveRoomMessage.RevealHandout? = null,
+    val combat: CombatState = CombatState()
 )
 
 @Serializable
@@ -92,7 +93,10 @@ sealed class LiveRoomMessage {
         val difficulty: Int = 6,
         val label: String = "",
         val isPrivate: Boolean = false,
-        val timestamp: Long = 0L
+        val timestamp: Long = 0L,
+        /** Null on old senders: consumers must treat the roll as non-critical. */
+        val isBotch: Boolean? = null,
+        val netSuccesses: Int? = null
     ) : LiveRoomMessage()
 
     /** Master -> player roll request (Master Spec section 34). */
@@ -128,6 +132,18 @@ sealed class LiveRoomMessage {
         val title: String,
         val content: String,
         val kind: String = "clue"
+    ) : LiveRoomMessage()
+
+    /** Master -> players: full combat tracker snapshot. */
+    @Serializable
+    data class CombatUpdate(val state: CombatState) : LiveRoomMessage()
+
+    /** Player -> master: initiative roll result (V20: 1d10 + Dexterity + Wits). */
+    @Serializable
+    data class InitiativeRoll(
+        val characterId: String = "",
+        val playerName: String = "",
+        val initiative: Int = 0
     ) : LiveRoomMessage()
 
     @Serializable
