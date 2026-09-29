@@ -53,6 +53,9 @@ fun ChronicleStorytellerScreen(
     onDeleteCharacterNote: (String) -> Unit,
     onUpdateChronicle: (Chronicle) -> Unit,
     onCreateScene: (String, String) -> Unit,
+    onAddSceneVariant: (ChronicleScene, String, String?) -> Unit = { _, _, _ -> },
+    onToggleDefaultSceneVariant: (String, String) -> Unit = { _, _ -> },
+    onDeleteSceneVariant: (String) -> Unit = {},
     onCreateLocation: (String, String) -> Unit,
     onDeleteLocation: (String) -> Unit,
     onUpdateLocation: (ChronicleLocation) -> Unit,
@@ -276,6 +279,7 @@ fun ChronicleStorytellerScreen(
         SceneDeckSheet(
             scenes = uiState.scenes,
             activeSceneId = uiState.activeSession?.activeSceneId,
+            sceneVariants = uiState.sceneVariants,
             onSceneSelect = { scene ->
                 uiState.activeSession?.let { session ->
                     onChangeScene(scene.id)
@@ -361,10 +365,14 @@ fun ChronicleStorytellerScreen(
         SceneDetailDialog(
             scene = scene,
             isActive = uiState.activeSession?.activeSceneId == scene.id,
+            variants = uiState.sceneVariants.filter { it.sceneId == scene.id },
             onActivate = {
                 onChangeScene(scene.id)
                 selectedScene = null
             },
+            onAddVariant = { name, notes -> onAddSceneVariant(scene, name, notes) },
+            onToggleDefaultVariant = { variantId -> onToggleDefaultSceneVariant(scene.id, variantId) },
+            onDeleteVariant = onDeleteSceneVariant,
             onDismiss = { selectedScene = null }
         )
     }

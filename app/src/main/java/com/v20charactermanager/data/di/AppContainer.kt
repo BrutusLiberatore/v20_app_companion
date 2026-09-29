@@ -70,6 +70,10 @@ class AppContainer(private val context: Context) {
         database.sceneDao()
     }
 
+    private val sceneVariantDao by lazy {
+        database.sceneVariantDao()
+    }
+
     private val secretDao by lazy {
         database.secretDao()
     }
@@ -139,7 +143,7 @@ class AppContainer(private val context: Context) {
             chronicleDao, chronicleMemberDao, sessionDao,
             chronicleNoteDao, chronicleCharacterNoteDao,
             npcDao, locationDao, factionDao, relationshipDao,
-            plotArcDao, sceneDao, secretDao, clueDao, eventDao, boonDao,
+            plotArcDao, sceneDao, sceneVariantDao, secretDao, clueDao, eventDao, boonDao,
             quickNoteDao, sessionEventDao
         )
     }

@@ -916,6 +916,16 @@
     <string name="live_reveal_received">Rivelato: %1$s</string>
     <string name="live_reveal_dialog_title">Contenuto rivelato</string>
     <string name="live_empty_clue">Nessun indizio</string>
+    <string name="scene_variants">Varianti</string>
+    <string name="scene_variant_add">Aggiungi variante</string>
+    <string name="scene_variant_name">Nome variante</string>
+    <string name="scene_variant_default">Predefinita</string>
+    <string name="live_p2p_title">WiFi Direct (senza router)</string>
+    <string name="live_p2p_desc">Connessione diretta tra dispositivi senza rete Wi-Fi: il Narratore crea il gruppo, i giocatori lo cercano.</string>
+    <string name="live_p2p_scan">Cerca dispositivi</string>
+    <string name="live_p2p_no_peers">Nessun dispositivo trovato. Tieni i due dispositivi vicini e riprova.</string>
+    <string name="live_p2p_timeout">Connessione scaduta: controlla Wi-Fi e permessi di posizione.</string>
+    <string name="live_p2p_master_denied">Permesso WiFi Direct negato: il tavolo funzionerà solo sulla stessa rete.</string>
     <string name="sheet_roll_hint">Seleziona da 1 a 3 caratteristiche. Il pool di dadi vale la loro somma.</string>
     <string name="sheet_roll_pool">Dadi totali: %1$d</string>
     <string name="live_share_recipients">Destinatari</string>

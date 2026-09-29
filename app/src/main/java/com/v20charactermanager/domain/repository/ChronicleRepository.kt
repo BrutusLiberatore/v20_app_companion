@@ -80,6 +80,12 @@ interface ChronicleRepository {
     suspend fun updateScene(scene: ChronicleScene)
     suspend fun deleteScene(id: String)
 
+    // Scene variants (Addendum section 22)
+    fun getSceneVariants(chronicleId: String): Flow<List<SceneVariant>>
+    suspend fun insertSceneVariant(variant: SceneVariant)
+    suspend fun updateSceneVariant(variant: SceneVariant)
+    suspend fun deleteSceneVariant(id: String)
+
     // Secrets
     fun getSecrets(chronicleId: String): Flow<List<Secret>>
     suspend fun insertSecret(secret: Secret)

@@ -576,15 +576,16 @@ class LiveRoomViewModel(
                 wifiDirectManager.connectToPeer(
                     device = peer,
                     onConnected = {
-                        Log.d(TAG, "WiFi Direct connected to peer")
-                        // Wait a moment for group to form, then connect TCP
+                        Log.d(TAG, "WiFi Direct connected to peer, joining TCP")
+                        // Wait for the group to form, then join the master's server
                         viewModelScope.launch {
-                            kotlinx.coroutines.delay(1500)
-                            val goAddress = wifiDirectManager.getGroupOwnerAddress()
-                            val port = _uiState.value.room?.port ?: 0
-                            if (port > 0) {
-                                client?.connect(goAddress, port, playerName, characterId)
-                            }
+                            kotlinx.coroutines.delay(2000)
+                            joinRoom(
+                                wifiDirectManager.getGroupOwnerAddress(),
+                                com.v20charactermanager.data.network.LiveRoomServer.TABLE_PORT,
+                                playerName,
+                                characterId
+                            )
                         }
                     },
                     onError = { error ->

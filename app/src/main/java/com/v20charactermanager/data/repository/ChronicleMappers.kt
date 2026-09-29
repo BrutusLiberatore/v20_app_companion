@@ -210,6 +210,18 @@ fun ChronicleScene.toEntity() = SceneEntity(
     createdAt = createdAt, updatedAt = updatedAt
 )
 
+fun SceneVariantEntity.toDomain() = SceneVariant(
+    id = id, sceneId = sceneId, name = name,
+    assetIds = assetIds.split(",").filter { it.isNotEmpty() },
+    notes = notes, isDefault = isDefault, createdAt = createdAt
+)
+
+fun SceneVariant.toEntity() = SceneVariantEntity(
+    id = id, sceneId = sceneId, name = name,
+    assetIds = assetIds.joinToString(","),
+    notes = notes, isDefault = isDefault, createdAt = createdAt
+)
+
 fun SecretEntity.toDomain() = Secret(
     id = id, chronicleId = chronicleId, title = title, content = content,
     linkedEntityIds = linkedEntityIds.split(",").filter { it.isNotEmpty() },

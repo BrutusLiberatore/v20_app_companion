@@ -19,6 +19,7 @@ class ChronicleRepositoryImpl(
     private val relationshipDao: RelationshipDao,
     private val plotArcDao: PlotArcDao,
     private val sceneDao: SceneDao,
+    private val sceneVariantDao: SceneVariantDao,
     private val secretDao: SecretDao,
     private val clueDao: ClueDao,
     private val eventDao: EventDao,
@@ -289,6 +290,25 @@ class ChronicleRepositoryImpl(
 
     override suspend fun deleteScene(id: String) {
         sceneDao.deleteScene(id)
+    }
+
+    // Scene variants (Addendum section 22)
+    override fun getSceneVariants(chronicleId: String): Flow<List<SceneVariant>> {
+        return sceneVariantDao.getVariantsByChronicle(chronicleId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun insertSceneVariant(variant: SceneVariant) {
+        sceneVariantDao.insertVariant(variant.toEntity())
+    }
+
+    override suspend fun updateSceneVariant(variant: SceneVariant) {
+        sceneVariantDao.updateVariant(variant.toEntity())
+    }
+
+    override suspend fun deleteSceneVariant(id: String) {
+        sceneVariantDao.deleteVariant(id)
     }
 
     // Secrets

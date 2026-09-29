@@ -31,6 +31,7 @@ data class ChronicleDetailUiState(
     val plotArcs: List<PlotArc> = emptyList(),
     val scenes: List<ChronicleScene> = emptyList(),
     val activeScenes: List<ChronicleScene> = emptyList(),
+    val sceneVariants: List<SceneVariant> = emptyList(),
     val secrets: List<Secret> = emptyList(),
     val clues: List<Clue> = emptyList(),
     val events: List<ChronicleEvent> = emptyList(),
@@ -140,6 +141,11 @@ class ChronicleViewModel(
         viewModelScope.launch {
             chronicleRepository.getScenes(chronicleId).collect { scenes ->
                 _detailUiState.update { it.copy(scenes = scenes) }
+            }
+        }
+        viewModelScope.launch {
+            chronicleRepository.getSceneVariants(chronicleId).collect { variants ->
+                _detailUiState.update { it.copy(sceneVariants = variants) }
             }
         }
         viewModelScope.launch {
@@ -385,6 +391,38 @@ class ChronicleViewModel(
         }
     }
     fun deleteScene(id: String) { viewModelScope.launch { chronicleRepository.deleteScene(id) } }
+
+    // Scene variants (Addendum section 22)
+    fun addSceneVariant(scene: ChronicleScene, name: String, notes: String? = null) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
+        viewModelScope.launch {
+            chronicleRepository.insertSceneVariant(
+                SceneVariant(
+                    id = UUID.randomUUID().toString(),
+                    sceneId = scene.id,
+                    name = trimmed,
+                    assetIds = scene.mediaAssetIds,
+                    notes = notes?.trim()?.takeIf { it.isNotEmpty() }
+                )
+            )
+        }
+    }
+
+    fun toggleDefaultSceneVariant(sceneId: String, variantId: String) {
+        viewModelScope.launch {
+            val current = _detailUiState.value.sceneVariants
+                .filter { it.sceneId == sceneId }
+            val isCurrentlyDefault = current.find { it.id == variantId }?.isDefault == true
+            val newDefaultId = if (isCurrentlyDefault) null else variantId
+            current.withDefaultSelection(sceneId, newDefaultId)
+                .forEach { chronicleRepository.updateSceneVariant(it) }
+        }
+    }
+
+    fun deleteSceneVariant(id: String) {
+        viewModelScope.launch { chronicleRepository.deleteSceneVariant(id) }
+    }
 
     // Secrets
     fun createSecret(chronicleId: String, title: String, content: String = "") {

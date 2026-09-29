@@ -63,6 +63,11 @@ class WifiDirectManager(private val context: Context) {
             addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
         }
 
+        // Unregister any previous receiver to avoid duplicates when initialize is called again
+        receiver?.let {
+            try { context.unregisterReceiver(it) } catch (_: Exception) {}
+        }
+
         receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
                 when (intent.action) {
@@ -101,47 +106,57 @@ class WifiDirectManager(private val context: Context) {
 
         _state.value = _state.value.copy(isCreatingGroup = true)
 
-        mgr.createGroup(ch, object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-                Log.d(TAG, "Group created successfully")
-                _state.value = _state.value.copy(
-                    isCreatingGroup = false,
-                    isGroupOwner = true,
-                    isConnected = true,
-                    groupOwnerAddress = GROUP_OWNER_IP
-                )
-                onSuccess()
-            }
-
-            override fun onFailure(reason: Int) {
-                val errorMsg = when (reason) {
-                    WifiP2pManager.ERROR -> "Errore generico WiFi P2P"
-                    WifiP2pManager.P2P_UNSUPPORTED -> "WiFi Direct non supportato"
-                    WifiP2pManager.BUSY -> "WiFi P2P occupato"
-                    else -> "Errore sconosciuto: $reason"
+        try {
+            mgr.createGroup(ch, object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    Log.d(TAG, "Group created successfully")
+                    _state.value = _state.value.copy(
+                        isCreatingGroup = false,
+                        isGroupOwner = true,
+                        isConnected = true,
+                        groupOwnerAddress = GROUP_OWNER_IP
+                    )
+                    onSuccess()
                 }
-                Log.e(TAG, "Failed to create group: $errorMsg")
-                _state.value = _state.value.copy(isCreatingGroup = false, error = errorMsg)
-                onError(errorMsg)
-            }
-        })
+
+                override fun onFailure(reason: Int) {
+                    val errorMsg = when (reason) {
+                        WifiP2pManager.ERROR -> "Errore generico WiFi P2P"
+                        WifiP2pManager.P2P_UNSUPPORTED -> "WiFi Direct non supportato"
+                        WifiP2pManager.BUSY -> "WiFi P2P occupato"
+                        else -> "Errore sconosciuto: $reason"
+                    }
+                    Log.e(TAG, "Failed to create group: $errorMsg")
+                    _state.value = _state.value.copy(isCreatingGroup = false, error = errorMsg)
+                    onError(errorMsg)
+                }
+            })
+        } catch (e: SecurityException) {
+            Log.e(TAG, "createGroup permission denied: ${e.message}")
+            _state.value = _state.value.copy(isCreatingGroup = false)
+            onError("Permesso WiFi Direct negato")
+        }
     }
 
     fun removeGroup(onSuccess: () -> Unit = {}) {
         val mgr = manager ?: return
         val ch = channel ?: return
 
-        mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-                Log.d(TAG, "Group removed")
-                _state.value = WifiDirectState()
-                onSuccess()
-            }
+        try {
+            mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {
+                    Log.d(TAG, "Group removed")
+                    _state.value = WifiDirectState()
+                    onSuccess()
+                }
 
-            override fun onFailure(reason: Int) {
-                Log.e(TAG, "Failed to remove group: $reason")
-            }
-        })
+                override fun onFailure(reason: Int) {
+                    Log.e(TAG, "Failed to remove group: $reason")
+                }
+            })
+        } catch (e: SecurityException) {
+            Log.e(TAG, "removeGroup permission denied: ${e.message}")
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -241,6 +256,10 @@ class WifiDirectManager(private val context: Context) {
 
     fun getGroupOwnerAddress(): String {
         return _state.value.groupOwnerAddress ?: GROUP_OWNER_IP
+    }
+
+    fun clearError() {
+        _state.value = _state.value.copy(error = null)
     }
 
     fun isGroupOwner(): Boolean {

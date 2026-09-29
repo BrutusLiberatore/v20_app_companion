@@ -97,6 +97,7 @@ Elenco delle cronache (le avventure del gruppo). Ogni cronaca ha:
 - **NPC**: personaggi non giocanti con ruolo, descrizione e note.
 - **Luoghi**: luoghi della cronaca, con immagine e mappa.
 - **Fazioni**, **Trame**, **Segreti**, **Eventi**, **Indizi**: elementi di racconto gestibili con aggiunta, modifica ed eliminazione.
+- **Varianti di scena**: ogni scena può avere alternative (es. "Elysium — durante l'attacco") con nome, note e asset propri; una variante può essere impostata come **predefinita** (radiobutton), e compare come sottotitolo della scena nel deck.
 - **Regole della casa**: testo delle regole personalizzate della cronaca.
 - **Ricerca nella cronaca**: cerca in tutte le aree, con filtri per PG/NPC e per tipo (luoghi, trame, segreti, indizi, fazioni, eventi, note).
 - **Media**: libreria dei file della cronaca (vedi sezione 10).
@@ -161,6 +162,7 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Crea tavolo**: il Narratore apre la sala e condivide il suo indirizzo IP.
 - **Trova tavolo**: scansione automatica delle tavole attive sulla stessa WiFi (con avvio e arresto scansione).
 - **Connessione manuale**: inserimento dell'IP del Narratore e della porta.
+- **WiFi Direct (P2P)**: connessione diretta tra dispositivi **senza router** — il Narratore crea automaticamente il gruppo alla creazione del tavolo; da "Trova tavolo" i giocatori possono **cercare i dispositivi WiFi Direct** e unirsi con un tocco (serve il permesso di posizione/vicinanza). Alla creazione del tavolo l'app **chiede il permesso WiFi Direct**: se negato, il tavolo resta comunque aperto ma **solo sulla stessa rete (LAN)**.
 - Avviso se il Narratore è su un emulatore (indirizzi 10.0.2.x non raggiungibili).
 
 **Al tavolo**

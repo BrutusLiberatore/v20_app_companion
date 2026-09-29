@@ -916,6 +916,16 @@
     <string name="live_reveal_received">Revealed: %1$s</string>
     <string name="live_reveal_dialog_title">Revealed content</string>
     <string name="live_empty_clue">No clues yet</string>
+    <string name="scene_variants">Variants</string>
+    <string name="scene_variant_add">Add variant</string>
+    <string name="scene_variant_name">Variant name</string>
+    <string name="scene_variant_default">Default</string>
+    <string name="live_p2p_title">WiFi Direct (no router)</string>
+    <string name="live_p2p_desc">Connect directly between devices without a Wi-Fi network: the master creates the group, players search for it.</string>
+    <string name="live_p2p_scan">Search for devices</string>
+    <string name="live_p2p_no_peers">No devices found. Keep both devices close and try again.</string>
+    <string name="live_p2p_timeout">Connection timed out: check Wi-Fi and location permissions.</string>
+    <string name="live_p2p_master_denied">WiFi Direct permission denied: the room will only work on the same network.</string>
     <string name="sheet_roll_hint">Select 1 to 3 traits. The dice pool equals their total value.</string>
     <string name="sheet_roll_pool">Total dice: %1$d</string>
     <string name="live_share_recipients">Recipients</string>

@@ -968,6 +968,15 @@ fun V20NavGraph(
                 onCreateScene = { cId, title ->
                     viewModel.createScene(cId, title)
                 },
+                onAddSceneVariant = { scene, name, notes ->
+                    viewModel.addSceneVariant(scene, name, notes)
+                },
+                onToggleDefaultSceneVariant = { sceneId, variantId ->
+                    viewModel.toggleDefaultSceneVariant(sceneId, variantId)
+                },
+                onDeleteSceneVariant = { variantId ->
+                    viewModel.deleteSceneVariant(variantId)
+                },
                 onCreateLocation = { cId, name ->
                     viewModel.createLocation(cId, name)
                 },
@@ -1509,6 +1518,32 @@ fun V20NavGraph(
             
             val liveRoomState by liveRoomViewModel.uiState.collectAsState()
 
+            // WiFi Direct (master): createGroup requires the nearby/position permission at runtime.
+            // If denied, the room still starts as LAN-only (WifiDirectManager falls back gracefully).
+            val roomContext = LocalContext.current
+            val p2pCreatePermission = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                android.Manifest.permission.NEARBY_WIFI_DEVICES
+            } else {
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            }
+            var pendingCreateRoom by remember { mutableStateOf<Pair<String, String>?>(null) }
+            val createRoomPermissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                val pending = pendingCreateRoom
+                pendingCreateRoom = null
+                if (!granted && pending != null) {
+                    android.widget.Toast.makeText(
+                        roomContext,
+                        roomContext.getString(R.string.live_p2p_master_denied),
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
+                if (pending != null) {
+                    liveRoomViewModel.createRoom(pending.first, pending.second, chronicleId)
+                }
+            }
+
             val chronicleRepo = appContainer.chronicleRepository
             var chronicleName by remember { mutableStateOf("") }
             LaunchedEffect(chronicleId) {
@@ -1542,7 +1577,15 @@ fun V20NavGraph(
                 autoPlayerName = autoPlayerName,
                 autoCharacterId = autoCharacterId,
                 onCreateRoom = { name, master, _ ->
-                    liveRoomViewModel.createRoom(name, master, chronicleId)
+                    val hasP2pPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                        roomContext, p2pCreatePermission
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                    if (hasP2pPermission) {
+                        liveRoomViewModel.createRoom(name, master, chronicleId)
+                    } else {
+                        pendingCreateRoom = name to master
+                        createRoomPermissionLauncher.launch(p2pCreatePermission)
+                    }
                 },
                 onJoinRoom = { host, port, name, charId ->
                     liveRoomViewModel.joinRoom(host, port, name, charId)
@@ -1600,6 +1643,21 @@ fun V20NavGraph(
             val findTableState by findTableViewModel.uiState.collectAsState()
             val defaultRoomName = stringResource(R.string.live_style_section_table)
 
+            LaunchedEffect(findTableState.p2pConnectHost) {
+                val p2pHost = findTableState.p2pConnectHost
+                if (p2pHost != null) {
+                    findTableViewModel.clearP2pConnect()
+                    navController.navigate(
+                        Routes.selectCharacter(
+                            p2pHost,
+                            com.v20charactermanager.data.network.LiveRoomServer.TABLE_PORT,
+                            "WiFi Direct",
+                            "Master"
+                        )
+                    )
+                }
+            }
+
             com.v20charactermanager.ui.liveroom.FindTableScreen(
                 discoveredTables = findTableState.discoveredTables,
                 isScanning = findTableState.isScanning,
@@ -1614,6 +1672,12 @@ fun V20NavGraph(
                 onManualConnect = { host, port ->
                     navController.navigate(Routes.selectCharacter(host, port, "Tavolo", "Master"))
                 },
+                p2pPeers = findTableState.p2pPeers,
+                isP2pScanning = findTableState.isP2pScanning,
+                isP2pConnecting = findTableState.isP2pConnecting,
+                p2pError = findTableState.p2pError,
+                onP2pScan = { findTableViewModel.startP2pScan() },
+                onP2pConnect = { peer -> findTableViewModel.connectP2p(peer) },
                 onBack = { navController.popBackStack() }
             )
         }

@@ -16,12 +16,14 @@ import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.ChronicleScene
 import com.v20charactermanager.domain.model.SceneStatus
+import com.v20charactermanager.domain.model.SceneVariant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SceneDeckSheet(
     scenes: List<ChronicleScene>,
     activeSceneId: String?,
+    sceneVariants: List<SceneVariant> = emptyList(),
     onSceneSelect: (ChronicleScene) -> Unit,
     onNewScene: () -> Unit,
     onDismiss: () -> Unit
@@ -67,12 +69,25 @@ fun SceneDeckSheet(
                             else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                         }
 
+                        val defaultVariant = sceneVariants.find {
+                            it.sceneId == scene.id && it.isDefault
+                        }
+
                         ListItem(
                             headlineContent = {
                                 Text(
                                     text = scene.title,
                                     fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
                                 )
+                            },
+                            supportingContent = defaultVariant?.let { variant ->
+                                {
+                                    Text(
+                                        text = variant.name,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                                    )
+                                }
                             },
                             leadingContent = {
                                 Icon(
