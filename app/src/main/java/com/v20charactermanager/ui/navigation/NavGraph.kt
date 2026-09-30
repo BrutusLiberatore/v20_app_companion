@@ -1658,6 +1658,10 @@ fun V20NavGraph(
                 onCombatAdvance = { liveRoomViewModel.advanceCombatTurn() },
                 onCombatEnd = { liveRoomViewModel.endCombat() },
                 onCombatToggleReroll = { enabled -> liveRoomViewModel.setCombatReroll(enabled) },
+                onCombatTimerSet = { seconds -> liveRoomViewModel.setCombatTimer(seconds) },
+                onCombatTimerPause = { liveRoomViewModel.pauseCombatTimer() },
+                onCombatTimerResume = { liveRoomViewModel.resumeCombatTimer() },
+                onCombatTimerAutoAdvance = { enabled -> liveRoomViewModel.setCombatTimerAutoAdvance(enabled) },
                 onRollInitiative = { liveRoomViewModel.rollInitiative() },
                 localCharacter = liveLocalCharacter,
                 sharedCharacters = liveSharedCharacters,
@@ -1733,6 +1737,10 @@ fun V20NavGraph(
                 onAdvance = { combatViewModel.advance() },
                 onEnd = { combatViewModel.end() },
                 onToggleReroll = { enabled -> combatViewModel.toggleReroll(enabled) },
+                onTimerSet = { seconds -> combatViewModel.setTimer(seconds) },
+                onTimerPause = { combatViewModel.pauseTimer() },
+                onTimerResume = { combatViewModel.resumeTimer() },
+                onTimerAutoAdvance = { enabled -> combatViewModel.setTimerAutoAdvance(enabled) },
                 onBack = { navController.popBackStack() }
             )
         }

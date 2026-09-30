@@ -8,17 +8,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
+import com.v20charactermanager.domain.model.CombatEngine
 import com.v20charactermanager.domain.model.CombatState
+import java.util.Locale
 
 /**
  * Shared combat tracker UI (V20: initiative = 1d10 + Dexterity + Wits,
@@ -39,6 +43,10 @@ fun CombatTrackerContent(
     onAdvance: () -> Unit = {},
     onEnd: () -> Unit = {},
     onToggleReroll: (Boolean) -> Unit = {},
+    onTimerSet: (Int) -> Unit = {},
+    onTimerPause: () -> Unit = {},
+    onTimerResume: () -> Unit = {},
+    onTimerAutoAdvance: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
@@ -71,6 +79,18 @@ fun CombatTrackerContent(
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        if (combat.active) {
+            TurnTimerSection(
+                combat = combat,
+                canControl = canControl,
+                onTimerSet = onTimerSet,
+                onTimerPause = onTimerPause,
+                onTimerResume = onTimerResume,
+                onTimerAutoAdvance = onTimerAutoAdvance
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
 
@@ -232,6 +252,124 @@ fun CombatTrackerContent(
             },
             onDismiss = { showAddDialog = false }
         )
+    }
+}
+
+@Composable
+private fun TurnTimerSection(
+    combat: CombatState,
+    canControl: Boolean,
+    onTimerSet: (Int) -> Unit,
+    onTimerPause: () -> Unit,
+    onTimerResume: () -> Unit,
+    onTimerAutoAdvance: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val timerEnabled = combat.timerSeconds > 0
+    if (!timerEnabled && !canControl) return
+
+    var nowMs by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(combat.timerEndsAt) {
+        if (combat.timerEndsAt <= 0) return@LaunchedEffect
+        var alerted = false
+        while (true) {
+            nowMs = System.currentTimeMillis()
+            if (nowMs >= combat.timerEndsAt) {
+                if (!alerted) {
+                    alerted = true
+                    CombatTimerAlert.fire(context)
+                }
+                break
+            }
+            kotlinx.coroutines.delay(150)
+        }
+    }
+
+    val remainingMs = CombatEngine.timerRemainingMs(combat, nowMs)
+    val expired = combat.timerEndsAt > 0 && nowMs >= combat.timerEndsAt
+    val running = combat.timerEndsAt > 0
+    val paused = combat.timerPausedRemainingMs > 0
+    val totalSeconds = remainingMs / 1000
+    val timeText = if (!timerEnabled && !paused) {
+        "—"
+    } else {
+        String.format(Locale.US, "%02d:%02d", totalSeconds / 60, totalSeconds % 60)
+    }
+    val countdownColor = when {
+        expired -> MaterialTheme.colorScheme.error
+        running && remainingMs <= 5000 -> MaterialTheme.colorScheme.error
+        paused -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.primary
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = if (expired) stringResource(R.string.combat_timer_expired) else timeText,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = countdownColor
+        )
+        if (paused) {
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = stringResource(R.string.combat_timer_pause),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        if (canControl && (running || paused)) {
+            IconButton(onClick = { if (running) onTimerPause() else onTimerResume() }) {
+                Icon(
+                    imageVector = if (running) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = stringResource(
+                        if (running) R.string.combat_timer_pause else R.string.combat_timer_resume
+                    ),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+
+    if (canControl) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            listOf(0, 15, 30, 60, 120).forEach { seconds ->
+                val label = if (seconds == 0) {
+                    stringResource(R.string.combat_timer_off)
+                } else {
+                    stringResource(R.string.combat_timer_seconds, seconds)
+                }
+                FilterChip(
+                    selected = combat.timerSeconds == seconds,
+                    onClick = { onTimerSet(seconds) },
+                    label = { Text(label, style = MaterialTheme.typography.labelSmall) }
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = stringResource(R.string.combat_timer_auto),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Switch(
+                checked = combat.timerAutoAdvance,
+                onCheckedChange = onTimerAutoAdvance,
+                modifier = Modifier.height(24.dp)
+            )
+        }
     }
 }
 

@@ -35,6 +35,10 @@ fun CombatTrackerScreen(
     onAdvance: () -> Unit,
     onEnd: () -> Unit,
     onToggleReroll: (Boolean) -> Unit,
+    onTimerSet: (Int) -> Unit = {},
+    onTimerPause: () -> Unit = {},
+    onTimerResume: () -> Unit = {},
+    onTimerAutoAdvance: (Boolean) -> Unit = {},
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -81,6 +85,10 @@ fun CombatTrackerScreen(
                 onAdvance = onAdvance,
                 onEnd = onEnd,
                 onToggleReroll = onToggleReroll,
+                onTimerSet = onTimerSet,
+                onTimerPause = onTimerPause,
+                onTimerResume = onTimerResume,
+                onTimerAutoAdvance = onTimerAutoAdvance,
                 modifier = Modifier.fillMaxWidth()
             )
         }

@@ -54,8 +54,19 @@ class LiveRoomViewModel(
     private val _localCharacter = MutableStateFlow<Character?>(null)
     val localCharacter: StateFlow<Character?> = _localCharacter.asStateFlow()
     private var localCharJob: kotlinx.coroutines.Job? = null
+    private var combatTimerAlertedFor: Long = 0
 
     init {
+        viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(500)
+                try {
+                    tickCombatTimer()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Combat timer tick failed", e)
+                }
+            }
+        }
         viewModelScope.launch {
             _uiState.map { it.localPlayer?.characterId }
                 .distinctUntilChanged()
@@ -124,7 +135,12 @@ class LiveRoomViewModel(
                         server?.sendToPlayer(id, LiveRoomMessage.TableStyle(style.tablePack, style.chairPack))
                         // Push the combat tracker if a fight is running
                         if (style.combat.active) {
-                            server?.sendToPlayer(id, LiveRoomMessage.CombatUpdate(style.combat))
+                            server?.sendToPlayer(
+                                id,
+                                LiveRoomMessage.CombatUpdate(
+                                    style.combat.copy(timerSyncNow = System.currentTimeMillis())
+                                )
+                            )
                         }
                         // Share character portrait from master's DB (re-encoded so other devices can read it)
                         if (charId != null && characterRepository != null) {
@@ -290,7 +306,7 @@ class LiveRoomViewModel(
                     )
                 )
                 _uiState.update { it.copy(combat = updated) }
-                server?.broadcast(LiveRoomMessage.CombatUpdate(updated))
+                server?.broadcast(LiveRoomMessage.CombatUpdate(updated.copy(timerSyncNow = System.currentTimeMillis())))
             }
             else -> {}
         }
@@ -802,7 +818,7 @@ class LiveRoomViewModel(
                 }
             }
             is LiveRoomMessage.CombatUpdate -> {
-                _uiState.update { it.copy(combat = message.state) }
+                _uiState.update { it.copy(combat = rebaseCombatTimer(message.state)) }
             }
             is LiveRoomMessage.RoomClosed -> {
                 _uiState.update { state ->
@@ -1113,13 +1129,31 @@ class LiveRoomViewModel(
     // --- COMBAT TRACKER (V20: initiative = 1d10 + Dexterity + Wits) ---
 
     private fun publishCombat() {
-        server?.broadcast(LiveRoomMessage.CombatUpdate(_uiState.value.combat))
+        // Stamp the sender clock so receivers can rebase timerEndsAt on their own clock.
+        val outgoing = _uiState.value.combat.copy(timerSyncNow = System.currentTimeMillis())
+        server?.broadcast(LiveRoomMessage.CombatUpdate(outgoing))
+    }
+
+    /** Rebase the turn timer from the sender's clock onto this device's clock (skew-free countdown). */
+    private fun rebaseCombatTimer(state: CombatState): CombatState {
+        if (state.timerEndsAt <= 0 || state.timerSyncNow <= 0) return state
+        val remainingAtReceipt = state.timerEndsAt - state.timerSyncNow
+        return state.copy(timerEndsAt = System.currentTimeMillis() + remainingAtReceipt)
     }
 
     /** Master: start the combat keeping anyone who already rolled initiative. */
     fun startCombat(reRollEachRound: Boolean = true) {
         if (!_uiState.value.isMaster) return
-        _uiState.update { it.copy(combat = CombatEngine.start(it.combat.combatants, reRollEachRound)) }
+        _uiState.update {
+            it.copy(
+                combat = CombatEngine.start(
+                    combatants = it.combat.combatants,
+                    reRollEachRound = reRollEachRound,
+                    previousConfig = it.combat,
+                    now = System.currentTimeMillis()
+                )
+            )
+        }
         publishCombat()
         showToast(application.getString(R.string.combat_started))
     }
@@ -1151,7 +1185,7 @@ class LiveRoomViewModel(
     fun advanceCombatTurn() {
         if (!_uiState.value.isMaster) return
         val before = _uiState.value.combat
-        val after = CombatEngine.advance(before)
+        val after = CombatEngine.advance(before, System.currentTimeMillis())
         _uiState.update { it.copy(combat = after) }
         publishCombat()
         if (after.round > before.round && after.reRollEachRound) {
@@ -1167,8 +1201,45 @@ class LiveRoomViewModel(
 
     fun endCombat() {
         if (!_uiState.value.isMaster) return
-        _uiState.update { it.copy(combat = CombatEngine.end()) }
+        _uiState.update { it.copy(combat = CombatEngine.end(it.combat)) }
         publishCombat()
+    }
+
+    // --- TURN TIMER (master controls; state broadcast via CombatUpdate) ---
+
+    fun setCombatTimer(seconds: Int) {
+        if (!_uiState.value.isMaster) return
+        _uiState.update { it.copy(combat = CombatEngine.setTimer(it.combat, seconds, System.currentTimeMillis())) }
+        publishCombat()
+    }
+
+    fun pauseCombatTimer() {
+        if (!_uiState.value.isMaster) return
+        _uiState.update { it.copy(combat = CombatEngine.pauseTimer(it.combat, System.currentTimeMillis())) }
+        publishCombat()
+    }
+
+    fun resumeCombatTimer() {
+        if (!_uiState.value.isMaster) return
+        _uiState.update { it.copy(combat = CombatEngine.resumeTimer(it.combat, System.currentTimeMillis())) }
+        publishCombat()
+    }
+
+    fun setCombatTimerAutoAdvance(enabled: Boolean) {
+        if (!_uiState.value.isMaster) return
+        _uiState.update { it.copy(combat = CombatEngine.setTimerAutoAdvance(it.combat, enabled)) }
+        publishCombat()
+    }
+
+    /** Master: detect turn-timer expiry and auto-advance (alert sound/vibration is played by the UI). */
+    private fun tickCombatTimer() {
+        if (!_uiState.value.isMaster) return
+        val combat = _uiState.value.combat
+        if (!combat.active || !CombatEngine.isTimerExpired(combat, System.currentTimeMillis())) return
+        if (!combat.timerAutoAdvance) return
+        if (combatTimerAlertedFor == combat.timerEndsAt) return
+        combatTimerAlertedFor = combat.timerEndsAt
+        advanceCombatTurn()
     }
 
     /** Player: roll initiative (1d10 + Dexterity + Wits) and send it to the master. */

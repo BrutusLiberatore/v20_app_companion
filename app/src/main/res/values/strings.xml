@@ -878,6 +878,12 @@
     <string name="status_players_title">Player status</string>
     <string name="status_no_character">No shared character</string>
     <string name="status_no_players">No players connected.</string>
+    <string name="combat_timer_expired">TIME UP!</string>
+    <string name="combat_timer_pause">Pause</string>
+    <string name="combat_timer_resume">Resume</string>
+    <string name="combat_timer_off">Off</string>
+    <string name="combat_timer_seconds">%1$ds</string>
+    <string name="combat_timer_auto">Auto-advance turn</string>
     <string name="live_tap_fullscreen">Tap to view fullscreen</string>
     <string name="live_waiting_master">Waiting for Master to present…</string>
     <string name="live_minimize">Minimize</string>

@@ -878,6 +878,12 @@
     <string name="status_players_title">Stato dei giocatori</string>
     <string name="status_no_character">Nessun personaggio condiviso</string>
     <string name="status_no_players">Nessun giocatore connesso.</string>
+    <string name="combat_timer_expired">TEMPO!</string>
+    <string name="combat_timer_pause">Pausa</string>
+    <string name="combat_timer_resume">Riprendi</string>
+    <string name="combat_timer_off">Off</string>
+    <string name="combat_timer_seconds">%1$ds</string>
+    <string name="combat_timer_auto">Auto-avanza turno</string>
     <string name="live_tap_fullscreen">Tocca per schermo intero</string>
     <string name="live_waiting_master">In attesa che il Master presenti…</string>
     <string name="live_minimize">Riduci</string>

@@ -190,7 +190,7 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Presentazione dei file** dal Narratore (immagini, PDF, video) a schermo intero per tutti.
 - **Rivela (handout)**: dal browser cronaca al tavolo il Narratore può premere **"Rivela"** su un **indizio** o un **segreto**; il contenuto appare a tutti i giocatori con un'avviso, l'indizio passa a "condiviso" e (se la sessione è attiva) viene registrato l'evento "Indizio rivelato" nel diario.
 - **Condivisione di file** verso i giocatori: il file ricevuto viene salvato nella cronaca del giocatore.
-- **Tracker di combattimento**: dal menu del Narratore (voce "Combattimento") si apre l'inseguitore di iniziativa e round; i giocatori premono **"Tira iniziativa"** (1d10 + Destrezza + Prontezza del loro personaggio), l'ordine si ricalcola e viene mostrato a tutti, il turno corrente è evidenziato (chi ci si trova vede "Tuo turno"); il Narratore aggiunge/rimuove combattenti, avanza i round e può disattivare il rilancio a ogni round (vedi sezione 17).
+- **Tracker di combattimento**: dal menu del Narratore (voce "Combattimento") si apre l'inseguitore di iniziativa e round; i giocatori premono **"Tira iniziativa"** (1d10 + Destrezza + Prontezza del loro personaggio), l'ordine si ricalcola e viene mostrato a tutti, il turno corrente è evidenziato (chi ci si trova vede "Tuo turno"); il Narratore aggiunge/rimuove combattenti, avanza i round e può disattivare il rilancio a ogni round (vedi sezione 17). Anche il **timer di turno** è sincronizzato: i giocatori vedono lo stesso countdown nella propria finestra combattimento (vedi sezione 17).
 - Il Narratore può **chiudere la tavola**; tutti ricevono l'avviso.
 
 ## 13. Mixer audio
@@ -243,6 +243,7 @@ Strumento sonoro per l'atmosfera di partita:
   - L'ordine viene ricalcolato e mostrato a tutti; il turno corrente è evidenziato.
   - Il tracker viene inviato automaticamente ai giocatori che si collegano durante un combattimento.
 - **Tracker locale**: stato solo in memoria (alla chiusura dell'app si azzera); non è collegato al tavolo live.
+- **Timer di turno**: countdown per turno visibile a tutti (Off, 15, 30, 60, 120 secondi), con **pausa/ripresa** e interruttore **auto-avanza turno** (default attivo). Alla scadenza: suono + vibrazione e "TEMPO!" in rosso; con l'auto-avanzamento attivo il turno successivo parte automaticamente e il countdown si riavvia, altrimenti resta in rosso finché non si avanza manualmente. Il countdown è sincronizzato al tavolo (corretto automaticamente sugli orologi dei dispositivi) e la configurazione del timer sopravvive alla fine del combattimento.
 - Limite: non gestisce azioni per round, Ferite, Celerità o turni multipli: è un inseguitore di iniziativa e round fedele alle regole base.
 
 ## 18. Note e limiti noti

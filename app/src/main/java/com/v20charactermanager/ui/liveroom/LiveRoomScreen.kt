@@ -123,6 +123,10 @@ fun LiveRoomScreen(
     onStatusRecoverWillpower: () -> Unit = {},
     onStatusApplyDamage: (Int, DamageType) -> Unit = { _, _ -> },
     onStatusHealDamage: (Int) -> Unit = {},
+    onCombatTimerSet: (Int) -> Unit = {},
+    onCombatTimerPause: () -> Unit = {},
+    onCombatTimerResume: () -> Unit = {},
+    onCombatTimerAutoAdvance: (Boolean) -> Unit = {},
     onMasterStatusEdit: (String, String, Int?, String?) -> Unit = { _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
@@ -276,6 +280,10 @@ fun LiveRoomScreen(
                     onCombatAdvance = onCombatAdvance,
                     onCombatEnd = onCombatEnd,
                     onCombatToggleReroll = onCombatToggleReroll,
+                    onCombatTimerSet = onCombatTimerSet,
+                    onCombatTimerPause = onCombatTimerPause,
+                    onCombatTimerResume = onCombatTimerResume,
+                    onCombatTimerAutoAdvance = onCombatTimerAutoAdvance,
                     onRollInitiative = onRollInitiative,
                     localCharacter = localCharacter,
                     sharedCharacters = sharedCharacters,
@@ -530,6 +538,10 @@ private fun VirtualTableView(
     onStatusRecoverWillpower: () -> Unit = {},
     onStatusApplyDamage: (Int, DamageType) -> Unit = { _, _ -> },
     onStatusHealDamage: (Int) -> Unit = {},
+    onCombatTimerSet: (Int) -> Unit = {},
+    onCombatTimerPause: () -> Unit = {},
+    onCombatTimerResume: () -> Unit = {},
+    onCombatTimerAutoAdvance: (Boolean) -> Unit = {},
     onMasterStatusEdit: (String, String, Int?, String?) -> Unit = { _, _, _, _ -> },
     onCloseRoom: () -> Unit = {},
     onTableStyleChange: (String, String) -> Unit = { _, _ -> },
@@ -617,7 +629,11 @@ private fun VirtualTableView(
                         showCombatDialog = false
                         onCombatEnd()
                     },
-                    onToggleReroll = onCombatToggleReroll
+                    onToggleReroll = onCombatToggleReroll,
+                    onTimerSet = onCombatTimerSet,
+                    onTimerPause = onCombatTimerPause,
+                    onTimerResume = onCombatTimerResume,
+                    onTimerAutoAdvance = onCombatTimerAutoAdvance
                 )
             },
             confirmButton = {
