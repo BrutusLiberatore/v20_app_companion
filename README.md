@@ -6,6 +6,11 @@ A native Android companion app for *Vampire: The Masquerade 20th Anniversary Edi
 
 ## Features
 
+### Getting Started
+
+- First-launch language picker (English/Italian) followed by a 9-step interactive tutorial, replayable anytime from Settings
+- Adaptive layouts for phones and tablets (2/3/4-column grids, compact top bar, landscape split view at the live table)
+
 ### Characters
 
 - Five-step creation wizard (Identity, Attributes, Abilities, Advantages, Final Touches) with V20 rules validation
@@ -28,7 +33,7 @@ A native Android companion app for *Vampire: The Masquerade 20th Anniversary Edi
 
 Six-tab mobile interface:
 
-- **Live**: active session dashboard, scene deck, character quick cards with blood pool and willpower controls, quick action bar with Quick NPC
+- **Live**: active session dashboard, scene deck, character quick cards with blood pool and willpower controls, quick action bar with Quick NPC and a Table chip (create/join)
 - **People**: player characters and NPCs, NPC creation with optional link to a full sheet
 - **Plots**: plot arcs, notes, scenes with hooks
 - **Visual**: media library and annotation board
@@ -55,6 +60,7 @@ During a live session:
 - Targeted file sharing and full-screen asset presentation
 - Voluntary character sheet push to the Storyteller, who can save it into the chronicle
 - Scene deck and audio mixer usable from the table
+- Landscape split layout (tools panel left, table right) with enlarged dice and a landscape-adapted cinematic reveal
 
 ### Visual Board
 
@@ -69,7 +75,8 @@ Layered annotation over maps and images: pen, highlighter, line, arrow, circle, 
 ### Tools
 
 - Equipment library import/export in structured JSON
-- Localisation: 950 strings in Italian and English, switchable at runtime
+- Full backup export/restore in a single `.v20backup` archive (data + portraits/media/audio files) with a daily automatic copy to `Download/V20Companion`
+- Localisation: 1031 strings in Italian and English, switchable at runtime
 
 ---
 
@@ -103,7 +110,7 @@ The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 gradlew test
 ```
 
-The suite contains 256 unit tests covering character CRUD, import/export, the dice engine, migrations, repositories, live room messages, and scene variants.
+The suite contains 350 unit tests covering character CRUD, import/export, the backup engine, the dice engine, migrations, repositories, live room messages, scene variants, the combat timer, XP calculators, and house-rule engines.
 
 ---
 
@@ -123,6 +130,7 @@ The suite contains 256 unit tests covering character CRUD, import/export, the di
 | Min SDK | 26 (Android 8.0) |
 | Target SDK | 34 |
 | Build | Gradle 8.9, AGP 8.5.0 |
+| CI | GitHub Actions: debug build, unit tests, EN/IT string parity, U+FFFD scan |
 
 Every character edit is written to the database on first modification; there is no separate save step. Migrations are versioned, with destructive migration configured only as a last-resort fallback.
 
@@ -162,7 +170,7 @@ app/src/main/java/com/v20charactermanager/
     components/                     -- Shared UI components
   util/                             -- Helpers (locale, and others)
 
-app/src/test/                       -- JVM unit tests (256)
+app/src/test/                       -- JVM unit tests (350)
 ```
 
 ---

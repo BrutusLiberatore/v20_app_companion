@@ -1,10 +1,12 @@
 # V20 Companion — Guida alle funzioni dell'applicazione
 
-Aggiornato alla versione **v34** dell'app.
+Aggiornato alla versione **v45** dell'app.
 
 App Android per gestire le partite di **Vampire: The Masquerade 20th Anniversary (V20)**.
 Può essere usata dal **Giocatore** (per il proprio personaggio) e dal **Narratore** (per gestire la cronaca e la tavola).
 Tutti i dati restano salvati sul telefono. L'interfaccia è disponibile in **italiano** e **inglese**, con possibilità di cambiare lingua dall'app.
+
+**Al primo avvio** l'app chiede di **scegliere la lingua** (English / Italiano) e mostra un **tutorial interattivo di 9 passi** con le funzioni principali; la stessa guida può essere riaperta in qualsiasi momento da Impostazioni («Rivedi il tutorial»).
 
 ---
 
@@ -150,7 +152,7 @@ Pannello di controllo durante la sessione:
 - **Avvio e fine sessione**.
 - **PG in scena** e **PNG in scena** (con personaggi e ritratti).
 - **Trame attive** della cronaca.
-- **Barra azioni rapide**: **dadi**, **nota rapida**, **evento** da registrare al volo e **Quick NPC** (crea un PNG al volo con nome, ruolo e tipo).
+- **Barra azioni rapide**: **dadi**, **nota rapida**, **evento** da registrare al volo, **Quick NPC** (crea un PNG al volo con nome, ruolo e tipo) e **Tavolo** (con dialog per creare o unirsi al tavolo live — funziona anche in orizzontale, dove la barra alta con i pulsanti non è presente).
 - Indicatore **LIVE** quando la tavola è attiva.
 - Pulsanti per creare o unirsi al **tavolo live**.
 
@@ -179,7 +181,8 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Tiri privati del Narratore**: opzione "Tiro privato" nella finestra dei dadi; solo il Narratore vede pool, dadi ed esito, gli altri vedono solo la notula "privato".
 - **Tiri dalla scheda**: dal proprio foglio aperto al tavolo (icona dadi in alto) si selezionano **1, 2 o 3 caratteristiche** (Attributi/Abilità) e il pool è la loro **somma** (regole V20, difficoltà di default 6); il tiro è visibile a tutti sul tavolo.
 - **Feed riducibile a icona**: i risultati recenti sul tavolo possono essere ridotti a una sola icona dadi e riaperti con un tocco.
-- **Dadi 3D animati**: d10 in marmo a texture reale (volatina, atterraggio sul risultato, tinta rosso/verde per boccia/successo). Mesh e texture dal set gratuito "Low Poly 3D Dice Set" di **eddex** (itch.io), licenza **CC BY-SA 4.0**.
+- **Dadi 3D animati**: d10 in marmo a texture reale (volatina, atterraggio sul risultato, tinta rosso/verde per boccia/successo). Mesh e texture dal set gratuito "Low Poly 3D Dice Set" di **eddex** (itch.io), licenza **CC BY-SA 4.0**. In **orizzontale** i dadi animati sono **più grandi** (griglia più larga e raggio maggiore).
+- **Layout in orizzontale**: con lo schermo ruotato il pannello strumenti (banner condivisione, pannelli master/giocatore, log tiri) va **a sinistra** e il tavolo **a destra**; anche il **reveal cinematografico** si adatta (nome ed etichetta su una riga, verdetto più compatto, più spazio ai dadi).
 - **Reveal cinematografico al tavolo**: dal menu del Narratore (voce "Reveal cinematografico dei dadi") si sceglie quando mostrare il reveal a schermo intero — **disattivato**, **solo momenti critici** (predefinito) o **ogni tiro**; i giocatori possono cambiare la stessa preferenza da Impostazioni. I tiri privati non attivano mai il reveal per gli altri.
 - **Stato rapido al tavolo**: il giocatore vede una card "Stato rapido" con il riepilogo (sangue · volontà · salute); toccandola si apre il pannello stato interattivo per modificare il proprio stato. Ogni modifica è **salvata in locale** e **sincronizzata a tutti in tempo reale** (protocollo StatUpdate).
 - **Stato dei giocatori (Narratore)**: dal menu del Narratore (voce "Stato dei giocatori") si apre l'elenco dei PG condivisi con il pannello stato di ciascuno; il Narratore può **correggere** sangue, volontà e salute di qualunque giocatore e la modifica viene replicata a tutti e **salvata sul dispositivo del giocatore**. I giocatori senza scheda condivisa sono elencati con l'avviso "Nessun personaggio condiviso".
@@ -209,11 +212,14 @@ Strumento sonoro per l'atmosfera di partita:
 - Se un personaggio con lo stesso nome esiste già: **sostituisci** o **crea una copia**.
 - **Esporta JSON** e **Condivisione** del file.
 - **Libreria di attrezzature**: import/export del file `v20-equipment-library` (formato JSON dedicato).
+- **Backup completo** (file `.v20backup`): esporta in un unico archivio personaggi, cronache (con note, NPCs, luoghi, trama, media e audio), ritratti e tracce audio; il **ripristino** chiede conferma perché **sostituisce tutti i dati attuali**.
+- **Copia automatica giornaliera** del backup in `Download/V20Companion` (ultima versione), controllata all'avvio dell'app.
 - Accesso anche dalle **Impostazioni**.
 
 ## 15. Impostazioni
 
 - **Lingua**: Inglese / Italiano, applicata subito senza riavvio.
+- **Rivedi il tutorial**: riapre la guida interattiva di 9 passi mostrata al primo avvio.
 - **Tema**: aspetto dell'interfaccia.
 - **Import/Export** dei personaggi.
 - **Regole della casa** delle cronache, per cronaca:
@@ -249,6 +255,6 @@ Strumento sonoro per l'atmosfera di partita:
 ## 18. Note e limiti noti
 
 - Le stringhe tecniche dei file di importazione (es. "formato non valido", errori interni) restano in inglese.
-- Il tavolo live funziona solo se tutti i dispositivi sono sulla **stessa rete WiFi**.
+- Il tavolo live funziona sulla **stessa rete WiFi** oppure in **WiFi Direct** (senza router, vedi sezione 12).
 - Un Narratore su emulatore (BlueStacks) non è raggiungibile dagli altri dispositivi: usare un telefono fisico.
 - Le modifiche vengono salvate appena si cambia qualcosa.

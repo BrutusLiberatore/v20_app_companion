@@ -1,12 +1,124 @@
 # V20 Character Manager — Cronologia Modifiche
 
-## Ultimo aggiornamento: 03/09/2026
+## Ultimo aggiornamento: 03/10/2026
 
 ---
 
-## Stato Build: ✅ SUCCESS (v14)
+## Stato Build: ✅ SUCCESS (v45) — CI GitHub Actions verde (build + 350 test)
 
 ---
+
+## Backup completo con ripristino (v45)
+
+- **Backup completo in un unico file `.v20backup`** (ZIP): `backup.json` con tutti i dati strutturati (personaggi, cronache con tutte le entità figlie, media, audio, regole della casa) più i file binari (ritratti, immagini originali/thumbnail, tracce audio) con mappa dei percorsi rimappata all'estrazione
+- **Esporta** dalla schermata Import/Export (SAF, `application/zip`) e **Ripristina** con dialog di conferma "sostituisci tutto": estrazione file → `clearAllTables` → reinserimento in ordine (personaggi → cronache → figli → media → audio → regole casa)
+- **Copia automatica giornaliera** in `Download/V20Companion` (MediaStore su API 29+, cartella specifica dell'app sotto API 29), cadenza 24h controllata all'avvio, saltata se non ci sono dati, marcata solo a successo
+- Validazione dedicata: file non valido → `BackupFormatException`, `schemaVersion` futuro → `BackupVersionException`, entrambi con stringhe proprie EN/IT
+- **350 test (+8 BackupEngineTest), 1031 stringhe**
+
+---
+
+## Fix CI — gradlew eseguibile (v44)
+
+**Commit**: `368d828`
+
+- Permesso eseguibile `gradlew` (da 100644 a 100755) per l'esecuzione sui runner Linux
+- `.gitattributes` per mantenere `gradlew` con fine riga LF anche su checkout Windows
+- `actions/setup-java` aggiornato a v5 (v4 deprecato)
+
+## CI GitHub Actions (v43)
+
+**Commit**: `6b0365e`
+
+- Workflow `.github/workflows/ci.yml`: build debug + test unitari a ogni push e pull request
+- JDK 21 (Temurin), cache Gradle, annullamento run supersoste (`concurrency`)
+- Controlli rapidi prima del build: parità stringhe EN/IT e assenza di caratteri di sostituzione U+FFFD nei sorgenti
+- Report HTML (test/lint) caricati come artifact in caso di errore
+
+## Onboarding al primo avvio + tavolo in orizzontale (v42)
+
+**Commit**: `957ba9e`
+
+- **Selettore lingua al primo avvio** — English/Italiano prima di tutto, flag dedicato `language_chosen` (non alias della locale), applicazione via `AppCompatDelegate.setApplicationLocales`
+- **Tutorial interattivo a 9 passi** — overlay paginato con punti indicatore, completamento salvato in `v20_tutorial`, riprovabile da Impostazioni ("Rivedi il tutorial")
+- **Tavolo live in landscape** — layout split: pannello strumenti a sinistra, tavolo a destra; banner condivisione e feed tiri spostati nel pannello
+- **Chip "Tavolo" nella QuickActionBar** della prima pagina cronaca con dialog Crea/Unisciti — risolve l'assenza della barra alta nel layout largo
+- **Dadi animati più grandi in orizzontale** — griglia fino a 6 colonne e raggio 0.42 (vs 0.34)
+- **Reveal cinematografico riadattato in landscape** — nome + etichetta su una sola riga, verdetto a 34sp, meno padding → più spazio ai dadi
+- Fix: chip "Tavolo Live" nascosto quando si è già sulla schermata del tavolo
+- **334 test, 1019 stringhe**
+
+## Estetica gotica e adattamento landscape/tablet (v41)
+
+**Commit**: `2e519ef`
+
+- Palette colori tokenizzati (tema scuro V20) e ritratti/icone clan — 14 simboli Dark Pack Paradox in `drawable-nodpi`, logo e note di licenza in Impostazioni
+- Avatar con ritratto del PG o simbolo del clan; icone clan al tavolo live via protocollo `clanId` con fallback lato client
+- Servizio keep-alive del tavolo (`TableKeepAliveService`)
+- Regole casa collegate a dadi/XP/creazione con start sangue/volontà correnti (`HouseRulesEngines`)
+- Layout adaptivo: Home con pannello laterale strumenti, elenchi Compendium/Cronache/Seleziona PG a 2 colonne, media 2/3/4 colonne, Impostazioni 6 card su 2 colonne
+- Barra alta compatta `V20TopBar` (40dp, inset status bar e cutout) su tutte le 26 schermate; tasto "Tavolo" diretto nel pannello Home
+- **334 test, 995 stringhe**
+
+## Timer di turno nel tracker di combattimento (v40)
+
+**Commit**: `c87b2ae`
+
+- Countdown sincronizzato Off/15/30/60/120s con pausa/ripresa e auto-avanzamento del turno
+- Beep + vibrazione alla scadenza, rebase dell'orologio tra dispositivi
+- Stessa UI su tavolo master/giocatore e tracker standalone
+- **334 test, 987 stringhe**
+
+## Pannello stato rapido unificato (v39)
+
+**Commit**: `f39daff`
+
+- Sangue/volontà/salute condivisi su sessione, scheda e tavolo live, con modifica interattiva
+- Sync `StatUpdate` salvata in locale; menu master "Stato dei giocatori" per correggere ogni PG
+- `EditCharacterViewModel` con persist immediato; dominio `applyStatUpdate` puro
+- **316 test, 981 stringhe**
+
+## Tracker di combattimento + reveal cinematografico (v38)
+
+**Commit**: `3ccdac4`
+
+- Tracker di combattimento con iniziativa V20 (1d10 + Des + Prontezza), round e menu live + standalone locale
+- Reveal cinematografico dei dadi (menu tavolo, impostazioni, schermo locale; flash rosso su boccia)
+- **302 test, 977 stringhe**
+
+## WiFi Direct e varianti scena (v36–v37)
+
+- **v36** `ff66eb9` — connessione WiFi Direct al tavolo (P2P senza router) con permessi runtime e fallback LAN; varianti scena con selezione predefinita (DB v13)
+- **v37** `ada25f7` — README riscritto: sezione tavolo live con i tre modi di connessione, dati aggiornati, credito dadi 3D CC BY-SA
+
+## Strumenti Narratore e contenuti al tavolo (v31–v35)
+
+- **v31** `0bf9112` — dadi 3D nel tavolo live, condivisione file mirata, localizzazione EN/IT completa, rimozione codice morto, documento funzioni
+- **v32** `1952139` — dadi 3D a texture reale (CC BY-SA eddex), log tiri con tiri privati e tiri da scheda, modificatori/roll request (sezione 34), feed riducibile a icona
+- **v33** `e26d513` — regole casa applicate a dadi/XP/creazione (costi XP, decine esplosive, freebie cronaca, contenuti ammessi), sezioni scheda riordinabili, invio scheda volontario al Narratore
+- **v34** `549628f` — azione RIVELA handout al tavolo live (Addendum 63): indizi/segreti ai giocatori con evento "indizio rivelato"
+- **v35** `604eb6f` — documento funzioni aggiornato: 8 sezioni scheda con riordino, quick action bar e quick NPC del Narratore, mixer audio al tavolo
+
+## Tavolo virtuale, layout adattivo e creazione PG (v26–v30)
+
+- **v26** `4639f25` — mixer audio con preset, browser cronache profondo, fix crash tavolo
+- **v27** `0c7f040` — layout adattivo Compact/Medium/Expanded con NavigationRail e ContextInspector
+- **v28** `69aed72` — correzioni Character Creator secondo la spec V20
+- **v29** `aac199f` — validazione creazione (gap #3), fix "Avanti", tasto Chiudi Tavolo per il master
+- **v30** `0509b06` — fix crash creazione, pack tavolo/sedie al tavolo live, ritratti in rete, schede PG cliccabili (master: tutte, giocatori: solo la propria)
+
+## Rete del tavolo live — serie di fix TCP (v15–v24)
+
+- **v15** `72da62f` — fix race condition sul join TCP + diagnostica
+- **v16** `72cbfdb` — rilevamento IP via `ConnectivityManager` (specifica WiFi)
+- **v17** `16556b2` — banner IP spostato sopra l'area del tavolo
+- **v18** `ecba60e` — fix join TCP: serializer esplicito, stato connessione, gestione errori di parsing lato server
+- **v19** `44c2e65` — fix serializzazione TCP: `@Serializable` su classi sigillate, timeout server, stato connessione
+- **v20** `f3980fd` — visibilità dei giocatori sul master, fix crash `presentFile`, UI aggiornata su `onConnected`, broadcast su IO thread, `ConcurrentHashMap`
+- **v21** `df2c27e` — fix caricamento asset cronaca per la presentazione file del master
+- **v22** `1e37952` — modalità presentazione riscritta: solo asset ID, niente byte file via TCP
+- **v23** `28a0d58` — condivisione file in tempo reale via Base64
+- **v24** `6e8406d` — PDF con prima pagina renderizzata, video riprodotto inline a schermo intero
 
 ## Virtual Table Custom Assets + WiFi Direct (v14)
 
@@ -491,4 +603,5 @@ app/src/main/java/com/v20charactermanager/
 - **AGP**: 8.5.0
 - **Room**: 2.6.1
 - **Java**: 21
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) — assembleDebug + test + parità stringhe EN/IT + scan U+FFFD
 - **APK size**: ~40 MB

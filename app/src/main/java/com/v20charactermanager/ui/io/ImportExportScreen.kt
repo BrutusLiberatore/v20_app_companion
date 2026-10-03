@@ -40,7 +40,10 @@ fun ImportExportScreen(
     onResetState: () -> Unit,
     onImportEquipmentLibrary: (android.net.Uri) -> Unit,
     onImportEquipmentToCharacter: (String) -> Unit,
-    onExportEquipmentLibrary: (List<com.v20charactermanager.domain.model.EquipmentItem>, String, android.net.Uri) -> Unit
+    onExportEquipmentLibrary: (List<com.v20charactermanager.domain.model.EquipmentItem>, String, android.net.Uri) -> Unit,
+    onExportBackup: (android.net.Uri) -> Unit,
+    onRequestRestore: (android.net.Uri) -> Unit,
+    onConfirmRestore: () -> Unit
 ) {
     val context = LocalContext.current
     var selectedCharacter by remember { mutableStateOf<Character?>(null) }
@@ -87,6 +90,22 @@ fun ImportExportScreen(
                     onExportEquipmentLibrary(state.items, state.libraryName, uri)
                 }
             }
+        }
+    }
+
+    val backupSaveLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri -> onExportBackup(uri) }
+        }
+    }
+
+    val backupRestoreLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri -> onRequestRestore(uri) }
         }
     }
 
@@ -194,6 +213,63 @@ fun ImportExportScreen(
                                 }
                             )
                         }
+                    }
+                }
+            }
+
+            Card {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.backup_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.backup_description),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Button(
+                        onClick = {
+                            val stamp = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US)
+                                .format(java.util.Date())
+                            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                                type = "application/zip"
+                                putExtra(Intent.EXTRA_TITLE, "v20_backup_$stamp.v20backup")
+                            }
+                            backupSaveLauncher.launch(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Default.FileDownload,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.backup_export))
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                                type = "*/*"
+                            }
+                            backupRestoreLauncher.launch(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Default.FileUpload,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.backup_restore))
                     }
                 }
             }
@@ -338,6 +414,23 @@ fun ImportExportScreen(
                         TextButton(onClick = onResetState) {
                             Text(stringResource(R.string.action_close))
                         }
+                    }
+                }
+            )
+        }
+        is IoOperationState.RestoreConfirm -> {
+            AlertDialog(
+                onDismissRequest = onResetState,
+                title = { Text(stringResource(R.string.backup_restore_confirm_title)) },
+                text = { Text(stringResource(R.string.backup_restore_confirm_body)) },
+                confirmButton = {
+                    TextButton(onClick = onConfirmRestore) {
+                        Text(stringResource(R.string.backup_confirm_restore))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onResetState) {
+                        Text(stringResource(R.string.action_cancel))
                     }
                 }
             )

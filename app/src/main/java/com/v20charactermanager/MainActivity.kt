@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -20,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
+import com.v20charactermanager.data.backup.BackupManager
 import com.v20charactermanager.data.di.AppContainer
 import com.v20charactermanager.ui.navigation.V20NavGraph
 import com.v20charactermanager.ui.theme.V20Theme
@@ -28,8 +30,10 @@ import com.v20charactermanager.ui.tutorial.LanguageState
 import com.v20charactermanager.ui.tutorial.TutorialOverlay
 import com.v20charactermanager.ui.tutorial.TutorialPrefs
 import com.v20charactermanager.ui.tutorial.TutorialState
+import com.v20charactermanager.util.BackupPrefs
 import com.v20charactermanager.util.CrashHandler
 import com.v20charactermanager.util.LocaleHelper
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -65,6 +69,29 @@ class MainActivity : AppCompatActivity() {
                 if (!dir.exists()) dir.mkdirs()
                 File(dir, "crash_${System.currentTimeMillis()}.txt").writeText(log)
             } catch (_: Exception) {}
+        }
+
+        val backupContainer = appContainer
+        if (backupContainer != null && savedInstanceState == null) {
+            lifecycleScope.launch {
+                try {
+                    if (BackupPrefs.isAutoDue(applicationContext)) {
+                        val manager = BackupManager(
+                            context = applicationContext,
+                            characterRepository = backupContainer.characterRepository,
+                            chronicleRepository = backupContainer.chronicleRepository,
+                            mediaRepository = backupContainer.mediaRepository,
+                            audioRepository = backupContainer.audioRepository,
+                            houseRuleRepository = backupContainer.houseRuleRepository,
+                            clearAll = { backupContainer.clearAllTables() }
+                        )
+                        if (manager.exportAutoToDownloads()) {
+                            BackupPrefs.markAutoDone(applicationContext)
+                        }
+                    }
+                } catch (_: Exception) {
+                }
+            }
         }
 
         setContent {

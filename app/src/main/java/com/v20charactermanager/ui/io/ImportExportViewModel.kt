@@ -7,6 +7,9 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.v20charactermanager.data.backup.BackupManager
+import com.v20charactermanager.domain.engine.BackupFormatException
+import com.v20charactermanager.domain.engine.BackupVersionException
 import com.v20charactermanager.domain.engine.CharacterExporter
 import com.v20charactermanager.domain.engine.CharacterImporter
 import com.v20charactermanager.domain.engine.EquipmentLibraryEngine
@@ -39,6 +42,7 @@ sealed class IoOperationState {
         val items: List<com.v20charactermanager.domain.model.EquipmentItem>,
         val libraryName: String
     ) : IoOperationState()
+    data class RestoreConfirm(val uri: Uri) : IoOperationState()
 }
 
 data class ImportExportUiState(
@@ -48,7 +52,8 @@ data class ImportExportUiState(
 
 class ImportExportViewModel(
     private val characterRepository: CharacterRepository,
-    private val context: Context
+    private val context: Context,
+    private val backupManager: BackupManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ImportExportUiState())
@@ -363,17 +368,74 @@ class ImportExportViewModel(
         }
     }
 
+    fun exportBackup(uri: Uri) {
+        _uiState.value = _uiState.value.copy(operationState = IoOperationState.Loading)
+        viewModelScope.launch {
+            try {
+                backupManager.exportTo(uri)
+                _uiState.value = _uiState.value.copy(
+                    operationState = IoOperationState.Success(context.getString(R.string.backup_export_ok))
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    operationState = backupError(e, V20ErrorType.EXPORT_FAILED)
+                )
+            }
+        }
+    }
+
+    fun requestRestore(uri: Uri) {
+        _uiState.value = _uiState.value.copy(operationState = IoOperationState.RestoreConfirm(uri))
+    }
+
+    fun confirmRestore() {
+        val state = _uiState.value.operationState
+        if (state !is IoOperationState.RestoreConfirm) return
+        _uiState.value = _uiState.value.copy(operationState = IoOperationState.Loading)
+        viewModelScope.launch {
+            try {
+                val summary = backupManager.restoreFrom(state.uri)
+                _uiState.value = _uiState.value.copy(
+                    operationState = IoOperationState.Success(
+                        context.getString(R.string.backup_restore_ok, summary.characters, summary.chronicles)
+                    )
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(operationState = backupError(e))
+            }
+        }
+    }
+
+    private fun backupError(e: Exception, defaultType: V20ErrorType = V20ErrorType.DATABASE_ERROR): IoOperationState.Error = when (e) {
+        is BackupFormatException -> IoOperationState.Error(
+            context.getString(R.string.backup_invalid_file),
+            V20ErrorType.IMPORT_FORMAT_ERROR,
+            e.message
+        )
+        is BackupVersionException -> IoOperationState.Error(
+            context.getString(R.string.backup_unsupported_version),
+            V20ErrorType.IMPORT_FORMAT_ERROR,
+            e.message
+        )
+        else -> IoOperationState.Error(
+            context.getString(R.string.backup_error, e.message),
+            defaultType,
+            e.message
+        )
+    }
+
     private var _pendingEquipmentItems: List<EquipmentItem>? = null
 }
 
 class ImportExportViewModelFactory(
     private val characterRepository: CharacterRepository,
-    private val context: Context
+    private val context: Context,
+    private val backupManager: BackupManager
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ImportExportViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ImportExportViewModel(characterRepository, context) as T
+            return ImportExportViewModel(characterRepository, context, backupManager) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

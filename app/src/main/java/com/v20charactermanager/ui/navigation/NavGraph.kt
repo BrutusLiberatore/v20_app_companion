@@ -776,7 +776,19 @@ fun V20NavGraph(
         }
         composable(Routes.IMPORT_EXPORT) {
             val viewModel: ImportExportViewModel = viewModel(
-                factory = ImportExportViewModelFactory(appContainer.characterRepository, context)
+                factory = ImportExportViewModelFactory(
+                    appContainer.characterRepository,
+                    context,
+                    com.v20charactermanager.data.backup.BackupManager(
+                        context = context,
+                        characterRepository = appContainer.characterRepository,
+                        chronicleRepository = appContainer.chronicleRepository,
+                        mediaRepository = appContainer.mediaRepository,
+                        audioRepository = appContainer.audioRepository,
+                        houseRuleRepository = appContainer.houseRuleRepository,
+                        clearAll = { appContainer.clearAllTables() }
+                    )
+                )
             )
             val uiState by viewModel.uiState.collectAsState()
 
@@ -812,6 +824,15 @@ fun V20NavGraph(
                 },
                 onExportEquipmentLibrary = { items, name, uri ->
                     viewModel.exportEquipmentLibrary(items, name, uri)
+                },
+                onExportBackup = { uri ->
+                    viewModel.exportBackup(uri)
+                },
+                onRequestRestore = { uri ->
+                    viewModel.requestRestore(uri)
+                },
+                onConfirmRestore = {
+                    viewModel.confirmRestore()
                 }
             )
         }

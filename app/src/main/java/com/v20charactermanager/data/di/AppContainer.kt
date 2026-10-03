@@ -170,4 +170,9 @@ class AppContainer(private val context: Context) {
     val ruleRepository: RuleRepository by lazy {
         RuleRepositoryImpl()
     }
+
+    /** Wipes every table — used by backup restore before re-inserting data. */
+    suspend fun clearAllTables() {
+        database.clearAllTables()
+    }
 }
