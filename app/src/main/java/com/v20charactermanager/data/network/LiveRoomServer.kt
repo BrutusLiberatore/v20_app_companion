@@ -35,20 +35,21 @@ class LiveRoomServer(
     private val portraitCache = ConcurrentHashMap<String, String>()
 
     private var onClientMessage: ((clientId: String, message: LiveRoomMessage) -> Unit)? = null
-    private var onClientConnected: ((clientId: String, playerName: String, characterId: String?) -> Unit)? = null
+    private var onClientConnected: ((clientId: String, playerName: String, characterId: String?, clanId: String?) -> Unit)? = null
     private var onClientDisconnected: ((clientId: String, playerName: String) -> Unit)? = null
 
     data class ClientConnection(
         val id: String,
         val playerName: String,
         val characterId: String?,
+        val clanId: String? = null,
         val writer: BufferedWriter,
         val socket: Socket
     )
 
     fun setCallbacks(
         onMessage: (String, LiveRoomMessage) -> Unit,
-        onConnected: (String, String, String?) -> Unit,
+        onConnected: (String, String, String?, String?) -> Unit,
         onDisconnected: (String, String) -> Unit
     ) {
         onClientMessage = onMessage
@@ -137,12 +138,13 @@ class LiveRoomServer(
                     socket.close()
                     return@launch
                 }
-                Log.d(TAG, "JOIN parsed: playerName=${joinMsg.playerName}, characterId=${joinMsg.characterId}")
+                Log.d(TAG, "JOIN parsed: playerName=${joinMsg.playerName}, characterId=${joinMsg.characterId}, clanId=${joinMsg.clanId}")
 
                 val connection = ClientConnection(
                     id = clientId,
                     playerName = joinMsg.playerName,
                     characterId = joinMsg.characterId,
+                    clanId = joinMsg.clanId,
                     writer = writer,
                     socket = socket
                 )
@@ -151,7 +153,7 @@ class LiveRoomServer(
 
                 // Send WELCOME with current players
                 val playerInfos = _connections.values.map {
-                    LiveRoomMessage.PlayerInfo(it.id, it.playerName, it.characterId)
+                    LiveRoomMessage.PlayerInfo(it.id, it.playerName, it.characterId, clanId = it.clanId)
                 }
                 val welcome = LiveRoomMessage.Welcome(
                     playerId = clientId,
@@ -167,12 +169,13 @@ class LiveRoomServer(
                     LiveRoomMessage.PlayerJoined(
                         playerName = joinMsg.playerName,
                         playerId = clientId,
-                        characterId = joinMsg.characterId
+                        characterId = joinMsg.characterId,
+                        clanId = joinMsg.clanId
                     ),
                     excludeId = clientId
                 )
 
-                onClientConnected?.invoke(clientId, joinMsg.playerName, joinMsg.characterId)
+                onClientConnected?.invoke(clientId, joinMsg.playerName, joinMsg.characterId, joinMsg.clanId)
 
                 // Replay cached character portraits so the newcomer sees everyone
                 portraitCache.forEach { (charId, b64) ->

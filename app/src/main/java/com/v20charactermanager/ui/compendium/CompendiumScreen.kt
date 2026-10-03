@@ -2,9 +2,11 @@ package com.v20charactermanager.ui.compendium
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -18,6 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
+import com.v20charactermanager.ui.components.AdaptiveLayoutType
+import com.v20charactermanager.ui.components.rememberAdaptiveLayout
+import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.theme.V20Gold
 import com.v20charactermanager.util.LocaleHelper
 
@@ -32,10 +37,11 @@ fun CompendiumScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val isItalian = LocaleHelper.isItalian(context)
+    val wideLayout = rememberAdaptiveLayout() != AdaptiveLayoutType.COMPACT
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = stringResource(R.string.compendium_title),
@@ -46,12 +52,7 @@ fun CompendiumScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { padding ->
@@ -118,9 +119,11 @@ fun CompendiumScreen(
                     )
                 }
             } else {
-                LazyColumn(
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(if (wideLayout) 2 else 1),
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(uiState.filteredItems) { item ->

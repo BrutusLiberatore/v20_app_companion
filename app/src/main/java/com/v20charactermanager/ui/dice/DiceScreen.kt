@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.ui.components.V20DiceButton
 import com.v20charactermanager.ui.components.V20IntField
+import com.v20charactermanager.ui.components.V20TopBar
+import com.v20charactermanager.ui.theme.V20GoldBright
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +64,7 @@ fun DiceScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = stringResource(R.string.dice_title),
@@ -73,12 +75,7 @@ fun DiceScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, stringResource(R.string.action_back))
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { padding ->
@@ -254,7 +251,7 @@ fun DiceScreen(
                                         .size(40.dp)
                                         .background(
                                             when {
-                                                die >= uiState.difficulty -> Color(0xFFC9A54E)
+                                                die >= uiState.difficulty -> V20GoldBright
                                                 die == 1 -> Color(0xFF8B1A1A)
                                                 else -> MaterialTheme.colorScheme.surfaceVariant
                                             }
@@ -283,7 +280,7 @@ fun DiceScreen(
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = when {
-                                diceResult.isSuccess -> Color(0xFFC9A54E)
+                                diceResult.isSuccess -> V20GoldBright
                                 diceResult.isBotch -> Color(0xFF8B1A1A)
                                 else -> MaterialTheme.colorScheme.onSurfaceVariant
                             },

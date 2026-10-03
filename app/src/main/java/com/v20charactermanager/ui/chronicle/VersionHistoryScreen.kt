@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.ImageRevision
+import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -34,7 +35,7 @@ fun VersionHistoryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = stringResource(R.string.version_history),
@@ -47,7 +48,8 @@ fun VersionHistoryScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back), tint = V20Ink)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)
+                containerColor = V20Surface2,
+                contentColor = V20Ink
             )
         },
         containerColor = V20Surface

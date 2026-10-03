@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
+import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.util.CrashHandler
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,7 +43,7 @@ fun CrashLogScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = { Text(stringResource(R.string.crash_logs)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

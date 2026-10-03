@@ -16,17 +16,23 @@ val V20Gold = Color(0xFF9A8A3C)
 val V20GoldBright = Color(0xFFC9A54E)
 val V20GoldDark = Color(0xFF6A5A2A)
 
-// Background — Black & Dark
-val V20Black = Color(0xFF0A0A0A)
-val V20Surface = Color(0xFF111111)
-val V20Surface2 = Color(0xFF1A1A1A)
-val V20Surface3 = Color(0xFF222222)
-val V20Line = Color(0xFF2A2A2A)
+// Background — Black & Dark (Gothic blood-tinted)
+val V20Black = Color(0xFF0D0606)
+val V20Surface = Color(0xFF160B0B)
+val V20Surface2 = Color(0xFF1F1010)
+val V20Surface3 = Color(0xFF291717)
+val V20Line = Color(0xFF332020)
 
-// Text — Weathered White
-val V20Ink = Color(0xFFE8E8E8)
-val V20InkDim = Color(0xFFAAAAAA)
-val V20InkFaint = Color(0xFF666666)
+// Gothic Crimson Surfaces — blood-tinted elevations
+val V20BloodBg = Color(0xFF140909)       // Deep blood background (app & live room)
+val V20SurfaceBlood = Color(0xFF221212)  // Elevated card
+val V20SurfaceBlood2 = Color(0xFF2C1A1A) // Higher card
+val V20SurfaceBlood3 = Color(0xFF372424) // Highest card
+
+// Text — Bone Ivory
+val V20Ink = Color(0xFFF5F0E8)
+val V20InkDim = Color(0xFFB5AC9C)
+val V20InkFaint = Color(0xFF7E7466)
 
 // Status Colors
 val V20Error = Color(0xFF8B2A2A)

@@ -24,6 +24,8 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.v20charactermanager.ui.theme.V20GoldBright
+import com.v20charactermanager.ui.components.V20TopBar
+import com.v20charactermanager.ui.theme.V20Ink
 import com.v20charactermanager.ui.theme.V20Surface2
 import java.io.File
 
@@ -90,7 +92,7 @@ private fun VideoPlayerScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = title,
@@ -129,7 +131,8 @@ private fun VideoPlayerScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)
+                containerColor = V20Surface2,
+                contentColor = V20Ink
             )
         },
         containerColor = Color.Black

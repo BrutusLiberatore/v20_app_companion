@@ -57,6 +57,7 @@ import com.v20charactermanager.domain.model.FlawValue
 import com.v20charactermanager.domain.model.RollSpec
 import com.v20charactermanager.ui.components.V20DotRating as V20DotRatingComponent
 import com.v20charactermanager.ui.components.PortraitPicker
+import com.v20charactermanager.ui.components.V20TopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,7 +114,7 @@ fun SheetScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = character.identity.name.ifEmpty { stringResource(R.string.character_unnamed) },
@@ -187,12 +188,7 @@ fun SheetScreen(
                             Text(stringResource(R.string.action_session), color = MaterialTheme.colorScheme.onPrimary)
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { padding ->

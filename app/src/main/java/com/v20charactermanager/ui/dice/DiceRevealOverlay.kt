@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.v20charactermanager.ui.liveroom.Dice3DCanvas
+import com.v20charactermanager.ui.theme.V20GoldBright
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -117,7 +118,7 @@ fun DiceRevealOverlay(
                 text = data.verdict,
                 color = when {
                     data.isBotch -> Color(0xFFFF6B6B)
-                    data.isCritical -> Color(0xFFC9A54E)
+                    data.isCritical -> V20GoldBright
                     else -> Color.White
                 },
                 fontSize = 46.sp,

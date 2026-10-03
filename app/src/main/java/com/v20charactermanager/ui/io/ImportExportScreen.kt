@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.Character
 import com.v20charactermanager.ui.components.V20ErrorDialog
+import com.v20charactermanager.ui.components.V20TopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,7 +92,7 @@ fun ImportExportScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = stringResource(R.string.settings_import_export),
@@ -102,12 +103,7 @@ fun ImportExportScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, stringResource(R.string.action_back))
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { padding ->

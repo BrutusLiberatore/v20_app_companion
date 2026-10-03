@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
+import com.v20charactermanager.ui.components.V20TopBar
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -43,7 +44,7 @@ fun SessionRecapScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = { Text(stringResource(R.string.recap_title, session.number)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

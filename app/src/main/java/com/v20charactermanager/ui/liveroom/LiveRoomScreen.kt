@@ -62,9 +62,17 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.compose.ui.viewinterop.AndroidView
 import com.v20charactermanager.R
+import com.v20charactermanager.domain.definition.ClanId
 import com.v20charactermanager.domain.definition.DamageType
 import com.v20charactermanager.domain.model.*
 import com.v20charactermanager.ui.components.QuickStatusPanel
+import com.v20charactermanager.ui.components.avatarSymbolRes
+import com.v20charactermanager.ui.theme.V20BloodBg
+import com.v20charactermanager.ui.theme.V20Ink
+import com.v20charactermanager.ui.theme.V20SurfaceBlood
+import com.v20charactermanager.ui.theme.V20SurfaceBlood2
+import com.v20charactermanager.ui.components.V20TopBar
+import com.v20charactermanager.ui.theme.V20SurfaceBlood3
 import java.io.File
 import kotlin.math.cos
 import kotlin.math.min
@@ -205,7 +213,7 @@ fun LiveRoomScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         when {
@@ -222,9 +230,8 @@ fun LiveRoomScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = if (uiState.isConnected) Color(0xFF1A1A2E) else MaterialTheme.colorScheme.surface
-                ),
+                containerColor = if (uiState.isConnected) V20BloodBg else MaterialTheme.colorScheme.surface,
+                contentColor = V20Ink,
                 actions = {
                     if (uiState.isConnected && uiState.presentedFile != null) {
                         IconButton(onClick = onToggleFullscreen) {
@@ -334,7 +341,7 @@ private fun ConnectingOverlay(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF1A1A2E)),
+            .background(V20BloodBg),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -382,7 +389,7 @@ private fun ConnectingOverlay(
                     Spacer(modifier = Modifier.height(8.dp))
                     Card(
                         modifier = Modifier.padding(horizontal = 32.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A4A)),
+                        colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood2),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(
@@ -426,7 +433,7 @@ private fun ConnectingOverlay(
                         ) {
                             Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.live_retry), color = Color(0xFF1A1A2E), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.live_retry), color = V20BloodBg, fontWeight = FontWeight.Bold)
                         }
                     }
                     OutlinedButton(
@@ -689,7 +696,7 @@ private fun VirtualTableView(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF1A1A2E))
+            .background(V20BloodBg)
     ) {
         // IP banner for master - outside table area so it's always readable
         if (uiState.isMaster && uiState.room != null && uiState.room.host.isNotBlank()) {
@@ -699,7 +706,7 @@ private fun VirtualTableView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A4A)),
+                    colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood2),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
@@ -941,7 +948,7 @@ private fun VirtualTableView(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A4A)),
+            colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood2),
             shape = RoundedCornerShape(16.dp)
         ) {
             if (uiState.isMaster) {
@@ -1285,7 +1292,7 @@ private fun RevealHandoutDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1A1A2E),
+        containerColor = V20BloodBg,
         icon = {
             Icon(Icons.Default.Visibility, contentDescription = null, tint = Gold)
         },
@@ -1680,23 +1687,33 @@ private fun ChairWithPlayer(
                     Icon(
                         Icons.Default.Star,
                         contentDescription = null,
-                        tint = Color(0xFF1A1A2E),
+                        tint = V20BloodBg,
                         modifier = Modifier.size(with(LocalDensity.current) { (avatarPx * 0.55f).toDp() })
                     )
                 } else {
-                    AsyncImage(
-                        model = seat.portraitUri,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize().clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                    if (seat.portraitUri == null) {
-                        Text(
-                            text = seat.initials,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = with(LocalDensity.current) { (avatarPx * 0.4f).toSp() }
+                    val clanSymbol = seat.clanId?.let { ClanId.fromId(it)?.avatarSymbolRes() }
+                    if (seat.portraitUri == null && clanSymbol != null) {
+                        Image(
+                            painter = painterResource(id = clanSymbol),
+                            contentDescription = null,
+                            modifier = Modifier.size(with(LocalDensity.current) { (avatarPx * 0.55f).toDp() }),
+                            contentScale = ContentScale.Fit
                         )
+                    } else {
+                        AsyncImage(
+                            model = seat.portraitUri,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize().clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                        if (seat.portraitUri == null) {
+                            Text(
+                                text = seat.initials,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = with(LocalDensity.current) { (avatarPx * 0.4f).toSp() }
+                            )
+                        }
                     }
                 }
             }
@@ -1874,9 +1891,9 @@ private fun MasterBottomPanel(
                 colors = ButtonDefaults.buttonColors(containerColor = Gold),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.PresentToAll, contentDescription = null, tint = Color(0xFF1A1A2E))
+                Icon(Icons.Default.PresentToAll, contentDescription = null, tint = V20BloodBg)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.live_present_from_chronicle), color = Color(0xFF1A1A2E), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.live_present_from_chronicle), color = V20BloodBg, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -1909,7 +1926,7 @@ private fun MasterBottomPanel(
     if (showCloseTable) {
         AlertDialog(
             onDismissRequest = { showCloseTable = false },
-            containerColor = Color(0xFF2A2A4A),
+            containerColor = V20SurfaceBlood2,
             title = { Text(stringResource(R.string.live_close_table_title), color = Color.White, fontWeight = FontWeight.Bold) },
             text = { Text(stringResource(R.string.live_close_table_message), color = Color.White.copy(alpha = 0.8f)) },
             confirmButton = {
@@ -2135,7 +2152,7 @@ private fun TableStyleEditorPopup(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF2A2A4A),
+        containerColor = V20SurfaceBlood2,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Chair, contentDescription = null, tint = Gold)
@@ -2223,7 +2240,7 @@ private fun StylePackCard(
         targetValue = if (selected) Gold else Color.White.copy(alpha = 0.12f),
         label = "packBorder"
     )
-    val background = if (selected) Gold.copy(alpha = 0.14f) else Color(0xFF1A1A2E)
+    val background = if (selected) Gold.copy(alpha = 0.14f) else V20BloodBg
     Column(
         modifier = Modifier
             .width(112.dp)
@@ -2295,7 +2312,7 @@ private fun AudioMixerPopup(
             Column(modifier = Modifier.heightIn(max = 450.dp)) {
                 TabRow(
                     selectedTabIndex = selectedTab,
-                    containerColor = Color(0xFF1A1A2E),
+                    containerColor = V20BloodBg,
                     contentColor = Color(0xFFE91E63)
                 ) {
                     Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }) {
@@ -2418,7 +2435,7 @@ private fun PresetRow(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A3E)),
+        colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood),
         shape = RoundedCornerShape(8.dp)
     ) {
         Row(
@@ -2452,7 +2469,7 @@ private fun AudioTrackRow(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (track.isActive) Color(0xFF1B5E20).copy(alpha = 0.4f) else Color(0xFF2A2A3E)
+            containerColor = if (track.isActive) Color(0xFF1B5E20).copy(alpha = 0.4f) else V20SurfaceBlood
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -2551,7 +2568,7 @@ private fun ChronicleDeepBrowserPopup(
             Column(modifier = Modifier.heightIn(max = 450.dp)) {
                 ScrollableTabRow(
                     selectedTabIndex = selectedSection,
-                    containerColor = Color(0xFF1A1A2E),
+                    containerColor = V20BloodBg,
                     contentColor = Gold,
                     edgePadding = 4.dp
                 ) {
@@ -2734,7 +2751,7 @@ private fun ChronicleDeepBrowserPopup(
                                     }
                                     Card(
                                         modifier = Modifier.fillMaxWidth(),
-                                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A3E)),
+                                        colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood),
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
                                         Row(
@@ -2835,7 +2852,7 @@ private fun SimpleListItem(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A3E)),
+        colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood),
         shape = RoundedCornerShape(8.dp)
     ) {
         Row(
@@ -2898,11 +2915,11 @@ private fun PlayerBottomPanel(
             colors = ButtonDefaults.buttonColors(containerColor = Gold),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Icon(Icons.Default.Casino, contentDescription = null, tint = Color(0xFF1A1A2E), modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.Casino, contentDescription = null, tint = V20BloodBg, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = stringResource(R.string.dashboard_roll_dice),
-                color = Color(0xFF1A1A2E),
+                color = V20BloodBg,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -2912,7 +2929,7 @@ private fun PlayerBottomPanel(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { showStatus = true },
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF37474F))
+                colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood3)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -2949,7 +2966,7 @@ private fun PlayerBottomPanel(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { showCombat = true },
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF37474F))
+                colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood3)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -3057,7 +3074,7 @@ private fun PlayerBottomPanel(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onToggleFullscreen,
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF37474F))
+                colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood3)
             ) {
                 Row(
                     modifier = Modifier.padding(12.dp),
@@ -3109,7 +3126,8 @@ private data class SeatData(
     val chairSize: Dp = 60.dp,
     val avatarSize: Dp = 36.dp,
     val portraitUri: String? = null,
-    val characterId: String? = null
+    val characterId: String? = null,
+    val clanId: String? = null
 )
 
 private fun buildCircularSeats(
@@ -3157,7 +3175,8 @@ private fun buildCircularSeats(
                 portraitUri = player?.characterId?.let { charId ->
                     uiState.characterPortraits[charId]?.takeIf { it.isNotBlank() && java.io.File(it).exists() }
                 },
-                characterId = player?.characterId
+                characterId = player?.characterId,
+                clanId = player?.clanId
             )
         )
     }

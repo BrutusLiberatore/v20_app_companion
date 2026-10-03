@@ -2,8 +2,9 @@ package com.v20charactermanager.ui.chronicle
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -21,9 +22,12 @@ import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.Chronicle
 import com.v20charactermanager.domain.model.ChronicleUserRole
+import com.v20charactermanager.ui.components.AdaptiveLayoutType
 import com.v20charactermanager.ui.components.V20BloodButton
 import com.v20charactermanager.ui.components.V20GothicFab
 import com.v20charactermanager.ui.components.V20IvoryButton
+import com.v20charactermanager.ui.components.V20TopBar
+import com.v20charactermanager.ui.components.rememberAdaptiveLayout
 import com.v20charactermanager.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,10 +41,11 @@ fun ChronicleListScreen(
     onBack: () -> Unit
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
+    val wideLayout = rememberAdaptiveLayout() != AdaptiveLayoutType.COMPACT
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = stringResource(R.string.chronicle_title),
@@ -52,11 +57,8 @@ fun ChronicleListScreen(
                         Icon(Icons.Default.ArrowBack, stringResource(R.string.action_back))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = V20Green,
-                    titleContentColor = V20Ink,
-                    navigationIconContentColor = V20Ink
-                )
+                containerColor = V20Green,
+                contentColor = V20Ink
             )
         },
         floatingActionButton = {
@@ -108,14 +110,16 @@ fun ChronicleListScreen(
                 }
             }
         } else {
-            LazyColumn(
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(if (wideLayout) 2 else 1),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
                 contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(uiState.chronicles) { chronicle ->
+                items(uiState.chronicles, key = { it.id }) { chronicle ->
                     ChronicleCard(
                         chronicle = chronicle,
                         onClick = { onChronicleClick(chronicle.id) },

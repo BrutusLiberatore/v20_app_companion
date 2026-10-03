@@ -10,6 +10,7 @@ import com.v20charactermanager.data.network.LiveRoomClient
 import com.v20charactermanager.data.network.LiveRoomServer
 import com.v20charactermanager.data.network.TableDiscoveryManager
 import com.v20charactermanager.data.network.WifiDirectManager
+import com.v20charactermanager.data.service.TableKeepAliveService
 import com.v20charactermanager.domain.definition.DamageType
 import com.v20charactermanager.domain.model.*
 import com.v20charactermanager.domain.repository.MediaRepository
@@ -106,6 +107,7 @@ class LiveRoomViewModel(
     // --- MASTER (Server) ---
 
     fun createRoom(roomName: String, masterName: String, chronicleId: String) {
+        TableKeepAliveService.start(application.applicationContext)
         viewModelScope.launch {
             try {
                 wifiDirectManager.initialize(
@@ -117,15 +119,16 @@ class LiveRoomViewModel(
                 server = LiveRoomServer(roomName, masterName, chronicleId)
                 server!!.setCallbacks(
                     onMessage = { clientId, message -> handleServerMessage(clientId, message) },
-                    onConnected = { id, name, charId ->
-                        Log.d(TAG, "Player connected: $name (charId=$charId)")
+                    onConnected = { id, name, charId, clanId ->
+                        Log.d(TAG, "Player connected: $name (charId=$charId, clanId=$clanId)")
                         _uiState.update { state ->
                             if (state.connectedPlayers.none { it.id == id }) {
                                 state.copy(
                                     connectedPlayers = state.connectedPlayers + ConnectedPlayer(
                                         id = id,
                                         name = name,
-                                        characterId = charId
+                                        characterId = charId,
+                                        clanId = clanId
                                     )
                                 )
                             } else state
@@ -225,6 +228,7 @@ class LiveRoomViewModel(
                             discoveryManager.startBroadcasting(roomName, masterName, chronicleId, port)
                             Log.d(TAG, "Room created (direct): $roomName on $hostIp:$port")
                         } catch (e: Exception) {
+                            TableKeepAliveService.stop(application.applicationContext)
                             _uiState.update { it.copy(error = application.getString(com.v20charactermanager.R.string.live_create_room_error, e.message ?: "")) }
                         }
                     }
@@ -275,6 +279,16 @@ class LiveRoomViewModel(
                                 portraitUri = _uiState.value.characterPortraits[message.characterId] ?: parsed.portraitUri
                             )
                             _sharedCharacters.update { it + (message.characterId to char) }
+                            // Backfill the clan for seats when the sender did not carry it in JOIN
+                            _uiState.update { state ->
+                                state.copy(
+                                    connectedPlayers = state.connectedPlayers.map { p ->
+                                        if (p.characterId == message.characterId && p.clanId == null) {
+                                            p.copy(clanId = char.identity.clan.id)
+                                        } else p
+                                    }
+                                )
+                            }
                             Log.d(TAG, "Received shared sheet for ${message.characterId}")
                             if (_uiState.value.isMaster) {
                                 showToast(
@@ -565,6 +579,7 @@ class LiveRoomViewModel(
     private var lastJoinCharId: String? = null
 
     fun joinRoom(host: String, port: Int, playerName: String, characterId: String?) {
+        TableKeepAliveService.start(application.applicationContext)
         lastJoinHost = host
         lastJoinPort = port
         lastJoinName = playerName
@@ -606,18 +621,27 @@ class LiveRoomViewModel(
                         _uiState.update { it.copy(connectionStatus = status) }
                     }
                 )
+                var clanId: String? = null
+                if (characterId != null && characterRepository != null) {
+                    try {
+                        clanId = characterRepository.getCharacterByIdOnce(characterId)?.identity?.clan?.id
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to resolve clan for $characterId", e)
+                    }
+                }
                 _uiState.update {
                     it.copy(
                         error = null,
                         localPlayer = ConnectedPlayer(
                             id = "",
                             name = playerName,
-                            characterId = characterId
+                            characterId = characterId,
+                            clanId = clanId
                         )
                     )
                 }
                 Log.d(TAG, "Calling client.connect($host, $port)")
-                client!!.connect(host, port, playerName, characterId)
+                client!!.connect(host, port, playerName, characterId, clanId)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to join room", e)
                 _uiState.update { it.copy(error = e.message ?: application.getString(R.string.unknown_error)) }
@@ -689,7 +713,7 @@ class LiveRoomViewModel(
                         ),
                         localPlayer = it.localPlayer?.copy(id = message.playerId),
                         connectedPlayers = message.players.map {
-                            ConnectedPlayer(it.id, it.name, it.characterId)
+                            ConnectedPlayer(it.id, it.name, it.characterId, clanId = it.clanId)
                         },
                         error = null
                     )
@@ -739,7 +763,8 @@ class LiveRoomViewModel(
                         connectedPlayers = state.connectedPlayers + ConnectedPlayer(
                             id = message.playerId,
                             name = message.playerName,
-                            characterId = message.characterId
+                            characterId = message.characterId,
+                            clanId = message.clanId
                         )
                     )
                 }
@@ -1345,6 +1370,7 @@ class LiveRoomViewModel(
     }
 
     fun disconnect() {
+        TableKeepAliveService.stop(application.applicationContext)
         server?.stop()
         server = null
         client?.disconnect()

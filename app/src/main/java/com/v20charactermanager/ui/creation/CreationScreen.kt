@@ -17,6 +17,7 @@ import com.v20charactermanager.R
 import com.v20charactermanager.ui.components.V20BloodButton
 import com.v20charactermanager.ui.components.V20IvoryButton
 import com.v20charactermanager.ui.components.V20ProgressLine
+import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.domain.definition.*
 import com.v20charactermanager.domain.model.CharacterIdentity
 
@@ -66,7 +67,7 @@ fun CreationScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = stringResource(R.string.creation_title_step, uiState.currentStep),
@@ -77,12 +78,7 @@ fun CreationScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, stringResource(R.string.action_back))
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { padding ->

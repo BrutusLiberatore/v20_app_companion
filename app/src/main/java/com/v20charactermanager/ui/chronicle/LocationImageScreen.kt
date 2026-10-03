@@ -19,6 +19,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
+import com.v20charactermanager.ui.components.V20TopBar
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,7 +57,7 @@ fun LocationImageScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Column {
                         Text(location.name, fontWeight = FontWeight.Bold)

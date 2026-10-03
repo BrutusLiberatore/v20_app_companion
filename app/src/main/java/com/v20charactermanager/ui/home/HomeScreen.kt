@@ -1,31 +1,39 @@
 package com.v20charactermanager.ui.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.Character
+import com.v20charactermanager.ui.components.AdaptiveLayoutType
+import com.v20charactermanager.ui.components.CharacterAvatar
 import com.v20charactermanager.ui.components.V20GothicFab
+import com.v20charactermanager.ui.components.V20TopBar
+import com.v20charactermanager.ui.components.rememberAdaptiveLayout
 import com.v20charactermanager.util.LocaleHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,21 +49,20 @@ fun HomeScreen(
     onSettingsClick: () -> Unit,
     onRandomCharacterClick: () -> Unit,
     onChronicleClick: () -> Unit = {},
-    onCombatClick: () -> Unit = {}
+    onCombatClick: () -> Unit = {},
+    onFindTable: () -> Unit = {}
 ) {
+    val wideLayout = rememberAdaptiveLayout() != AdaptiveLayoutType.COMPACT
+
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = stringResource(R.string.home_title),
                         fontWeight = FontWeight.Bold
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         },
         floatingActionButton = {
@@ -64,124 +71,215 @@ fun HomeScreen(
                 contentDescription = stringResource(R.string.home_create_character),
                 onClick = onCreateClick
             )
+        },
+        bottomBar = {
+            if (!wideLayout) {
+                HomeToolsBar(
+                    onCompendiumClick = onCompendiumClick,
+                    onDiceClick = onDiceClick,
+                    onChronicleClick = onChronicleClick,
+                    onCombatClick = onCombatClick,
+                    onSettingsClick = onSettingsClick,
+                    onRandomCharacterClick = onRandomCharacterClick
+                )
+            }
         }
     ) { padding ->
-        if (uiState.characters.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.home_empty),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Button(onClick = onCreateClick) {
-                        Text(stringResource(R.string.home_create_first))
-                    }
-                    OutlinedButton(onClick = onRandomCharacterClick) {
-                        Text(stringResource(R.string.home_quick_random))
-                    }
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(uiState.characters) { character ->
-                    CharacterCard(
-                        character = character,
-                        onClick = { onCharacterClick(character.id) },
-                        onDelete = { onDeleteClick(character.id) },
-                        onDuplicate = { onDuplicateClick(character.id) }
-                    )
-                }
-            }
-        }
-
-        // Bottom tools row (overlay at the bottom)
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            verticalArrangement = Arrangement.Bottom
+                .padding(padding)
         ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Text(
-                        text = stringResource(R.string.home_tools),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 4.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+            if (uiState.characters.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        NavigationButton(
-                            icon = Icons.Default.List,
-                            label = stringResource(R.string.home_compendium),
-                            onClick = onCompendiumClick
+                        Text(
+                            text = stringResource(R.string.home_empty),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        NavigationButton(
-                            icon = Icons.Default.DateRange,
-                            label = stringResource(R.string.home_dice),
-                            onClick = onDiceClick
-                        )
-                        NavigationButton(
-                            icon = Icons.Default.Favorite,
-                            label = stringResource(R.string.home_chronicles),
-                            onClick = onChronicleClick
-                        )
-                        NavigationButton(
-                            icon = Icons.Default.Settings,
-                            label = stringResource(R.string.home_settings),
-                            onClick = onSettingsClick
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        NavigationButton(
-                            icon = Icons.Default.Shield,
-                            label = stringResource(R.string.combat_title),
-                            onClick = onCombatClick
-                        )
-                    }
-                    if (uiState.characters.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            NavigationButton(
-                                icon = Icons.Default.Refresh,
-                                label = stringResource(R.string.home_quick_random),
-                                onClick = onRandomCharacterClick
-                            )
+                        Button(onClick = onCreateClick) {
+                            Text(stringResource(R.string.home_create_first))
+                        }
+                        OutlinedButton(onClick = onRandomCharacterClick) {
+                            Text(stringResource(R.string.home_quick_random))
                         }
                     }
                 }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(if (wideLayout) 2 else 1),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(uiState.characters, key = { it.id }) { character ->
+                        CharacterCard(
+                            character = character,
+                            onClick = { onCharacterClick(character.id) },
+                            onDelete = { onDeleteClick(character.id) },
+                            onDuplicate = { onDuplicateClick(character.id) }
+                        )
+                    }
+                }
+            }
+            if (wideLayout) {
+                HomeToolsPanel(
+                    onCompendiumClick = onCompendiumClick,
+                    onDiceClick = onDiceClick,
+                    onChronicleClick = onChronicleClick,
+                    onCombatClick = onCombatClick,
+                    onSettingsClick = onSettingsClick,
+                    onRandomCharacterClick = onRandomCharacterClick,
+                    onFindTable = onFindTable,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
         }
+    }
+}
+
+@Composable
+fun HomeToolsBar(
+    onCompendiumClick: () -> Unit,
+    onDiceClick: () -> Unit,
+    onChronicleClick: () -> Unit,
+    onCombatClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onRandomCharacterClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Text(
+                text = stringResource(R.string.home_tools),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 4.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                NavigationButton(
+                    icon = Icons.Default.List,
+                    label = stringResource(R.string.home_compendium),
+                    onClick = onCompendiumClick
+                )
+                NavigationButton(
+                    icon = Icons.Default.DateRange,
+                    label = stringResource(R.string.home_dice),
+                    onClick = onDiceClick
+                )
+                NavigationButton(
+                    icon = Icons.Default.Favorite,
+                    label = stringResource(R.string.home_chronicles),
+                    onClick = onChronicleClick
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                NavigationButton(
+                    icon = Icons.Default.Shield,
+                    label = stringResource(R.string.combat_title),
+                    onClick = onCombatClick
+                )
+                NavigationButton(
+                    icon = Icons.Default.Settings,
+                    label = stringResource(R.string.home_settings),
+                    onClick = onSettingsClick
+                )
+                NavigationButton(
+                    icon = Icons.Default.Refresh,
+                    label = stringResource(R.string.home_quick_random),
+                    onClick = onRandomCharacterClick
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeToolsPanel(
+    onCompendiumClick: () -> Unit,
+    onDiceClick: () -> Unit,
+    onChronicleClick: () -> Unit,
+    onCombatClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onRandomCharacterClick: () -> Unit,
+    onFindTable: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .width(220.dp)
+            .fillMaxHeight(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Text(
+                text = stringResource(R.string.home_tools),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 4.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            ToolsPanelRow(Icons.Default.List, stringResource(R.string.home_compendium), onCompendiumClick)
+            ToolsPanelRow(Icons.Default.DateRange, stringResource(R.string.home_dice), onDiceClick)
+            ToolsPanelRow(Icons.Default.Favorite, stringResource(R.string.home_chronicles), onChronicleClick)
+            ToolsPanelRow(Icons.Default.TableRestaurant, stringResource(R.string.live_room), onFindTable)
+            ToolsPanelRow(Icons.Default.Shield, stringResource(R.string.combat_title), onCombatClick)
+            ToolsPanelRow(Icons.Default.Settings, stringResource(R.string.home_settings), onSettingsClick)
+            ToolsPanelRow(Icons.Default.Refresh, stringResource(R.string.home_quick_random), onRandomCharacterClick)
+        }
+    }
+}
+
+@Composable
+private fun ToolsPanelRow(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon,
+            contentDescription = label,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -218,6 +316,7 @@ fun CharacterCard(
     onDuplicate: () -> Unit = {}
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -234,6 +333,10 @@ fun CharacterCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            CharacterAvatar(character = character)
+
+            Spacer(modifier = Modifier.width(16.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = character.identity.name.ifEmpty { stringResource(R.string.character_unnamed) },
@@ -256,19 +359,52 @@ fun CharacterCard(
                 }
             }
 
-            IconButton(onClick = { showDeleteDialog = true }) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.action_delete),
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
-            IconButton(onClick = onDuplicate) {
-                Icon(
-                    Icons.Default.ContentCopy,
-                    contentDescription = stringResource(R.string.action_duplicate),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.action_more_options),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_duplicate)) },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.ContentCopy,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        onClick = {
+                            showMenu = false
+                            onDuplicate()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                stringResource(R.string.action_delete),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        },
+                        onClick = {
+                            showMenu = false
+                            showDeleteDialog = true
+                        }
+                    )
+                }
             }
         }
     }

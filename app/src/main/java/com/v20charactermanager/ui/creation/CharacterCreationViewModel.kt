@@ -281,17 +281,21 @@ class CharacterCreationViewModel(
     private fun withDerivedValues(character: Character): Character {
         val courage = character.getVirtueValue(VirtueId.COURAGE)
         val bloodMax = GenerationRules.getBloodPoolMax(character.identity.generation)
+        val rules = _uiState.value.houseRules
         return character.copy(
             willpower = character.willpower.copy(
                 permanent = courage,
-                current = character.willpower.current.coerceIn(0, courage)
+                current = (rules?.startingWillpower ?: character.willpower.current).coerceIn(0, courage)
             ),
             moralPath = character.moralPath.copy(
                 conscienceValue = character.getVirtueValue(VirtueId.CONSCIENCE),
                 selfControlValue = character.getVirtueValue(VirtueId.SELF_CONTROL),
                 courageValue = courage
             ),
-            bloodPool = BloodPoolState(maximum = bloodMax, current = bloodMax)
+            bloodPool = BloodPoolState(
+                maximum = bloodMax,
+                current = (rules?.startingBlood ?: bloodMax).coerceIn(0, bloodMax)
+            )
         )
     }
 

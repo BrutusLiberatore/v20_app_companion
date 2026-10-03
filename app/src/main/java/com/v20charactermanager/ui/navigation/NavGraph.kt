@@ -129,6 +129,8 @@ import com.v20charactermanager.ui.sheet.SheetSection
 import com.v20charactermanager.ui.xp.XpSpendingScreen
 import com.v20charactermanager.ui.xp.XpSpendingViewModel
 import com.v20charactermanager.ui.xp.XpSpendingViewModelFactory
+import com.v20charactermanager.ui.theme.V20BloodBg
+import com.v20charactermanager.ui.theme.V20GoldBright
 import kotlin.math.roundToInt
 
 object Routes {
@@ -192,10 +194,10 @@ private fun RouteLoading() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1A1A2E)),
+            .background(V20BloodBg),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(color = Color(0xFFD4A847))
+        CircularProgressIndicator(color = V20GoldBright)
     }
 }
 
@@ -205,7 +207,7 @@ private fun RouteEmptyState(message: String, onBack: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1A1A2E)),
+            .background(V20BloodBg),
         contentAlignment = Alignment.Center
     ) {
         IconButton(
@@ -291,6 +293,9 @@ fun V20NavGraph(
                 },
                 onCombatClick = {
                     navController.navigate(Routes.COMBAT)
+                },
+                onFindTable = {
+                    navController.navigate(Routes.FIND_TABLE)
                 }
             )
         }
@@ -566,11 +571,11 @@ fun V20NavGraph(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0xFF1A1A2E)),
+                            .background(V20BloodBg),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = Color(0xFFD4A847))
+                            CircularProgressIndicator(color = V20GoldBright)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = stringResource(R.string.sheet_loading),
@@ -1839,7 +1844,7 @@ private fun LiveRoomEntryButton(
     val screenH = configuration.screenHeightDp * density
 
     val isMaster = liveRoomState.isMaster
-    val facetTint = if (isMaster) Color(0xFFD4A847) else Color(0xFF66BB6A)
+    val facetTint = if (isMaster) V20GoldBright else Color(0xFF66BB6A)
 
     Box(
         modifier = modifier
@@ -1860,7 +1865,7 @@ private fun LiveRoomEntryButton(
                 }
                 .shadow(6.dp, CrystalShape)
                 .clip(CrystalShape)
-                .background(Color(0xCC1A1A2E))
+                .background(V20BloodBg.copy(alpha = 0.8f))
                 .border(1.dp, facetTint.copy(alpha = 0.6f), CrystalShape)
                 .clickable {
                     val chronicleId = liveRoomState.room?.chronicleId ?: ""

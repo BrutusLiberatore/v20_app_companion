@@ -24,6 +24,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
+import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.theme.*
 import java.io.File
 
@@ -83,7 +84,7 @@ fun ImageViewerScreen(
     Scaffold(
         topBar = {
             if (showAnyUi) {
-                TopAppBar(
+                V20TopBar(
                     title = { Text(text = mediaAsset.title, color = V20Ink, fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
@@ -114,7 +115,8 @@ fun ImageViewerScreen(
                             Icon(Icons.Default.Fullscreen, contentDescription = stringResource(R.string.presentation_mode), tint = V20GreenBright)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)
+                    containerColor = V20Surface2,
+                    contentColor = V20Ink
                 )
             }
         },

@@ -1,11 +1,10 @@
 package com.v20charactermanager.ui.liveroom
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,18 +14,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.Character
 import com.v20charactermanager.domain.repository.CharacterRepository
+import com.v20charactermanager.ui.components.AdaptiveLayoutType
+import com.v20charactermanager.ui.components.CharacterAvatar
+import com.v20charactermanager.ui.components.rememberAdaptiveLayout
+import com.v20charactermanager.ui.components.V20TopBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -41,16 +39,15 @@ fun SelectCharacterScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = { Text(stringResource(R.string.select_character_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface
             )
         }
     ) { padding ->
@@ -119,7 +116,11 @@ fun SelectCharacterScreen(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                LazyColumn(
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(
+                        if (rememberAdaptiveLayout() != AdaptiveLayoutType.COMPACT) 2 else 1
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(characters) { character ->
@@ -154,35 +155,7 @@ private fun CharacterCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (character.portraitUri != null) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(character.portraitUri)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = character.identity.name,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = character.identity.name.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
+            CharacterAvatar(character = character)
 
             Spacer(modifier = Modifier.width(16.dp))
 

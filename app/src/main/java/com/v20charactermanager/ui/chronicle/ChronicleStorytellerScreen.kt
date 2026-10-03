@@ -15,6 +15,7 @@ import com.v20charactermanager.domain.model.*
 import com.v20charactermanager.ui.components.AdaptiveChronicleNavigation
 import com.v20charactermanager.ui.components.AdaptiveLayoutType
 import com.v20charactermanager.ui.components.rememberAdaptiveLayout
+import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.theme.V20Ink
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -455,7 +456,7 @@ private fun CompactStorytellerLayout(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = { Text(chronicle?.name ?: "") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

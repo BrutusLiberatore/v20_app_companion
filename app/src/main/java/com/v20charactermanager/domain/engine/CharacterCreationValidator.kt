@@ -130,18 +130,25 @@ class CharacterCreationValidator(
 
         val creationProfile = CreationProfile.forSect(character.identity.sect)
 
+        val disciplineBudget = houseRules?.disciplineInitial
+            ?.takeIf { it != RuleSet.DISCIPLINE_INITIAL } ?: creationProfile.disciplinePoints
+        val backgroundBudget = houseRules?.backgroundInitial
+            ?.takeIf { it != RuleSet.BACKGROUND_INITIAL } ?: creationProfile.backgroundPoints
+        val virtueBudget = houseRules?.virtueInitial
+            ?.takeIf { it != RuleSet.VIRTUE_INITIAL } ?: creationProfile.virtuePoints
+
         val disciplinePoints = character.disciplines.sumOf { it.value }
-        if (disciplinePoints != creationProfile.disciplinePoints) {
-            warnings.add("Discipline points: $disciplinePoints, expected ${creationProfile.disciplinePoints}")
+        if (disciplinePoints != disciplineBudget) {
+            warnings.add("Discipline points: $disciplinePoints, expected $disciplineBudget")
         }
 
         val backgroundPoints = character.backgrounds.sumOf { it.value }
-        if (backgroundPoints != creationProfile.backgroundPoints) {
-            warnings.add("Background points: $backgroundPoints, expected ${creationProfile.backgroundPoints}")
+        if (backgroundPoints != backgroundBudget) {
+            warnings.add("Background points: $backgroundPoints, expected $backgroundBudget")
         }
 
         val virtuePoints = character.virtues.sumOf { it.value - RuleSet.VIRTUE_BASE }
-        val expectedVirtueExtra = creationProfile.virtuePoints - (character.virtues.size * RuleSet.VIRTUE_BASE)
+        val expectedVirtueExtra = virtueBudget - (character.virtues.size * RuleSet.VIRTUE_BASE)
         if (virtuePoints != expectedVirtueExtra) {
             warnings.add("Virtue points distribution is incorrect (have $virtuePoints extra, need $expectedVirtueExtra)")
         }

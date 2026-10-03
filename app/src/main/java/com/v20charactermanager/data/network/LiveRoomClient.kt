@@ -42,7 +42,7 @@ class LiveRoomClient(private val context: Context) {
         this.onStatus = onStatus
     }
 
-    fun connect(host: String, port: Int, playerName: String, characterId: String?) {
+    fun connect(host: String, port: Int, playerName: String, characterId: String?, clanId: String? = null) {
         isDisconnecting = false
         onStatus?.invoke("Connessione TCP a $host:$port...")
         scope.launch {
@@ -60,10 +60,10 @@ class LiveRoomClient(private val context: Context) {
                 onStatus?.invoke("TCP connesso, invio JOIN...")
                 Log.d(TAG, "TCP connected to $host:$port, sending JOIN")
 
-                val join = LiveRoomMessage.Join(playerName, characterId)
+                val join = LiveRoomMessage.Join(playerName, characterId, clanId)
                 sendMessage(join)
                 onStatus?.invoke("JOIN inviato, in attesa di risposta...")
-                Log.d(TAG, "JOIN sent: $playerName (char=$characterId)")
+                Log.d(TAG, "JOIN sent: $playerName (char=$characterId, clan=$clanId)")
 
                 while (socket?.isConnected == true && !socket!!.isClosed) {
                     val line = reader?.readLine() ?: break

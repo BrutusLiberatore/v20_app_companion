@@ -26,6 +26,7 @@ import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.MediaAsset
 import com.v20charactermanager.ui.components.V20ErrorScreen
 import com.v20charactermanager.ui.components.V20ErrorType
+import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -57,7 +58,7 @@ fun DocumentViewerScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = { Text(asset?.title ?: stringResource(R.string.media_type_document), color = V20GoldBright) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -77,7 +78,8 @@ fun DocumentViewerScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)
+                containerColor = V20Surface2,
+                contentColor = V20Ink
             )
         },
         containerColor = V20Black

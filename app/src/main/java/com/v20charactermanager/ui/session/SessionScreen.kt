@@ -34,6 +34,7 @@ import com.v20charactermanager.domain.model.Character
 import com.v20charactermanager.ui.components.QuickStatusPanel
 import com.v20charactermanager.ui.components.V20ControlButton
 import com.v20charactermanager.ui.components.V20IconButton
+import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.theme.*
 
 
@@ -54,7 +55,7 @@ fun SessionScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = stringResource(R.string.session_title, character.identity.name),
@@ -65,12 +66,7 @@ fun SessionScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, stringResource(R.string.action_back))
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                }
             )
         }
     ) { padding ->

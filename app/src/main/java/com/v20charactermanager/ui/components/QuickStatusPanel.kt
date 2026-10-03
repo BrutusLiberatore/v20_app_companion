@@ -44,6 +44,7 @@ import com.v20charactermanager.ui.theme.V20GoldDark
 import com.v20charactermanager.ui.theme.V20InkFaint
 import com.v20charactermanager.ui.theme.V20Line
 import com.v20charactermanager.ui.theme.V20Surface3
+import com.v20charactermanager.ui.theme.V20Surface2
 import com.v20charactermanager.util.LocaleHelper
 
 /**
@@ -125,8 +126,8 @@ fun QuickStatusPanel(
                             else
                                 Brush.verticalGradient(
                                     listOf(
-                                        Color(0xFF2A2A2A),
-                                        Color(0xFF1A1A1A)
+                                        V20Line,
+                                        V20Surface2
                                     )
                                 )
                         )
@@ -155,7 +156,7 @@ fun QuickStatusPanel(
                 text = "${character.willpower.current}/${character.willpower.permanent}",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFC9A54E)
+                color = V20GoldBright
             )
             if (canEdit) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -201,8 +202,8 @@ fun QuickStatusPanel(
                             else
                                 Brush.verticalGradient(
                                     listOf(
-                                        Color(0xFF2A2A2A),
-                                        Color(0xFF1A1A1A)
+                                        V20Line,
+                                        V20Surface2
                                     )
                                 )
                         )
@@ -252,7 +253,7 @@ fun QuickStatusPanel(
                             DamageType.NONE -> SolidColor(V20Surface3)
                             DamageType.BASHING -> Brush.verticalGradient(listOf(V20GoldBright, V20Gold, V20GoldDark))
                             DamageType.LETHAL -> Brush.verticalGradient(listOf(V20ErrorBright, V20Error, Color(0xFF4A0E0E)))
-                            DamageType.AGGRAVATED -> Brush.verticalGradient(listOf(Color(0xFF333333), Color(0xFF1A1A1A), Color(0xFF0A0A0A)))
+                            DamageType.AGGRAVATED -> Brush.verticalGradient(listOf(Color(0xFF333333), V20Surface2, Color(0xFF0A0A0A)))
                         }
                     )
                     .border(

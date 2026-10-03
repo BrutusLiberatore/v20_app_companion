@@ -29,10 +29,13 @@ import coil.request.ImageRequest
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.*
 import com.v20charactermanager.ui.theme.*
+import com.v20charactermanager.ui.components.AdaptiveLayoutType
 import com.v20charactermanager.ui.components.V20BloodButton
 import com.v20charactermanager.ui.components.V20ErrorDialog
 import com.v20charactermanager.ui.components.V20ErrorType
 import com.v20charactermanager.ui.components.V20IvoryButton
+import com.v20charactermanager.ui.components.rememberAdaptiveLayout
+import com.v20charactermanager.ui.components.V20TopBar
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
@@ -63,6 +66,11 @@ fun MediaLibraryScreen(
     var showRenameDialog by remember { mutableStateOf<MediaAsset?>(null) }
     var showTagEditorDialog by remember { mutableStateOf<MediaAsset?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val mediaColumns = when (rememberAdaptiveLayout()) {
+        AdaptiveLayoutType.COMPACT -> 2
+        AdaptiveLayoutType.MEDIUM -> 3
+        AdaptiveLayoutType.EXPANDED -> 4
+    }
 
     LaunchedEffect(message) {
         message?.let {
@@ -89,7 +97,7 @@ fun MediaLibraryScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = { Text(text = stringResource(R.string.media_library), color = V20GoldBright, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -105,7 +113,8 @@ fun MediaLibraryScreen(
                     }
                     V20IvoryButton(text = stringResource(R.string.media_import), onClick = onImportImage)
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = V20Surface2)
+                containerColor = V20Surface2,
+                contentColor = V20Ink
             )
         },
         containerColor = V20Black
@@ -158,7 +167,7 @@ fun MediaLibraryScreen(
                 }
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
+                    columns = GridCells.Fixed(mediaColumns),
                     contentPadding = PaddingValues(12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)

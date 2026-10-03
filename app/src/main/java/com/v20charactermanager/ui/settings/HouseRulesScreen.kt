@@ -19,6 +19,7 @@ import com.v20charactermanager.R
 import com.v20charactermanager.domain.definition.ClanId
 import com.v20charactermanager.domain.model.HouseRules
 import com.v20charactermanager.ui.theme.V20GoldBright
+import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.theme.V20Surface
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -43,7 +44,7 @@ fun HouseRulesScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = { Text(stringResource(R.string.house_rules_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.CombatState
+import com.v20charactermanager.ui.components.V20TopBar
 
 /** Standalone (offline) combat tracker screen. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +44,7 @@ fun CombatTrackerScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            V20TopBar(
                 title = {
                     Text(
                         text = stringResource(R.string.combat_title),
@@ -58,9 +59,8 @@ fun CombatTrackerScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface
             )
         }
     ) { padding ->

@@ -19,6 +19,7 @@ data class ConnectedPlayer(
     val name: String,
     val characterId: String? = null,
     val characterName: String? = null,
+    val clanId: String? = null,
     val connectedAt: Long = System.currentTimeMillis()
 )
 
@@ -63,13 +64,13 @@ data class PresentedFile(
 @Serializable
 sealed class LiveRoomMessage {
     @Serializable
-    data class Join(val playerName: String, val characterId: String? = null) : LiveRoomMessage()
+    data class Join(val playerName: String, val characterId: String? = null, val clanId: String? = null) : LiveRoomMessage()
 
     @Serializable
     data class RoomInfo(val roomName: String, val masterName: String, val chronicleId: String) : LiveRoomMessage()
 
     @Serializable
-    data class PlayerJoined(val playerName: String, val playerId: String, val characterId: String? = null) : LiveRoomMessage()
+    data class PlayerJoined(val playerName: String, val playerId: String, val characterId: String? = null, val clanId: String? = null) : LiveRoomMessage()
 
     @Serializable
     data class PlayerLeft(val playerName: String, val playerId: String) : LiveRoomMessage()
@@ -156,7 +157,7 @@ sealed class LiveRoomMessage {
     data class Welcome(val playerId: String, val roomName: String, val masterName: String, val players: List<PlayerInfo>) : LiveRoomMessage()
 
     @Serializable
-    data class PlayerInfo(val id: String, val name: String, val characterId: String? = null, val characterName: String? = null)
+    data class PlayerInfo(val id: String, val name: String, val characterId: String? = null, val characterName: String? = null, val clanId: String? = null)
 
     @Serializable
     object Ping : LiveRoomMessage()

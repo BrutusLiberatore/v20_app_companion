@@ -6,10 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.v20charactermanager.data.repository.HouseRuleRepositoryImpl
-import com.v20charactermanager.domain.engine.DiceEngine
-import com.v20charactermanager.domain.engine.DiceRules
-import com.v20charactermanager.domain.engine.XpCostCalculator
-import com.v20charactermanager.domain.engine.toXpCostRules
+import com.v20charactermanager.domain.engine.applyToEngines
 import com.v20charactermanager.domain.model.HouseRules
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +32,8 @@ class HouseRulesViewModel(
         viewModelScope.launch {
             val rules = repository.getHouseRules(chronicleId)
             _uiState.update { it.copy(rules = rules, isLoaded = true) }
-            applyToEngines(rules)
+            persistLastChronicle(chronicleId)
+            rules.applyToEngines()
         }
     }
 
@@ -47,7 +45,8 @@ class HouseRulesViewModel(
         viewModelScope.launch {
             val rules = _uiState.value.rules
             repository.saveHouseRules(rules)
-            applyToEngines(rules)
+            persistLastChronicle(rules.chronicleId)
+            rules.applyToEngines()
             _uiState.update { it.copy(message = context.getString(R.string.msg_house_rules_saved)) }
         }
     }
@@ -56,23 +55,24 @@ class HouseRulesViewModel(
         val chronicleId = _uiState.value.rules.chronicleId
         val defaults = HouseRules.defaults(chronicleId)
         _uiState.update { it.copy(rules = defaults) }
-        applyToEngines(defaults)
+        defaults.applyToEngines()
     }
 
-    private fun applyToEngines(rules: HouseRules) {
-        DiceEngine.configure(
-            DiceRules(
-                explodingTensAvailable = rules.explodingTensAvailable,
-                explodingTensDefault = rules.explodingTensDefault,
-                explodingTensRecursive = rules.explodingTensRecursive,
-                difficultyDefault = rules.difficultyDefault
-            )
-        )
-        XpCostCalculator.configure(rules.toXpCostRules())
+    private fun persistLastChronicle(chronicleId: String) {
+        if (chronicleId.isBlank()) return
+        context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_LAST_CHRONICLE, chronicleId)
+            .apply()
     }
 
     fun clearMessage() {
         _uiState.update { it.copy(message = null) }
+    }
+
+    companion object {
+        const val PREFS_NAME = "house_rules"
+        const val KEY_LAST_CHRONICLE = "last_chronicle"
     }
 }
 

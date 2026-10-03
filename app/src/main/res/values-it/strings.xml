@@ -56,6 +56,7 @@
     <string name="action_back">Indietro</string>
     <string name="action_remove">Rimuovi</string>
     <string name="action_duplicate">Duplica</string>
+    <string name="action_more_options">Altre opzioni</string>
     <string name="action_roll">Tira</string>
     <string name="action_session">Sessione</string>
     <string name="action_close">Chiudi</string>
@@ -1096,5 +1097,15 @@
     <string name="dice_reveal_every">Ogni tiro</string>
     <string name="dice_reveal_total_success">SUCCESSO TOTALE!</string>
     <string name="dice_reveal_local">Il tuo tiro</string>
+
+    <string name="keepalive_channel">Connessione tavolo</string>
+    <string name="keepalive_title">Tavolo attivo</string>
+    <string name="keepalive_text">Il tavolo resta connesso in background</string>
+
+    <!-- About / Dark Pack attribution -->
+    <string name="settings_info_title">Informazioni e note legali</string>
+    <string name="settings_info_darkpack_logo">Logo Dark Pack</string>
+    <string name="settings_info_darkpack_notice">Portions of the materials are the copyrights and trademarks of Paradox Interactive AB, and are used with permission. All rights reserved. For more information please visit worldofdarkness.com.</string>
+    <string name="settings_info_unofficial">Questa app è contenuto non ufficiale creato dai fan. Non è materiale ufficiale del World of Darkness.</string>
 
 </resources>
