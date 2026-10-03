@@ -4,6 +4,7 @@ package com.v20charactermanager.ui.liveroom
 // "Low Poly 3D Dice Set" by eddex (https://eddex.itch.io/low-poly-3d-dice-set-game-assets),
 // licensed under CC BY-SA 4.0. Face albedo tiles are baked from the original UV texture.
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Paint
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.v20charactermanager.R
 import com.v20charactermanager.domain.model.LiveRoomMessage
@@ -285,6 +287,7 @@ fun Dice3DCanvas(
 ) {
     if (dice.isEmpty()) return
     val context = LocalContext.current
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val tiles = remember {
         val ids = intArrayOf(
             R.drawable.d10_face_0,
@@ -338,12 +341,16 @@ fun Dice3DCanvas(
     }
     Canvas(modifier = modifier) {
         val n = dice.size
-        val cols = ceil(sqrt(n.toDouble())).toInt().coerceIn(1, 5)
+        val cols = if (isLandscape) {
+            min(n, 6).coerceAtLeast(ceil(sqrt(n.toDouble())).toInt())
+        } else {
+            ceil(sqrt(n.toDouble())).toInt().coerceIn(1, 5)
+        }
         val rows = (n + cols - 1) / cols
         val cellW = size.width / cols
         val cellH = size.height / rows
         val cell = min(cellW, cellH)
-        val radiusPx = cell * 0.34f
+        val radiusPx = cell * (if (isLandscape) 0.42f else 0.34f)
         val t = progress.value
         val alpha = fade.value * (t / 0.10f).coerceIn(0f, 1f)
         val settle = ((t - 0.90f) / 0.10f).coerceIn(0f, 1f)

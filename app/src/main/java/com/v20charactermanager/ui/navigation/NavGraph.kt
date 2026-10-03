@@ -66,6 +66,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.v20charactermanager.R
 import com.v20charactermanager.data.di.AppContainer
@@ -1795,8 +1796,10 @@ fun V20NavGraph(
         }
     }
 
-    // Persistent Live Room re-entry button
-    if (liveRoomState.isConnected && !liveRoomState.isFileFullscreen) {
+    // Persistent Live Room re-entry button (hidden while already on the table)
+    val currentBackStack by navController.currentBackStackEntryAsState()
+    val onLiveRoomScreen = currentBackStack?.destination?.route?.startsWith("live_room") == true
+    if (liveRoomState.isConnected && !liveRoomState.isFileFullscreen && !onLiveRoomScreen) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)

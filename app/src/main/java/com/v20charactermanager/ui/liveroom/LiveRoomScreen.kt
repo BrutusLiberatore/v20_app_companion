@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.liveroom
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
@@ -47,6 +48,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -65,8 +67,10 @@ import com.v20charactermanager.R
 import com.v20charactermanager.domain.definition.ClanId
 import com.v20charactermanager.domain.definition.DamageType
 import com.v20charactermanager.domain.model.*
+import com.v20charactermanager.ui.components.AdaptiveLayoutType
 import com.v20charactermanager.ui.components.QuickStatusPanel
 import com.v20charactermanager.ui.components.avatarSymbolRes
+import com.v20charactermanager.ui.components.rememberAdaptiveLayout
 import com.v20charactermanager.ui.theme.V20BloodBg
 import com.v20charactermanager.ui.theme.V20Ink
 import com.v20charactermanager.ui.theme.V20SurfaceBlood
@@ -693,72 +697,108 @@ private fun VirtualTableView(
         )
     }
 
+    val bottomPanelContent: @Composable () -> Unit = {
+        if (uiState.isMaster) {
+            MasterBottomPanel(
+                uiState = uiState,
+                chronicleId = chronicleId,
+                audioViewModel = audioViewModel,
+                chronicleRepository = chronicleRepository,
+                onPresentAsset = onPresentAsset,
+                onShareAsset = onShareAsset,
+                onDismissFile = onDismissFile,
+                onToggleFullscreen = onToggleFullscreen,
+                onRevealClue = onRevealClue,
+                onRevealSecret = onRevealSecret,
+                onCloseRoom = onCloseRoom,
+                onTableStyleChange = onTableStyleChange,
+                onRollClick = { showRollDialog = true },
+                onOpenCombat = { showCombatDialog = true },
+                onOpenRevealSettings = { showRevealDialog = true },
+                onOpenPlayersStatus = { showPlayersDialog = true }
+            )
+        } else {
+            PlayerBottomPanel(
+                uiState = uiState,
+                localCharacter = localCharacter,
+                onToggleFullscreen = onToggleFullscreen,
+                onRollClick = { showRollDialog = true },
+                onRollInitiative = onRollInitiative,
+                onSpendBlood = onStatusSpendBlood,
+                onRefillBlood = onStatusRefillBlood,
+                onSpendWillpower = onStatusSpendWillpower,
+                onRecoverWillpower = onStatusRecoverWillpower,
+                onApplyDamage = onStatusApplyDamage,
+                onHealDamage = onStatusHealDamage
+            )
+        }
+    }
+
+    val layoutType = rememberAdaptiveLayout()
+    val configuration = LocalConfiguration.current
+    val wideLayout =
+        configuration.orientation == Configuration.ORIENTATION_LANDSCAPE ||
+            layoutType != AdaptiveLayoutType.COMPACT
+    val panelWidth = when {
+        configuration.screenWidthDp >= 840 -> 320.dp
+        configuration.screenWidthDp >= 600 -> 280.dp
+        else -> 240.dp
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(V20BloodBg)
     ) {
-        // IP banner for master - outside table area so it's always readable
-        if (uiState.isMaster && uiState.room != null && uiState.room.host.isNotBlank()) {
-            var showIpBanner by remember { mutableStateOf(true) }
-            if (showIpBanner) {
-                Card(
+        if (!wideLayout) {
+            ShareIpBanner(uiState)
+        }
+
+        Row(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            if (wideLayout) {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood2),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        .width(panelWidth)
+                        .fillMaxHeight()
+                        .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    ShareIpBanner(uiState, modifier = Modifier.fillMaxWidth())
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood2),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
-                        Icon(
-                            Icons.Default.Language,
-                            contentDescription = null,
-                            tint = Gold,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.live_room_share_ip),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = 0.7f)
-                            )
-                            Text(
-                                text = "${uiState.room.host}:${uiState.room.port}",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Gold,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        IconButton(
-                            onClick = { showIpBanner = false },
-                            modifier = Modifier.size(24.dp)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
                         ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = stringResource(R.string.action_close),
-                                tint = Color.White.copy(alpha = 0.5f),
-                                modifier = Modifier.size(16.dp)
+                            bottomPanelContent()
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                color = Color.White.copy(alpha = 0.12f)
+                            )
+                            PanelRollFeed(
+                                uiState = uiState,
+                                onOpenLog = { showLogDialog = true },
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                             )
                         }
                     }
                 }
             }
-        }
 
-        // Table area
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(8.dp)
-                .onGloballyPositioned { tableBoxSize = it.size },
-            contentAlignment = Alignment.Center
-        ) {
+            // Table area
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(8.dp)
+                    .onGloballyPositioned { tableBoxSize = it.size },
+                contentAlignment = Alignment.Center
+            ) {
             // Round table asset (style pack chosen by the Master)
             Image(
                 painter = painterResource(id = TableStylePack.fromId(uiState.tablePack).tableRes),
@@ -798,6 +838,7 @@ private fun VirtualTableView(
                 }
             }
 
+            if (!wideLayout) {
             // Roll results feed: can be reduced to a single icon and restored with a tap
             if (feedCollapsed) {
                 Surface(
@@ -881,6 +922,7 @@ private fun VirtualTableView(
                     }
                 }
             }
+            }
 
             // Chairs with player icons positioned in a circle
             val chairRes = TableStylePack.fromId(uiState.chairPack).chairRes
@@ -943,48 +985,117 @@ private fun VirtualTableView(
             }
         }
 
-        // Bottom panel
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood2),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            if (uiState.isMaster) {
-                MasterBottomPanel(
-                    uiState = uiState,
-                    chronicleId = chronicleId,
-                    audioViewModel = audioViewModel,
-                    chronicleRepository = chronicleRepository,
-                    onPresentAsset = onPresentAsset,
-                    onShareAsset = onShareAsset,
-                    onDismissFile = onDismissFile,
-                    onToggleFullscreen = onToggleFullscreen,
-                    onRevealClue = onRevealClue,
-                    onRevealSecret = onRevealSecret,
-                    onCloseRoom = onCloseRoom,
-                    onTableStyleChange = onTableStyleChange,
-                    onRollClick = { showRollDialog = true },
-                    onOpenCombat = { showCombatDialog = true },
-                    onOpenRevealSettings = { showRevealDialog = true },
-                    onOpenPlayersStatus = { showPlayersDialog = true }
-                )
-            } else {
-                PlayerBottomPanel(
-                    uiState = uiState,
-                    localCharacter = localCharacter,
-                    onToggleFullscreen = onToggleFullscreen,
-                    onRollClick = { showRollDialog = true },
-                    onRollInitiative = onRollInitiative,
-                    onSpendBlood = onStatusSpendBlood,
-                    onRefillBlood = onStatusRefillBlood,
-                    onSpendWillpower = onStatusSpendWillpower,
-                    onRecoverWillpower = onStatusRecoverWillpower,
-                    onApplyDamage = onStatusApplyDamage,
-                    onHealDamage = onStatusHealDamage
-                )
+        } // close tools/table Row
+
+        if (!wideLayout) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood2),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                bottomPanelContent()
             }
+        }
+    }
+}
+
+@Composable
+private fun ShareIpBanner(
+    uiState: LiveRoomState,
+    modifier: Modifier = Modifier
+) {
+    if (uiState.isMaster && uiState.room != null && uiState.room.host.isNotBlank()) {
+        var showIpBanner by remember { mutableStateOf(true) }
+        if (showIpBanner) {
+            Card(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood2),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Language,
+                        contentDescription = null,
+                        tint = Gold,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.live_room_share_ip),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "${uiState.room.host}:${uiState.room.port}",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Gold,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    IconButton(
+                        onClick = { showIpBanner = false },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.action_close),
+                            tint = Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PanelRollFeed(
+    uiState: LiveRoomState,
+    onOpenLog: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        if (uiState.isMaster) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color.Black.copy(alpha = 0.72f),
+                modifier = Modifier.clickable(onClick = onOpenLog)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.History,
+                        contentDescription = stringResource(R.string.live_log_open),
+                        tint = Gold,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.live_log_title),
+                        color = Gold,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+        uiState.diceRolls.takeLast(5).asReversed().forEach { roll ->
+            DiceRollFeedItem(roll)
         }
     }
 }

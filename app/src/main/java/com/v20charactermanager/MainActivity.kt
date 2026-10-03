@@ -23,6 +23,11 @@ import androidx.navigation.compose.rememberNavController
 import com.v20charactermanager.data.di.AppContainer
 import com.v20charactermanager.ui.navigation.V20NavGraph
 import com.v20charactermanager.ui.theme.V20Theme
+import com.v20charactermanager.ui.tutorial.LanguagePickerOverlay
+import com.v20charactermanager.ui.tutorial.LanguageState
+import com.v20charactermanager.ui.tutorial.TutorialOverlay
+import com.v20charactermanager.ui.tutorial.TutorialPrefs
+import com.v20charactermanager.ui.tutorial.TutorialState
 import com.v20charactermanager.util.CrashHandler
 import com.v20charactermanager.util.LocaleHelper
 import java.io.File
@@ -84,6 +89,30 @@ class MainActivity : AppCompatActivity() {
                             appContainer = container
                         )
                     }
+                }
+
+                val onboardContext = LocalContext.current
+                LaunchedEffect(Unit) {
+                    if (!TutorialPrefs.isLanguageChosen(onboardContext)) {
+                        LanguageState.visible = true
+                    } else if (!TutorialPrefs.isDone(onboardContext)) {
+                        TutorialState.visible = true
+                    }
+                }
+                if (LanguageState.visible) {
+                    LanguagePickerOverlay(
+                        onPicked = { language ->
+                            TutorialPrefs.setLanguageChosen(onboardContext)
+                            LanguageState.visible = false
+                            LocaleHelper.setLanguage(onboardContext, language)
+                            if (!TutorialPrefs.isDone(onboardContext)) {
+                                TutorialState.visible = true
+                            }
+                        }
+                    )
+                }
+                if (TutorialState.visible && !LanguageState.visible) {
+                    TutorialOverlay()
                 }
             }
         }

@@ -225,6 +225,7 @@ fun ChronicleStorytellerScreen(
                             }
                         },
                         onLiveRoom = onLiveRoom,
+                        onJoinLiveRoom = onJoinLiveRoom,
                         onAddCharacter = onAddCharacter,
                         onCreateCharacter = onCreateCharacter,
                         onRemoveCharacter = onRemoveCharacter,
@@ -551,6 +552,7 @@ private fun CompactStorytellerLayout(
             onMediaClick = onMediaClick,
             onQuickNpc = onQuickNpc,
             onLiveRoom = onLiveRoom,
+            onJoinLiveRoom = onJoinLiveRoom,
             onAddCharacter = onAddCharacter,
             onCreateCharacter = onCreateCharacter,
             onRemoveCharacter = onRemoveCharacter,
@@ -626,6 +628,7 @@ private fun StorytellerContent(
     onMediaClick: () -> Unit,
     onQuickNpc: (String, CreatureType, String) -> Unit,
     onLiveRoom: () -> Unit,
+    onJoinLiveRoom: () -> Unit = {},
     onAddCharacter: (String, String, ChronicleMemberRole) -> Unit,
     onCreateCharacter: () -> Unit = {},
     onRemoveCharacter: (String, String) -> Unit,
@@ -702,6 +705,8 @@ private fun StorytellerContent(
                         onCreateNpc(session.chronicleId, name, creatureType, role, null)
                     }
                 },
+                onLiveRoom = onLiveRoom,
+                onJoinLiveRoom = onJoinLiveRoom,
                 modifier = modifier
             )
         }

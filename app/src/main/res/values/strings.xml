@@ -1108,4 +1108,30 @@
     <string name="settings_info_darkpack_notice">Portions of the materials are the copyrights and trademarks of Paradox Interactive AB, and are used with permission. All rights reserved. For more information please visit worldofdarkness.com.</string>
     <string name="settings_info_unofficial">This app is unofficial fan content. It is not official World of Darkness material.</string>
 
+    <!-- First-launch tutorial -->
+    <string name="tutorial_skip">Skip</string>
+    <string name="tutorial_next">Next</string>
+    <string name="tutorial_start">Start</string>
+    <string name="tutorial_welcome_title">Welcome to V20 Companion</string>
+    <string name="tutorial_welcome_body">The companion app for Vampire: The Masquerade 20th Edition. Manage characters and chronicles and play live at the table. This quick tour takes about one minute.</string>
+    <string name="tutorial_home_title">Your Characters</string>
+    <string name="tutorial_home_body">The home screen lists your characters. Tap a card to open its sheet, use the menu with three dots to duplicate or delete it, the plus button to create one, or the dice button for a random character.</string>
+    <string name="tutorial_sheet_title">Character Sheet</string>
+    <string name="tutorial_sheet_body">The sheet has eight sections: identity, attributes, abilities, backgrounds, disciplines, advantages, extras and notes. Tap Edit to change values; your portrait and changes are saved automatically.</string>
+    <string name="tutorial_creation_title">Step-by-Step Creation</string>
+    <string name="tutorial_creation_body">The creation assistant walks you through every step in order, with validation and your house rules applied: XP costs, allowed backgrounds and starting blood and willpower.</string>
+    <string name="tutorial_dice_title">Dice and Rolls</string>
+    <string name="tutorial_dice_body">Roll V20 tests: a d10 plus the ability against the difficulty, with exploding tens according to your house rules and a cinematic reveal of the result.</string>
+    <string name="tutorial_chronicle_title">Chronicles and Sessions</string>
+    <string name="tutorial_chronicle_body">Create a chronicle to organize sessions, recaps, people, places, annotations, maps and a media library of images, audio and video.</string>
+    <string name="tutorial_combat_title">Combat Tracker</string>
+    <string name="tutorial_combat_body">Track combat with V20 initiative (d10 plus Dexterity plus Wits), rounds and a turn timer with countdown, pause and auto-advance.</string>
+    <string name="tutorial_table_title">Live Table</string>
+    <string name="tutorial_table_body">Create or find a table and play together over LAN, Wi-Fi Direct or P2P. The storyteller shares sheets, handouts, rolls and assets with the players in real time.</string>
+    <string name="tutorial_settings_title">House Rules and Settings</string>
+    <string name="tutorial_settings_body">Set language, dice reveal mode, import and export your data and tune house rules per chronicle: XP costs, explosive tens, freebies and more.</string>
+    <string name="settings_review_tutorial">Replay tutorial</string>
+    <string name="lang_picker_title">Choose your language</string>
+    <string name="quick_table">Table</string>
+
 </resources>

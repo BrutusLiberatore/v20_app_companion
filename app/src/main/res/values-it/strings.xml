@@ -1108,4 +1108,30 @@
     <string name="settings_info_darkpack_notice">Portions of the materials are the copyrights and trademarks of Paradox Interactive AB, and are used with permission. All rights reserved. For more information please visit worldofdarkness.com.</string>
     <string name="settings_info_unofficial">Questa app è contenuto non ufficiale creato dai fan. Non è materiale ufficiale del World of Darkness.</string>
 
+    <!-- First-launch tutorial -->
+    <string name="tutorial_skip">Salta</string>
+    <string name="tutorial_next">Avanti</string>
+    <string name="tutorial_start">Inizia</string>
+    <string name="tutorial_welcome_title">Benvenuto in V20 Companion</string>
+    <string name="tutorial_welcome_body">Il compagno di gioco per Vampire: The Masquerade 20ª Edizione. Gestisci personaggi e cronache e gioca live al tavolo. Questo tour rapido richiede circa un minuto.</string>
+    <string name="tutorial_home_title">I tuoi Personaggi</string>
+    <string name="tutorial_home_body">La schermata Home elenca i tuoi personaggi. Tocca una scheda per aprirla, usa il menu con i tre punti per duplicarla o eliminarla, il pulsante più per crearne uno o il dado per un personaggio casuale.</string>
+    <string name="tutorial_sheet_title">Scheda del Personaggio</string>
+    <string name="tutorial_sheet_body">La scheda ha otto sezioni: identità, attributi, abilità, background, discipline, vantaggi, extra e note. Tocca Modifica per cambiare i valori; ritratto e modifiche vengono salvati automaticamente.</string>
+    <string name="tutorial_creation_title">Creazione Passo-Passo</string>
+    <string name="tutorial_creation_body">La procedura guidata di creazione ti accompagna in ogni passo, con validazione e le regole casa applicate: costi XP, background ammessi, sangue e volontà iniziali.</string>
+    <string name="tutorial_dice_title">Dadi e Tiri</string>
+    <string name="tutorial_dice_body">Tira i test V20: d10 + abilità contro la difficoltà, con decine esplosive secondo le regole casa e un reveal cinematografico del risultato.</string>
+    <string name="tutorial_chronicle_title">Cronache e Sessioni</string>
+    <string name="tutorial_chronicle_body">Crea una cronaca per organizzare sessioni, recap, persone, luoghi, annotazioni, mappe e una libreria media con immagini, audio e video.</string>
+    <string name="tutorial_combat_title">Tracker di Combattimento</string>
+    <string name="tutorial_combat_body">Gestisci il combattimento con iniziativa V20 (d10 + Destrezza + Prontezza), round e timer di turno con countdown, pausa e auto-avanzamento.</string>
+    <string name="tutorial_table_title">Tavolo Live</string>
+    <string name="tutorial_table_body">Crea o cerca un tavolo e giocate insieme via LAN, Wi-Fi Direct o P2P. Il Narratore condivide schede, handout, tiri e risorse con i giocatori in tempo reale.</string>
+    <string name="tutorial_settings_title">Regole Casa e Impostazioni</string>
+    <string name="tutorial_settings_body">Imposta la lingua, la modalità di reveal dei dadi, importa ed esporta i dati e regola le regole casa per cronaca: costi XP, decine esplosive, freebie e altro.</string>
+    <string name="settings_review_tutorial">Rivedi il tutorial</string>
+    <string name="lang_picker_title">Scegli la lingua</string>
+    <string name="quick_table">Tavolo</string>
+
 </resources>

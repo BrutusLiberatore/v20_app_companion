@@ -19,9 +19,12 @@ fun QuickActionBar(
     onNoteClick: () -> Unit,
     onEventClick: () -> Unit,
     onQuickNpc: (String, CreatureType, String) -> Unit,
+    onLiveRoom: () -> Unit = {},
+    onJoinLiveRoom: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showQuickNpcDialog by remember { mutableStateOf(false) }
+    var showTableDialog by remember { mutableStateOf(false) }
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -78,6 +81,68 @@ fun QuickActionBar(
                 Icon(Icons.Filled.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
             },
             modifier = Modifier.weight(1f)
+        )
+        AssistChip(
+            onClick = { showTableDialog = true },
+            label = {
+                Text(
+                    text = stringResource(R.string.quick_table),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            leadingIcon = {
+                Icon(Icons.Filled.TableRestaurant, contentDescription = null, modifier = Modifier.size(18.dp))
+            },
+            modifier = Modifier.weight(1f)
+        )
+    }
+
+    if (showTableDialog) {
+        AlertDialog(
+            onDismissRequest = { showTableDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.live_room),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            showTableDialog = false
+                            onLiveRoom()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Filled.Casino, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.live_room_create_table),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            showTableDialog = false
+                            onJoinLiveRoom()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Filled.Casino, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.live_room_join_table),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showTableDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
         )
     }
 

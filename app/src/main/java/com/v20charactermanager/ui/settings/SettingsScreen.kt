@@ -26,6 +26,7 @@ import com.v20charactermanager.ui.components.rememberAdaptiveLayout
 import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.dice.DiceRevealModePicker
 import com.v20charactermanager.ui.dice.DiceRevealPrefs
+import com.v20charactermanager.ui.tutorial.TutorialState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +46,7 @@ fun SettingsScreen(
         { modifier -> ImportExportCard(onImportExportClick, modifier) },
         { modifier -> HouseRulesCard(chronicles, onHouseRulesClick, modifier) },
         { modifier -> CrashLogsCard(onCrashLogsClick, modifier) },
+        { modifier -> ReviewTutorialCard(modifier) },
         { modifier -> InfoCard(modifier) }
     )
 
@@ -309,6 +311,20 @@ private fun CrashLogsCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.crash_logs))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewTutorialCard(modifier: Modifier = Modifier) {
+    Card(modifier = modifier) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            OutlinedButton(
+                onClick = { TutorialState.visible = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.settings_review_tutorial))
             }
         }
     }

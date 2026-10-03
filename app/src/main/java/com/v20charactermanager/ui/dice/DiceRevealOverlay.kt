@@ -1,5 +1,6 @@
 package com.v20charactermanager.ui.dice
 
+import android.content.res.Configuration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -8,6 +9,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,8 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.v20charactermanager.ui.liveroom.Dice3DCanvas
@@ -44,6 +48,7 @@ fun DiceRevealOverlay(
     onFinished: () -> Unit = {}
 ) {
     if (data.dice.isEmpty()) return
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val scrimIn = remember(data) { Animatable(0f) }
     val verdictIn = remember(data) { Animatable(0f) }
     val flash = remember(data) { Animatable(0f) }
@@ -86,27 +91,57 @@ fun DiceRevealOverlay(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(if (isLandscape) 16.dp else 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = data.playerName,
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.graphicsLayer { alpha = chromeAlpha }
-            )
-            if (data.label.isNotBlank()) {
+            if (isLandscape) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { alpha = chromeAlpha },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = data.playerName,
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (data.label.isNotBlank()) {
+                        Text(
+                            text = data.label,
+                            color = Color.White.copy(alpha = 0.65f),
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 12.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            } else {
                 Text(
-                    text = data.label,
-                    color = Color.White.copy(alpha = 0.65f),
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
+                    text = data.playerName,
+                    color = Color.White,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.graphicsLayer { alpha = chromeAlpha }
                 )
+                if (data.label.isNotBlank()) {
+                    Text(
+                        text = data.label,
+                        color = Color.White.copy(alpha = 0.65f),
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.graphicsLayer { alpha = chromeAlpha }
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            Spacer(modifier = Modifier.height(16.dp))
             Dice3DCanvas(
                 dice = data.dice,
                 difficulty = data.difficulty,
@@ -121,7 +156,7 @@ fun DiceRevealOverlay(
                     data.isCritical -> V20GoldBright
                     else -> Color.White
                 },
-                fontSize = 46.sp,
+                fontSize = if (isLandscape) 34.sp else 46.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.graphicsLayer {
@@ -131,7 +166,7 @@ fun DiceRevealOverlay(
                     scaleY = scale
                 }
             )
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(if (isLandscape) 12.dp else 48.dp))
         }
     }
 }
