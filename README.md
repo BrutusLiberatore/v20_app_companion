@@ -1,6 +1,14 @@
 # V20 Character Manager
 
+[![CI](https://github.com/BrutusLiberatore/v20_app_companion/actions/workflows/ci.yml/badge.svg)](https://github.com/BrutusLiberatore/v20_app_companion/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/BrutusLiberatore/v20_app_companion)](https://github.com/BrutusLiberatore/v20_app_companion/releases)
+[![Android](https://img.shields.io/badge/Android-26%2B-3DDC84)](https://www.android.com)
+[![Tests](https://img.shields.io/badge/tests-350-4C8BF5)](https://github.com/BrutusLiberatore/v20_app_companion/actions/workflows/ci.yml)
+[![i18n](https://img.shields.io/badge/i18n-EN%20%7C%20IT-A970FF)](#features)
+
 A native Android companion app for *Vampire: The Masquerade 20th Anniversary Edition*, for both players and the Storyteller. It manages characters, chronicles, and live tabletop sessions with an offline-first architecture: no account, no server, no data collection. The interface is fully bilingual (Italian and English).
+
+First launch shows a language picker and a 9-step interactive tutorial (replayable from Settings). Full backups are exported to a single `.v20backup` file and copied automatically to `Download/V20Companion` once a day.
 
 ---
 
