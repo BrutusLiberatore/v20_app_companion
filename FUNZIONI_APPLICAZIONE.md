@@ -6,7 +6,7 @@ App Android per gestire le partite di **Vampire: The Masquerade 20th Anniversary
 Può essere usata dal **Giocatore** (per il proprio personaggio) e dal **Narratore** (per gestire la cronaca e la tavola).
 Tutti i dati restano salvati sul telefono. L'interfaccia è disponibile in **italiano** e **inglese**, con possibilità di cambiare lingua dall'app.
 
-**Al primo avvio** l'app chiede di **scegliere la lingua** (English / Italiano) e mostra un **tutorial interattivo di 9 passi** con le funzioni principali; la stessa guida può essere riaperta in qualsiasi momento da Impostazioni («Rivedi il tutorial»).
+**Al primo avvio** l'app chiede di **scegliere la lingua** (English / Italiano) e mostra un **tutorial interattivo di 9 passi** con le funzioni principali; la stessa guida può essere riaperta in qualsiasi momento da Impostazioni («Rivedi il tutorial»). Al **primo ingresso del Narratore in una stanza** parte inoltre un **tutorial guidato del tavolo** (7 passi) che evidenzia i pulsanti reali della schermata, riprovabile da Impostazioni («Rivedi tutorial tavolo»).
 
 ---
 
@@ -165,7 +165,8 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Crea tavolo**: il Narratore apre la sala e condivide il suo indirizzo IP.
 - **Trova tavolo**: scansione automatica delle tavole attive sulla stessa WiFi (con avvio e arresto scansione).
 - **Connessione manuale**: inserimento dell'IP del Narratore e della porta.
-- **WiFi Direct (P2P)**: connessione diretta tra dispositivi **senza router** — il Narratore crea automaticamente il gruppo alla creazione del tavolo; da "Trova tavolo" i giocatori possono **cercare i dispositivi WiFi Direct** e unirsi con un tocco (serve il permesso di posizione/vicinanza). Alla creazione del tavolo l'app **chiede il permesso WiFi Direct**: se negato, il tavolo resta comunque aperto ma **solo sulla stessa rete (LAN)**.
+- **WiFi Direct (P2P)**: connessione diretta tra dispositivi **senza router** — il Narratore crea automaticamente il gruppo alla creazione del tavolo; da "Trova tavolo" i giocatori possono **cercare i dispositivi WiFi Direct** e unirsi con un tocco (serve il permesso di posizione/vicinanza). Alla creazione del tavolo l'app **chiede il permesso WiFi Direct**: se negato, il tavolo resta comunque aperto ma **solo sulla stessa rete (LAN)**. Se Wi-Fi o posizione sono spenti, o il permesso manca, la ricerca mostra **errori espliciti** con azioni dirette (es. "Apri impostazioni") e la **scansione viene ripetuta automaticamente** per ~18 secondi. Nella stanza il banner IP mostra lo **stato P2P**: "WiFi Direct attivo" (verde) oppure "solo sulla stessa rete" con il motivo (arancione) — se la creazione del gruppo fallisce il Narratore lo vede subito invece di restare all'oscuro.
+- **Tutorial guidato del tavolo**: al primo ingresso del Narratore in una stanza parte un tutorial a **7 passi** che evidenzia i **pulsanti reali** (banner IP/ WiFi Direct, giocatori e punti, presentare file, condivisione selettiva, combattimento, dadi, registro tiri e cronaca) con una scheda descrittiva accanto all'elemento; si salta con "Salta" o il tiro indietro e si rivede da Impostazioni («Rivedi tutorial tavolo»).
 - Avviso se il Narratore è su un emulatore (indirizzi 10.0.2.x non raggiungibili).
 
 **Al tavolo**
@@ -220,6 +221,7 @@ Strumento sonoro per l'atmosfera di partita:
 
 - **Lingua**: Inglese / Italiano, applicata subito senza riavvio.
 - **Rivedi il tutorial**: riapre la guida interattiva di 9 passi mostrata al primo avvio.
+- **Rivedi tutorial tavolo**: riapre il tutorial guidato a 7 passi del tavolo live (vedi sezione 12); fuori dalla stanza le pagine sono senza evidenziazione.
 - **Tema**: aspetto dell'interfaccia.
 - **Import/Export** dei personaggi.
 - **Regole della casa** delle cronache, per cronaca:

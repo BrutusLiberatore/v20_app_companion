@@ -33,6 +33,8 @@ data class LiveRoomState(
     val isFileFullscreen: Boolean = false,
     val isConnected: Boolean = false,
     val error: String? = null,
+    val p2pActive: Boolean? = null,
+    val p2pStatusReason: String? = null,
     val chronicleAssets: List<MediaAsset> = emptyList(),
     val connectionStatus: String = "",
     val characterPortraits: Map<String, String> = emptyMap(),

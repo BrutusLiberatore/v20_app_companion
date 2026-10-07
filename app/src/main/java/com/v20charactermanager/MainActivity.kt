@@ -27,6 +27,8 @@ import com.v20charactermanager.ui.navigation.V20NavGraph
 import com.v20charactermanager.ui.theme.V20Theme
 import com.v20charactermanager.ui.tutorial.LanguagePickerOverlay
 import com.v20charactermanager.ui.tutorial.LanguageState
+import com.v20charactermanager.ui.tutorial.TableTutorialOverlay
+import com.v20charactermanager.ui.tutorial.TableTutorialState
 import com.v20charactermanager.ui.tutorial.TutorialOverlay
 import com.v20charactermanager.ui.tutorial.TutorialPrefs
 import com.v20charactermanager.ui.tutorial.TutorialState
@@ -140,6 +142,9 @@ class MainActivity : AppCompatActivity() {
                 }
                 if (TutorialState.visible && !LanguageState.visible) {
                     TutorialOverlay()
+                }
+                if (TableTutorialState.visible && !LanguageState.visible && !TutorialState.visible) {
+                    TableTutorialOverlay()
                 }
             }
         }

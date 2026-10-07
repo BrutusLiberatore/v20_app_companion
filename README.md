@@ -17,6 +17,7 @@ First launch shows a language picker and a 9-step interactive tutorial (replayab
 ### Getting Started
 
 - First-launch language picker (English/Italian) followed by a 9-step interactive tutorial, replayable anytime from Settings
+- Guided spotlight tutorial (7 steps) that highlights the storyteller's real table controls on first room entry, replayable from Settings
 - Adaptive layouts for phones and tablets (2/3/4-column grids, compact top bar, landscape split view at the live table)
 
 ### Characters
@@ -84,13 +85,13 @@ Layered annotation over maps and images: pen, highlighter, line, arrow, circle, 
 
 - Equipment library import/export in structured JSON
 - Full backup export/restore in a single `.v20backup` archive (data + portraits/media/audio files) with a daily automatic copy to `Download/V20Companion`
-- Localisation: 1031 strings in Italian and English, switchable at runtime
+- Localisation: 1053 strings in Italian and English, switchable at runtime
 
 ---
 
 ## Installation
 
-Download `app-debug.apk` from the [Releases](https://github.com/BrutusLiberatore/v20_app_companion/releases) page, open it, and allow installation from unknown sources when prompted.
+Download `V20-Companion-App.apk` from the [Releases](https://github.com/BrutusLiberatore/v20_app_companion/releases) page, open it, and allow installation from unknown sources when prompted.
 
 The current build is signed with the debug key. It installs and updates normally from the same machine.
 
@@ -108,7 +109,7 @@ Prerequisites:
 gradlew assembleDebug
 ```
 
-The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
+The APK is written to `app/build/outputs/apk/debug/app-debug.apk` and published on GitHub Releases as `V20-Companion-App.apk`.
 
 ---
 

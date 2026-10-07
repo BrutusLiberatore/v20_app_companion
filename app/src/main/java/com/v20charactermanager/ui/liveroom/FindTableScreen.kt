@@ -57,6 +57,7 @@ fun FindTableScreen(
     var manualHost by remember { mutableStateOf("") }
     var manualPort by remember { mutableStateOf("39641") }
     var p2pRequested by remember { mutableStateOf(false) }
+    var p2pDenied by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val p2pPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -68,12 +69,16 @@ fun FindTableScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
+            p2pDenied = false
             p2pRequested = true
             onP2pScan()
+        } else {
+            p2pDenied = true
         }
     }
     fun requestP2pScan() {
         if (ContextCompat.checkSelfPermission(context, p2pPermission) == PackageManager.PERMISSION_GRANTED) {
+            p2pDenied = false
             p2pRequested = true
             onP2pScan()
         } else {
@@ -179,13 +184,29 @@ fun FindTableScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (p2pError != null) {
+                    val effectiveError = p2pError
+                        ?: if (p2pDenied) stringResource(R.string.live_p2p_permission_denied) else null
+                    if (effectiveError != null) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = p2pError,
+                            text = effectiveError,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
+                    }
+                    if (p2pDenied) {
+                        TextButton(
+                            onClick = {
+                                context.startActivity(
+                                    android.content.Intent(
+                                        android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                        android.net.Uri.fromParts("package", context.packageName, null)
+                                    )
+                                )
+                            }
+                        ) {
+                            Text(stringResource(R.string.live_p2p_open_settings))
+                        }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(

@@ -77,7 +77,12 @@ import com.v20charactermanager.ui.theme.V20SurfaceBlood
 import com.v20charactermanager.ui.theme.V20SurfaceBlood2
 import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.theme.V20SurfaceBlood3
+import com.v20charactermanager.ui.tutorial.TableTutorialAnchors
+import com.v20charactermanager.ui.tutorial.TableTutorialPrefs
+import com.v20charactermanager.ui.tutorial.TableTutorialState
+import com.v20charactermanager.ui.tutorial.tableTutorialAnchor
 import java.io.File
+import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -144,6 +149,23 @@ fun LiveRoomScreen(
 ) {
     var autoCreated by remember { mutableStateOf(false) }
     var showLeaveDialog by remember { mutableStateOf(false) }
+
+    val tableTutorialContext = LocalContext.current
+    var tableTutorialAsked by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState.isMaster, uiState.isConnected, tableTutorialAsked) {
+        if (uiState.isMaster && uiState.isConnected && uiState.room != null &&
+            !tableTutorialAsked && !TableTutorialPrefs.isDone(tableTutorialContext)
+        ) {
+            tableTutorialAsked = true
+            delay(900)
+            if (!uiState.isFileFullscreen) {
+                TableTutorialState.visible = true
+            }
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose { TableTutorialAnchors.clear() }
+    }
 
     LaunchedEffect(startAsMaster, chronicleName, autoCreated) {
         if (startAsMaster && chronicleName.isNotBlank() && !autoCreated && !uiState.isConnected) {
@@ -783,7 +805,9 @@ private fun VirtualTableView(
                             PanelRollFeed(
                                 uiState = uiState,
                                 onOpenLog = { showLogDialog = true },
-                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                                modifier = Modifier
+                                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                                    .tableTutorialAnchor(TableTutorialAnchors.FEED)
                             )
                         }
                     }
@@ -863,7 +887,8 @@ private fun VirtualTableView(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(4.dp)
-                        .widthIn(max = 240.dp),
+                        .widthIn(max = 240.dp)
+                        .tableTutorialAnchor(TableTutorialAnchors.FEED),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (uiState.isMaster || uiState.diceRolls.isNotEmpty()) {
@@ -1012,7 +1037,8 @@ private fun ShareIpBanner(
             Card(
                 modifier = modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .tableTutorialAnchor(TableTutorialAnchors.IP),
                 colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood2),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -1040,6 +1066,23 @@ private fun ShareIpBanner(
                             color = Gold,
                             fontWeight = FontWeight.Bold
                         )
+                        val p2pLine = when {
+                            uiState.p2pActive == true -> stringResource(R.string.live_p2p_room_active)
+                            uiState.p2pActive == false ->
+                                if (uiState.p2pStatusReason.isNullOrBlank()) {
+                                    stringResource(R.string.live_p2p_room_lan_only)
+                                } else {
+                                    "${stringResource(R.string.live_p2p_room_lan_only)} (${uiState.p2pStatusReason})"
+                                }
+                            else -> null
+                        }
+                        if (p2pLine != null) {
+                            Text(
+                                text = p2pLine,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (uiState.p2pActive == true) Color(0xFF81C784) else Color(0xFFFFB74D)
+                            )
+                        }
                     }
                     IconButton(
                         onClick = { showIpBanner = false },
@@ -1908,7 +1951,10 @@ private fun MasterBottomPanel(
     }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth().tableTutorialAnchor(TableTutorialAnchors.HEADER),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(Icons.Default.Star, contentDescription = null, tint = Gold, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -1924,7 +1970,10 @@ private fun MasterBottomPanel(
             )
             Spacer(modifier = Modifier.width(4.dp))
             Box {
-                IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
+                IconButton(
+                    onClick = { showMenu = true },
+                    modifier = Modifier.size(32.dp).tableTutorialAnchor(TableTutorialAnchors.MENU)
+                ) {
                     Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
@@ -1998,7 +2047,7 @@ private fun MasterBottomPanel(
         } else {
             Button(
                 onClick = { showFileSelector = true },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().tableTutorialAnchor(TableTutorialAnchors.PRESENT),
                 colors = ButtonDefaults.buttonColors(containerColor = Gold),
                 shape = RoundedCornerShape(12.dp)
             ) {

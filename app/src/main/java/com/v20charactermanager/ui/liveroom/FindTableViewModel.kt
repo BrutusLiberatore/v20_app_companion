@@ -2,6 +2,7 @@ package com.v20charactermanager.ui.liveroom
 
 import android.app.Application
 import android.net.wifi.p2p.WifiP2pDevice
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -15,6 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val TAG = "FindTableViewModel"
+
 class FindTableViewModel(
     private val application: Application
 ) : ViewModel() {
@@ -24,6 +27,8 @@ class FindTableViewModel(
 
     private val _uiState = MutableStateFlow(FindTableUiState())
     val uiState: StateFlow<FindTableUiState> = _uiState.asStateFlow()
+
+    private var p2pScanJob: kotlinx.coroutines.Job? = null
 
     init {
         wifiDirectManager.initialize(
@@ -37,7 +42,7 @@ class FindTableViewModel(
                 _uiState.update {
                     it.copy(
                         p2pPeers = p2p.peers,
-                        isP2pScanning = p2p.isDiscovering
+                        p2pError = p2p.error ?: it.p2pError
                     )
                 }
             }
@@ -61,8 +66,44 @@ class FindTableViewModel(
     fun startP2pScan() {
         wifiDirectManager.clearError()
         _uiState.update { it.copy(p2pError = null) }
-        wifiDirectManager.discoverPeers { peers ->
-            _uiState.update { it.copy(p2pPeers = peers) }
+
+        val wifi = application.getSystemService(android.content.Context.WIFI_SERVICE) as? android.net.wifi.WifiManager
+        if (wifi != null && !wifi.isWifiEnabled) {
+            _uiState.update { it.copy(p2pError = application.getString(R.string.live_p2p_wifi_off)) }
+            return
+        }
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU && !isLocationEnabled()) {
+            _uiState.update { it.copy(p2pError = application.getString(R.string.live_p2p_location_off)) }
+            return
+        }
+
+        p2pScanJob?.cancel()
+        _uiState.update { it.copy(p2pPeers = emptyList(), isP2pScanning = true) }
+        p2pScanJob = viewModelScope.launch {
+            try {
+                repeat(4) {
+                    if (_uiState.value.p2pPeers.isNotEmpty()) return@launch
+                    if (wifiDirectManager.state.value.error != null) return@launch
+                    wifiDirectManager.discoverPeers { peers ->
+                        _uiState.update { it.copy(p2pPeers = peers) }
+                    }
+                    delay(4_500)
+                }
+                Log.d(TAG, "P2P scan finished: ${_uiState.value.p2pPeers.size} peer(s)")
+            } finally {
+                _uiState.update { it.copy(isP2pScanning = false) }
+            }
+        }
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val lm = application.getSystemService(android.content.Context.LOCATION_SERVICE)
+            as? android.location.LocationManager ?: return true
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            lm.isLocationEnabled
+        } else {
+            lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
+                lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
         }
     }
 

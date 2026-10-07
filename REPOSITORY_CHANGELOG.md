@@ -1,10 +1,30 @@
 # V20 Character Manager — Cronologia Modifiche
 
-## Ultimo aggiornamento: 03/10/2026
+## Ultimo aggiornamento: 07/10/2026
 
 ---
 
-## Stato Build: ✅ SUCCESS (v45) — CI GitHub Actions verde (build + 350 test)
+## Stato Build: ✅ SUCCESS (v48) — CI GitHub Actions verde (build + 350 test, 1053 stringhe)
+
+---
+
+## Processo release — nome APK (post v47)
+
+- **Ogni APK caricato su GitHub Releases va rinominato in `V20-Companion-App.apk`** prima dell'upload (build → copia/rinomina → `gh release upload <tag> <path>\V20-Companion-App.apk`)
+- Asset e note della release `v1.10.2` già aggiornati con il nuovo nome; README allineato (sezione Installation e Building)
+
+---
+
+## Tutorial guidato del tavolo + fix WiFi Direct (v48)
+
+**Release**: `v1.10.3` (versionCode 11003)
+
+- **Tutorial spotlight a 7 passi per il Narratore** (`ui/tutorial/TableTutorial.kt`): al primo ingresso in una stanza evidenzia i **pulsanti reali** (banner IP/WiFi Direct, giocatori e punti, presentare file, condivisione selettiva, combattimento, dadi, registro tiri e cronaca) con scheda descrittiva accanto all'elemento forato; overlay a livello radice in MainActivity, completamento salvato in `v20_table_tutorial`, saltabile con "Salta"/tiro indietro, riprovabile da Impostazioni («Rivedi tutorial tavolo»); fuori dalla stanza le pagine compaiono centrate senza foratura
+- **Fix WiFi Direct — errori espliciti**: permesso negato → errore dedicato + pulsante "Apri impostazioni"; pre-check Wi-Fi e posizione (SDK < 33) prima della ricerca; lista vuota con checklist completa
+- **Fix WiFi Direct — scansione ripetuta**: 4 cicli da 4,5s (~18s totali) con stop automatico su trova/errore; errori del manager sincronizzati nella UI (prima restavano nel log)
+- **Stato P2P visibile nel master**: sotto l'IP, "WiFi Direct attivo" (verde) oppure "solo sulla stessa rete (motivo)" (arancione); fallback a LAN **non più silenzioso** — pre-check Wi-Fi e motivo del fallimento del gruppo mostrati al momento della creazione stanza
+- **APK**: rilasciato come `V20-Companion-App.apk`
+- **350 test, 1053 stringhe EN/IT**
 
 ---
 

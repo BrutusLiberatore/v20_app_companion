@@ -180,8 +180,8 @@ class LiveRoomViewModel(
                 val hostIp = discoveryManager.getLocalIpAddress()
                 Log.d(TAG, "Detected local IP: $hostIp")
 
-                wifiDirectManager.createGroup(
-                    onSuccess = {
+                fun startRoomLanOnly(reason: String?) {
+                    try {
                         val port = server!!.start()
                         val roomId = UUID.randomUUID().toString().take(8)
 
@@ -197,15 +197,28 @@ class LiveRoomViewModel(
                                 ),
                                 isMaster = true,
                                 isConnected = true,
-                                connectedPlayers = emptyList()
+                                connectedPlayers = emptyList(),
+                                error = null,
+                                p2pActive = false,
+                                p2pStatusReason = reason
                             )
                         }
                         discoveryManager.startBroadcasting(roomName, masterName, chronicleId, port)
-                        Log.d(TAG, "Room created: $roomName on $hostIp:$port")
-                    },
-                    onError = { error ->
-                        Log.w(TAG, "WiFi Direct group failed, trying direct: $error")
-                        try {
+                        Log.w(TAG, "Room created LAN-only (${reason ?: "unknown"}): $roomName on $hostIp:$port")
+                    } catch (e: Exception) {
+                        TableKeepAliveService.stop(application.applicationContext)
+                        _uiState.update { it.copy(error = application.getString(com.v20charactermanager.R.string.live_create_room_error, e.message ?: "")) }
+                    }
+                }
+
+                val wifiManager = application.getSystemService(android.content.Context.WIFI_SERVICE)
+                    as? android.net.wifi.WifiManager
+                if (wifiManager != null && !wifiManager.isWifiEnabled) {
+                    Log.w(TAG, "Wi-Fi disabled: room will be LAN-only")
+                    startRoomLanOnly(application.getString(com.v20charactermanager.R.string.live_p2p_wifi_off))
+                } else {
+                    wifiDirectManager.createGroup(
+                        onSuccess = {
                             val port = server!!.start()
                             val roomId = UUID.randomUUID().toString().take(8)
 
@@ -222,17 +235,19 @@ class LiveRoomViewModel(
                                     isMaster = true,
                                     isConnected = true,
                                     connectedPlayers = emptyList(),
-                                    error = null
+                                    p2pActive = true,
+                                    p2pStatusReason = null
                                 )
                             }
                             discoveryManager.startBroadcasting(roomName, masterName, chronicleId, port)
-                            Log.d(TAG, "Room created (direct): $roomName on $hostIp:$port")
-                        } catch (e: Exception) {
-                            TableKeepAliveService.stop(application.applicationContext)
-                            _uiState.update { it.copy(error = application.getString(com.v20charactermanager.R.string.live_create_room_error, e.message ?: "")) }
+                            Log.d(TAG, "Room created (WiFi Direct): $roomName on $hostIp:$port")
+                        },
+                        onError = { error ->
+                            Log.w(TAG, "WiFi Direct group failed, falling back to LAN: $error")
+                            startRoomLanOnly(error)
                         }
-                    }
-                )
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
                 Log.e(TAG, "Failed to create room", e)
