@@ -28,6 +28,7 @@ import com.v20charactermanager.ui.dice.DiceRevealModePicker
 import com.v20charactermanager.ui.dice.DiceRevealPrefs
 import com.v20charactermanager.ui.tutorial.TableTutorialState
 import com.v20charactermanager.ui.tutorial.TutorialState
+import com.v20charactermanager.ui.tutorial.ChronicleTutorialState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +50,7 @@ fun SettingsScreen(
         { modifier -> CrashLogsCard(onCrashLogsClick, modifier) },
         { modifier -> ReviewTutorialCard(modifier) },
         { modifier -> ReviewTableTutorialCard(modifier) },
+        { modifier -> ReviewChronicleTutorialCard(modifier) },
         { modifier -> InfoCard(modifier) }
     )
 
@@ -323,7 +325,7 @@ private fun ReviewTutorialCard(modifier: Modifier = Modifier) {
     Card(modifier = modifier) {
         Column(modifier = Modifier.padding(16.dp)) {
             OutlinedButton(
-                onClick = { TutorialState.visible = true },
+                onClick = { TutorialState.open() },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.settings_review_tutorial))
@@ -337,10 +339,24 @@ private fun ReviewTableTutorialCard(modifier: Modifier = Modifier) {
     Card(modifier = modifier) {
         Column(modifier = Modifier.padding(16.dp)) {
             OutlinedButton(
-                onClick = { TableTutorialState.visible = true },
+                onClick = { TableTutorialState.open() },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.settings_review_table_tutorial))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewChronicleTutorialCard(modifier: Modifier = Modifier) {
+    Card(modifier = modifier) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            OutlinedButton(
+                onClick = { ChronicleTutorialState.open() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.settings_review_chronicle_tutorial))
             }
         }
     }

@@ -1,17 +1,31 @@
 # V20 Character Manager — Cronologia Modifiche
 
-## Ultimo aggiornamento: 07/10/2026
+## Ultimo aggiornamento: 13/10/2026
 
 ---
 
-## Stato Build: ✅ SUCCESS (v48) — CI GitHub Actions verde (build + 350 test, 1053 stringhe)
+## Stato Build: ✅ SUCCESS (v49) — CI GitHub Actions verde (build + 350 test, 1070 stringhe)
 
 ---
 
 ## Processo release — nome APK (post v47)
 
 - **Ogni APK caricato su GitHub Releases va rinominato in `V20-Companion-App.apk`** prima dell'upload (build → copia/rinomina → `gh release upload <tag> <path>\V20-Companion-App.apk`)
+- **Titoli e note delle release si scrivono in inglese** (pubblico internazionale); tutte le release esistenti (v1.0, v1.10.2, v1.10.3) già tradotte e asset rinominati
 - Asset e note della release `v1.10.2` già aggiornati con il nuovo nome; README allineato (sezione Installation e Building)
+
+---
+
+## Tutorial a spotlight bloccante ×3 — tavolo, onboarding, cronaca (v49)
+
+- **Componente condiviso** (`ui/tutorial/Spotlight.kt`): overlay **bloccante** (scrim nero 78% che assorbe tutti i tocchi) con **foratura dorata pulsante** sull'elemento reale, scheda posizionata sotto/sopra la foratura (fallback centrato), dots di progresso, "Salta" e "Avanti"/bottone finale; registry condiviso `SpotlightAnchors` + `Modifier.spotlightAnchor(key)`, ancore cancellate alla chiusura della schermata
+- **Tutorial tavolo** (`TableTutorial.kt`, 7 passi): rimosso il modello "azioni reali obbligatorie" (11 chiamate `event()` eliminati da LiveRoomScreen) → **tour bloccante con avanzamento "Avanti"**; testi descrittivi brevi
+- **Onboarding converted da slide a spotlight** (`TutorialOverlay.kt`, 8 passi): il pager a 9 pagine è stato sostituito da uno spotlight sulle voci reali della Home (elenco personaggi, FAB +, dadi, cronache, combattimento, tavolo, impostazioni) con ancore in `HomeScreen.kt`; ultima pagina eliminata (fusa), `TutorialState` ora ha `stepIndex`/`open()`
+- **Nuovo tutorial della Cronaca** (`ChronicleTutorial.kt`, 9 passi): al primo apertura di una cronaca (prefs `v20_chronicle_tutorial`); ancore sui 6 tab (`AdaptiveNavigation.kt`), icona ricerca (top bar) e badge LIVE nel welcome; overlay a livello radice in MainActivity
+- **Impostazioni**: nuova card «Rivedi tutorial cronaca»; «Rivedi il tutorial» ora usa `TutorialState.open()` (reset passo)
+- **Fix**: il trigger del tutorial tavolo si auto-annullava (`tableTutorialAsked` era chiave del `LaunchedEffect` e veniva impostata dentro il blocco → cancel durante `delay(900)`) → rimosso dalle chiavi; il tutorial non è mai partito in automatico dalla v48
+- **Stringhe**: 1070/1070 EN/IT (rimossi `tt_master_step_hint` e `tutorial_sheet_*`, aggiunte 18 `ct_*` + `settings_review_chronicle_tutorial`)
+- **Docs**: FUNZIONI_APPLICAZIONE intro/§8/§12/§15 aggiornate
 
 ---
 

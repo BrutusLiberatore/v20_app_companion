@@ -8,7 +8,7 @@
 
 A native Android companion app for *Vampire: The Masquerade 20th Anniversary Edition*, for both players and the Storyteller. It manages characters, chronicles, and live tabletop sessions with an offline-first architecture: no account, no server, no data collection. The interface is fully bilingual (Italian and English).
 
-First launch shows a language picker and a 9-step interactive tutorial (replayable from Settings). Full backups are exported to a single `.v20backup` file and copied automatically to `Download/V20Companion` once a day.
+First launch shows a language picker and an 8-step spotlight tutorial (replayable from Settings). Full backups are exported to a single `.v20backup` file and copied automatically to `Download/V20Companion` once a day.
 
 ---
 
@@ -16,8 +16,9 @@ First launch shows a language picker and a 9-step interactive tutorial (replayab
 
 ### Getting Started
 
-- First-launch language picker (English/Italian) followed by a 9-step interactive tutorial, replayable anytime from Settings
+- First-launch language picker (English/Italian) followed by an 8-step spotlight tour of the home screen, replayable anytime from Settings
 - Guided spotlight tutorial (7 steps) that highlights the storyteller's real table controls on first room entry, replayable from Settings
+- Chronicle spotlight tutorial (9 steps) covering the six sections, search and LIVE badge on first chronicle open, replayable from Settings
 - Adaptive layouts for phones and tablets (2/3/4-column grids, compact top bar, landscape split view at the live table)
 
 ### Characters
@@ -85,7 +86,7 @@ Layered annotation over maps and images: pen, highlighter, line, arrow, circle, 
 
 - Equipment library import/export in structured JSON
 - Full backup export/restore in a single `.v20backup` archive (data + portraits/media/audio files) with a daily automatic copy to `Download/V20Companion`
-- Localisation: 1053 strings in Italian and English, switchable at runtime
+- Localisation: 1070 strings in Italian and English, switchable at runtime
 
 ---
 

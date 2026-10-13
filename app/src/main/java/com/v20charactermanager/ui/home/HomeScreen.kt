@@ -34,6 +34,8 @@ import com.v20charactermanager.ui.components.CharacterAvatar
 import com.v20charactermanager.ui.components.V20GothicFab
 import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.components.rememberAdaptiveLayout
+import com.v20charactermanager.ui.tutorial.SpotlightAnchors
+import com.v20charactermanager.ui.tutorial.spotlightAnchor
 import com.v20charactermanager.util.LocaleHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +56,10 @@ fun HomeScreen(
 ) {
     val wideLayout = rememberAdaptiveLayout() != AdaptiveLayoutType.COMPACT
 
+    DisposableEffect(Unit) {
+        onDispose { SpotlightAnchors.clear() }
+    }
+
     Scaffold(
         topBar = {
             V20TopBar(
@@ -69,7 +75,8 @@ fun HomeScreen(
             V20GothicFab(
                 icon = Icons.Default.Add,
                 contentDescription = stringResource(R.string.home_create_character),
-                onClick = onCreateClick
+                onClick = onCreateClick,
+                modifier = Modifier.spotlightAnchor("home_create")
             )
         },
         bottomBar = {
@@ -94,7 +101,8 @@ fun HomeScreen(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .spotlightAnchor("home_chars"),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -119,7 +127,8 @@ fun HomeScreen(
                     columns = GridCells.Fixed(if (wideLayout) 2 else 1),
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .spotlightAnchor("home_chars"),
                     contentPadding = PaddingValues(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -185,12 +194,14 @@ fun HomeToolsBar(
                 NavigationButton(
                     icon = Icons.Default.DateRange,
                     label = stringResource(R.string.home_dice),
-                    onClick = onDiceClick
+                    onClick = onDiceClick,
+                    modifier = Modifier.spotlightAnchor("home_dice")
                 )
                 NavigationButton(
                     icon = Icons.Default.Favorite,
                     label = stringResource(R.string.home_chronicles),
-                    onClick = onChronicleClick
+                    onClick = onChronicleClick,
+                    modifier = Modifier.spotlightAnchor("home_chronicles")
                 )
             }
             Row(
@@ -200,12 +211,14 @@ fun HomeToolsBar(
                 NavigationButton(
                     icon = Icons.Default.Shield,
                     label = stringResource(R.string.combat_title),
-                    onClick = onCombatClick
+                    onClick = onCombatClick,
+                    modifier = Modifier.spotlightAnchor("home_combat")
                 )
                 NavigationButton(
                     icon = Icons.Default.Settings,
                     label = stringResource(R.string.home_settings),
-                    onClick = onSettingsClick
+                    onClick = onSettingsClick,
+                    modifier = Modifier.spotlightAnchor("home_settings")
                 )
                 NavigationButton(
                     icon = Icons.Default.Refresh,
@@ -245,11 +258,11 @@ private fun HomeToolsPanel(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             ToolsPanelRow(Icons.Default.List, stringResource(R.string.home_compendium), onCompendiumClick)
-            ToolsPanelRow(Icons.Default.DateRange, stringResource(R.string.home_dice), onDiceClick)
-            ToolsPanelRow(Icons.Default.Favorite, stringResource(R.string.home_chronicles), onChronicleClick)
-            ToolsPanelRow(Icons.Default.TableRestaurant, stringResource(R.string.live_room), onFindTable)
-            ToolsPanelRow(Icons.Default.Shield, stringResource(R.string.combat_title), onCombatClick)
-            ToolsPanelRow(Icons.Default.Settings, stringResource(R.string.home_settings), onSettingsClick)
+            ToolsPanelRow(Icons.Default.DateRange, stringResource(R.string.home_dice), onDiceClick, Modifier.spotlightAnchor("home_dice"))
+            ToolsPanelRow(Icons.Default.Favorite, stringResource(R.string.home_chronicles), onChronicleClick, Modifier.spotlightAnchor("home_chronicles"))
+            ToolsPanelRow(Icons.Default.TableRestaurant, stringResource(R.string.live_room), onFindTable, Modifier.spotlightAnchor("home_table"))
+            ToolsPanelRow(Icons.Default.Shield, stringResource(R.string.combat_title), onCombatClick, Modifier.spotlightAnchor("home_combat"))
+            ToolsPanelRow(Icons.Default.Settings, stringResource(R.string.home_settings), onSettingsClick, Modifier.spotlightAnchor("home_settings"))
             ToolsPanelRow(Icons.Default.Refresh, stringResource(R.string.home_quick_random), onRandomCharacterClick)
         }
     }
@@ -259,10 +272,11 @@ private fun HomeToolsPanel(
 private fun ToolsPanelRow(
     icon: ImageVector,
     label: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 6.dp),
@@ -287,11 +301,12 @@ private fun ToolsPanelRow(
 fun NavigationButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
+        modifier = modifier.clickable(onClick = onClick)
     ) {
         IconButton(onClick = onClick) {
             Icon(

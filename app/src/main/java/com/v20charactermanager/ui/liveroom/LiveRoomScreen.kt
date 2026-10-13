@@ -77,10 +77,10 @@ import com.v20charactermanager.ui.theme.V20SurfaceBlood
 import com.v20charactermanager.ui.theme.V20SurfaceBlood2
 import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.theme.V20SurfaceBlood3
-import com.v20charactermanager.ui.tutorial.TableTutorialAnchors
+import com.v20charactermanager.ui.tutorial.SpotlightAnchors
 import com.v20charactermanager.ui.tutorial.TableTutorialPrefs
 import com.v20charactermanager.ui.tutorial.TableTutorialState
-import com.v20charactermanager.ui.tutorial.tableTutorialAnchor
+import com.v20charactermanager.ui.tutorial.spotlightAnchor
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlin.math.cos
@@ -152,19 +152,19 @@ fun LiveRoomScreen(
 
     val tableTutorialContext = LocalContext.current
     var tableTutorialAsked by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.isMaster, uiState.isConnected, tableTutorialAsked) {
+    LaunchedEffect(uiState.isMaster, uiState.isConnected) {
         if (uiState.isMaster && uiState.isConnected && uiState.room != null &&
             !tableTutorialAsked && !TableTutorialPrefs.isDone(tableTutorialContext)
         ) {
             tableTutorialAsked = true
             delay(900)
             if (!uiState.isFileFullscreen) {
-                TableTutorialState.visible = true
+                TableTutorialState.open()
             }
         }
     }
     DisposableEffect(Unit) {
-        onDispose { TableTutorialAnchors.clear() }
+        onDispose { SpotlightAnchors.clear() }
     }
 
     LaunchedEffect(startAsMaster, chronicleName, autoCreated) {
@@ -611,7 +611,9 @@ private fun VirtualTableView(
 
     if (showRollDialog) {
         DiceRollDialog(
-            onDismiss = { showRollDialog = false },
+            onDismiss = {
+                showRollDialog = false
+            },
             showPrivateOption = uiState.isMaster,
             players = uiState.connectedPlayers,
             onRoll = { spec ->
@@ -643,7 +645,9 @@ private fun VirtualTableView(
 
     if (showCombatDialog) {
         AlertDialog(
-            onDismissRequest = { showCombatDialog = false },
+            onDismissRequest = {
+                showCombatDialog = false
+            },
             title = {
                 Text(
                     text = stringResource(R.string.combat_title),
@@ -670,7 +674,9 @@ private fun VirtualTableView(
                 )
             },
             confirmButton = {
-                TextButton(onClick = { showCombatDialog = false }) {
+                TextButton(onClick = {
+                    showCombatDialog = false
+                }) {
                     Text(stringResource(R.string.action_close))
                 }
             }
@@ -708,14 +714,18 @@ private fun VirtualTableView(
             players = uiState.connectedPlayers,
             sharedCharacters = sharedCharacters,
             onStatusEdit = onMasterStatusEdit,
-            onDismiss = { showPlayersDialog = false }
+            onDismiss = {
+                showPlayersDialog = false
+            }
         )
     }
 
     if (showLogDialog) {
         RollLogDialog(
             log = uiState.rollLog,
-            onDismiss = { showLogDialog = false }
+            onDismiss = {
+                showLogDialog = false
+            }
         )
     }
 
@@ -807,7 +817,7 @@ private fun VirtualTableView(
                                 onOpenLog = { showLogDialog = true },
                                 modifier = Modifier
                                     .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                                    .tableTutorialAnchor(TableTutorialAnchors.FEED)
+                                    .spotlightAnchor("tt_feed")
                             )
                         }
                     }
@@ -888,7 +898,7 @@ private fun VirtualTableView(
                         .align(Alignment.TopStart)
                         .padding(4.dp)
                         .widthIn(max = 240.dp)
-                        .tableTutorialAnchor(TableTutorialAnchors.FEED),
+                        .spotlightAnchor("tt_feed"),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (uiState.isMaster || uiState.diceRolls.isNotEmpty()) {
@@ -1038,7 +1048,7 @@ private fun ShareIpBanner(
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .tableTutorialAnchor(TableTutorialAnchors.IP),
+                    .spotlightAnchor("tt_ip"),
                 colors = CardDefaults.cardColors(containerColor = V20SurfaceBlood2),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -1952,7 +1962,7 @@ private fun MasterBottomPanel(
 
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
-            modifier = Modifier.fillMaxWidth().tableTutorialAnchor(TableTutorialAnchors.HEADER),
+            modifier = Modifier.fillMaxWidth().spotlightAnchor("tt_header"),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Default.Star, contentDescription = null, tint = Gold, modifier = Modifier.size(20.dp))
@@ -1972,7 +1982,7 @@ private fun MasterBottomPanel(
             Box {
                 IconButton(
                     onClick = { showMenu = true },
-                    modifier = Modifier.size(32.dp).tableTutorialAnchor(TableTutorialAnchors.MENU)
+                    modifier = Modifier.size(32.dp).spotlightAnchor("tt_menu")
                 ) {
                     Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
                 }
@@ -2047,7 +2057,7 @@ private fun MasterBottomPanel(
         } else {
             Button(
                 onClick = { showFileSelector = true },
-                modifier = Modifier.fillMaxWidth().tableTutorialAnchor(TableTutorialAnchors.PRESENT),
+                modifier = Modifier.fillMaxWidth().spotlightAnchor("tt_present"),
                 colors = ButtonDefaults.buttonColors(containerColor = Gold),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -2070,7 +2080,9 @@ private fun MasterBottomPanel(
                 showFileSelector = false
                 onShareAsset(asset.id, asset.title, assetMimeOf(asset), targets)
             },
-            onDismiss = { showFileSelector = false }
+            onDismiss = {
+                showFileSelector = false
+            }
         )
     }
 

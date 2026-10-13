@@ -17,6 +17,11 @@ import com.v20charactermanager.ui.components.AdaptiveLayoutType
 import com.v20charactermanager.ui.components.rememberAdaptiveLayout
 import com.v20charactermanager.ui.components.V20TopBar
 import com.v20charactermanager.ui.theme.V20Ink
+import com.v20charactermanager.ui.tutorial.ChronicleTutorialPrefs
+import com.v20charactermanager.ui.tutorial.ChronicleTutorialState
+import com.v20charactermanager.ui.tutorial.SpotlightAnchors
+import com.v20charactermanager.ui.tutorial.spotlightAnchor
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,6 +105,22 @@ fun ChronicleStorytellerScreen(
             selectedNavItem = it
             onTabRequestConsumed()
         }
+    }
+
+    val chronicleTutorialContext = androidx.compose.ui.platform.LocalContext.current
+    var chronicleTutorialAsked by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (!chronicleTutorialAsked && !ChronicleTutorialPrefs.isDone(chronicleTutorialContext)) {
+            chronicleTutorialAsked = true
+            delay(700)
+            if (!ChronicleTutorialState.visible) {
+                ChronicleTutorialState.open()
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { SpotlightAnchors.clear() }
     }
 
     val chronicle = uiState.chronicle
@@ -513,7 +534,7 @@ private fun CompactStorytellerLayout(
                             )
                         }
                     )
-                    IconButton(onClick = onSearchClick) {
+                    IconButton(onClick = onSearchClick, modifier = Modifier.spotlightAnchor("chron_search")) {
                         Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.action_search))
                     }
                 }

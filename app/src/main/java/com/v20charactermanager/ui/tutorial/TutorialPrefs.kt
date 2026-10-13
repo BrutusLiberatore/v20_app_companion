@@ -35,4 +35,10 @@ object TutorialPrefs {
 
 object TutorialState {
     var visible by mutableStateOf(false)
+    var stepIndex by mutableStateOf(0)
+
+    fun open() {
+        stepIndex = 0
+        visible = true
+    }
 }

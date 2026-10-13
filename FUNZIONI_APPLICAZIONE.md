@@ -6,7 +6,7 @@ App Android per gestire le partite di **Vampire: The Masquerade 20th Anniversary
 Può essere usata dal **Giocatore** (per il proprio personaggio) e dal **Narratore** (per gestire la cronaca e la tavola).
 Tutti i dati restano salvati sul telefono. L'interfaccia è disponibile in **italiano** e **inglese**, con possibilità di cambiare lingua dall'app.
 
-**Al primo avvio** l'app chiede di **scegliere la lingua** (English / Italiano) e mostra un **tutorial interattivo di 9 passi** con le funzioni principali; la stessa guida può essere riaperta in qualsiasi momento da Impostazioni («Rivedi il tutorial»). Al **primo ingresso del Narratore in una stanza** parte inoltre un **tutorial guidato del tavolo** (7 passi) che evidenzia i pulsanti reali della schermata, riprovabile da Impostazioni («Rivedi tutorial tavolo»).
+**Al primo avvio** l'app chiede di **scegliere la lingua** (English / Italiano) e mostra un **tutorial spotlight di 8 passi** che evidenzia le voci reali della Home (personaggi, creazione, dadi, cronache, combattimento, tavolo, impostazioni); l'overlay è **bloccante**: si avanza con "Avanti" e si salta con "Salta" o il tiro indietro. Al **primo ingresso nella Cronaca** parte invece il **tutorial della cronaca** (9 passi) sulle sei sezioni, ricerca e badge LIVE. Al **primo ingresso del Narratore in una stanza** parte il **tutorial del tavolo** (7 passi) sui pulsanti reali della stanza. Tutti e tre usano lo stesso overlay spotlight bloccante con foratura dorata pulsante e sono riapribili da Impostazioni («Rivedi il tutorial», «Rivedi tutorial tavolo», «Rivedi tutorial cronaca»).
 
 ---
 
@@ -109,6 +109,8 @@ Elenco delle cronache (le avventure del gruppo). Ogni cronaca ha:
 
 Le sessioni hanno tre stati: **pianificata**, **attiva**, **completata**.
 
+- **Tutorial della cronaca**: al primo apertura di una cronaca parte un tutorial spotlight a **9 passi** (welcome, Sessione, Persone, Trame, Visual, Audio, Altro, Ricerca, finale) con overlay bloccante e foratura dorata pulsante sulle voci reali; saltabile con "Salta"/tiro indietro e riapribile da Impostazioni («Rivedi tutorial cronaca»).
+
 ## 9. Riepilogo di sessione
 
 Per ogni sessione completata si può aprire il riepilogo:
@@ -166,7 +168,7 @@ Permette a Giocatori e Narratore di giocare insieme sulla **stessa rete WiFi**:
 - **Trova tavolo**: scansione automatica delle tavole attive sulla stessa WiFi (con avvio e arresto scansione).
 - **Connessione manuale**: inserimento dell'IP del Narratore e della porta.
 - **WiFi Direct (P2P)**: connessione diretta tra dispositivi **senza router** — il Narratore crea automaticamente il gruppo alla creazione del tavolo; da "Trova tavolo" i giocatori possono **cercare i dispositivi WiFi Direct** e unirsi con un tocco (serve il permesso di posizione/vicinanza). Alla creazione del tavolo l'app **chiede il permesso WiFi Direct**: se negato, il tavolo resta comunque aperto ma **solo sulla stessa rete (LAN)**. Se Wi-Fi o posizione sono spenti, o il permesso manca, la ricerca mostra **errori espliciti** con azioni dirette (es. "Apri impostazioni") e la **scansione viene ripetuta automaticamente** per ~18 secondi. Nella stanza il banner IP mostra lo **stato P2P**: "WiFi Direct attivo" (verde) oppure "solo sulla stessa rete" con il motivo (arancione) — se la creazione del gruppo fallisce il Narratore lo vede subito invece di restare all'oscuro.
-- **Tutorial guidato del tavolo**: al primo ingresso del Narratore in una stanza parte un tutorial a **7 passi** che evidenzia i **pulsanti reali** (banner IP/ WiFi Direct, giocatori e punti, presentare file, condivisione selettiva, combattimento, dadi, registro tiri e cronaca) con una scheda descrittiva accanto all'elemento; si salta con "Salta" o il tiro indietro e si rivede da Impostazioni («Rivedi tutorial tavolo»).
+- **Tutorial guidato del tavolo**: al primo ingresso del Narratore in una stanza parte un tutorial spotlight a **7 passi** che evidenzia gli elementi reali (banner IP/WiFi Direct, giocatori, presentare file, combattimento, dadi, registro tiri e cronaca) con scheda accanto alla foratura dorata pulsante. L'overlay è **bloccante**: l'interfaccia sotto non è toccabile e si avanza solo con "Avanti" (o "Salta"/tiro indietro per uscire); si rivede da Impostazioni («Rivedi tutorial tavolo»).
 - Avviso se il Narratore è su un emulatore (indirizzi 10.0.2.x non raggiungibili).
 
 **Al tavolo**
@@ -220,8 +222,9 @@ Strumento sonoro per l'atmosfera di partita:
 ## 15. Impostazioni
 
 - **Lingua**: Inglese / Italiano, applicata subito senza riavvio.
-- **Rivedi il tutorial**: riapre la guida interattiva di 9 passi mostrata al primo avvio.
-- **Rivedi tutorial tavolo**: riapre il tutorial guidato a 7 passi del tavolo live (vedi sezione 12); fuori dalla stanza le pagine sono senza evidenziazione.
+- **Rivedi il tutorial**: riapre il tutorial spotlight di 8 passi della Home mostrato al primo avvio; fuori dalla Home le pagine compaiono centrate senza foratura.
+- **Rivedi tutorial tavolo**: riapre il tutorial spotlight a 7 passi del tavolo live (vedi sezione 12); fuori dalla stanza le pagine compaiono centrate senza foratura.
+- **Rivedi tutorial cronaca**: riapre il tutorial spotlight a 9 passi della cronaca (sei sezioni, ricerca, badge LIVE); fuori dalla cronaca le pagine compaiono centrate senza foratura.
 - **Tema**: aspetto dell'interfaccia.
 - **Import/Export** dei personaggi.
 - **Regole della casa** delle cronache, per cronaca:

@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.v20charactermanager.ui.chronicle.ChronicleBottomNavItem
+import com.v20charactermanager.ui.tutorial.spotlightAnchor
 
 @Composable
 fun AdaptiveChronicleNavigation(
@@ -24,6 +25,7 @@ fun AdaptiveChronicleNavigation(
             NavigationBar(modifier = modifier) {
                 ChronicleBottomNavItem.entries.forEach { item ->
                     NavigationBarItem(
+                        modifier = Modifier.spotlightAnchor("chron_${item.route}"),
                         icon = {
                             Icon(imageVector = item.icon, contentDescription = null)
                         },
@@ -41,6 +43,7 @@ fun AdaptiveChronicleNavigation(
             NavigationRail(modifier = modifier) {
                 ChronicleBottomNavItem.entries.forEach { item ->
                     NavigationRailItem(
+                        modifier = Modifier.spotlightAnchor("chron_${item.route}"),
                         icon = {
                             Icon(imageVector = item.icon, contentDescription = null)
                         },
