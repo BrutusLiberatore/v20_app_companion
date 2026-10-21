@@ -15,8 +15,8 @@ android {
         applicationId = "com.v20charactermanager"
         minSdk = 26
         targetSdk = 34
-        versionCode = 11004
-        versionName = "1.10.4"
+        versionCode = 11005
+        versionName = "1.10.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
