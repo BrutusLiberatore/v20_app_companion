@@ -2,14 +2,22 @@
 
 package com.v20charactermanager.ui.creation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
@@ -385,8 +393,10 @@ fun IdentityStep(
 @Composable
 fun AttributesStep(
     attributes: List<com.v20charactermanager.domain.model.AttributeValue>,
-    onAttributeChange: (AttributeId, Int) -> Unit
+    onAttributeChange: (AttributeId, Int) -> Unit,
+    clan: ClanId = ClanId.GANGREL
 ) {
+    val isNosferatu = clan == ClanId.NOSFERATU
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -395,6 +405,22 @@ fun AttributesStep(
             text = stringResource(R.string.attributes_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
+        )
+
+        val attributePoints = CreationDotRules.attributePointsSpent(attributes, isNosferatu)
+        val attributePointsTotal = RuleSet.ATTRIBUTE_PRIMARY + RuleSet.ATTRIBUTE_SECONDARY + RuleSet.ATTRIBUTE_TERTIARY
+        Text(
+            text = stringResource(
+                R.string.creation_attribute_points_used,
+                attributePoints,
+                attributePointsTotal
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (attributePoints == attributePointsTotal) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.error
+            }
         )
 
         // Attribute distribution presets
@@ -458,11 +484,23 @@ fun AttributesStep(
 
             AttributeId.byCategory(category).forEach { attributeId ->
                 val currentValue = attributes.find { it.id == attributeId }?.value ?: 1
+                val isLockedAppearance = isNosferatu &&
+                    attributeId == AttributeId.APPEARANCE &&
+                    currentValue == 0
                 AttributeRow(
                     name = attributeId.nameEn,
                     value = currentValue,
+                    minValue = if (attributeId == AttributeId.APPEARANCE) 0 else 1,
+                    canIncrease = !isLockedAppearance,
                     onValueChange = { onAttributeChange(attributeId, it) }
                 )
+                if (isLockedAppearance) {
+                    Text(
+                        text = stringResource(R.string.creation_appearance_locked),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -472,34 +510,95 @@ fun AttributesStep(
 fun AttributeRow(
     name: String,
     value: Int,
-    onValueChange: (Int) -> Unit
+    onValueChange: (Int) -> Unit,
+    minValue: Int = CreationDotRules.ATTRIBUTE_MIN_VALUE,
+    canIncrease: Boolean = true
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = name,
             style = MaterialTheme.typography.bodyLarge
         )
 
-        Row {
-            (1..5).forEach { dot ->
-                RadioButton(
-                    selected = dot <= value,
-                    onClick = {
-                        if (dot == value) {
-                            if (value > 1) onValueChange(value - 1)
-                        } else if (value > 0) {
-                            onValueChange(dot)
+        CreationDotRow(
+            label = name,
+            value = value,
+            max = CreationDotRules.ATTRIBUTE_MAX_DOTS,
+            minValue = minValue,
+            enabled = canIncrease || value > minValue,
+            onValueChange = onValueChange
+        )
+    }
+}
+
+@Composable
+private fun CreationDotRow(
+    label: String,
+    value: Int,
+    max: Int,
+    minValue: Int,
+    enabled: Boolean = true,
+    onValueChange: (Int) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        for (dot in 1..max) {
+            val filled = dot <= value
+            val stateLabel = stringResource(
+                if (filled) R.string.creation_dot_filled else R.string.creation_dot_empty
+            )
+            val description = stringResource(
+                R.string.creation_dot_description,
+                dot,
+                max,
+                label,
+                stateLabel
+            )
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (filled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
                         }
-                    },
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+                    )
+                    .then(
+                        if (filled) {
+                            Modifier
+                        } else {
+                            Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                        }
+                    )
+                    .then(
+                        if (enabled) {
+                            Modifier.clickable {
+                                onValueChange(CreationDotRules.nextValue(value, dot, minValue))
+                            }
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .semantics {
+                        contentDescription = description
+                    }
+            )
         }
+        Text(
+            text = "$value",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -516,6 +615,22 @@ fun AbilitiesStep(
             text = stringResource(R.string.abilities_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
+        )
+
+        val abilityPoints = CreationDotRules.abilityPointsSpent(abilities)
+        val abilityPointsTotal = RuleSet.ABILITY_PRIMARY + RuleSet.ABILITY_SECONDARY + RuleSet.ABILITY_TERTIARY
+        Text(
+            text = stringResource(
+                R.string.creation_ability_points_used,
+                abilityPoints,
+                abilityPointsTotal
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (abilityPoints == abilityPointsTotal) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.error
+            }
         )
 
         // Ability distribution presets (13/9/5)
@@ -620,28 +735,21 @@ fun AbilityRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = name,
             style = MaterialTheme.typography.bodyLarge
         )
 
-        Row {
-            (0..5).forEach { dot ->
-                RadioButton(
-                    selected = dot <= value && value > 0,
-                    onClick = {
-                        if (dot == value) {
-                            if (value > 0) onValueChange(value - 1)
-                        } else {
-                            onValueChange(dot)
-                        }
-                    },
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
+        CreationDotRow(
+            label = name,
+            value = value,
+            max = CreationDotRules.ABILITY_MAX_DOTS,
+            minValue = CreationDotRules.ABILITY_MIN_VALUE,
+            onValueChange = onValueChange
+        )
     }
 }
 
@@ -710,23 +818,18 @@ fun AdvantagesStep(
         character.disciplines.forEach { disc ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = disc.id.nameEn)
-                Row {
-                    (1..5).forEach { dot ->
-                        RadioButton(
-                            selected = dot <= disc.value,
-                            onClick = {
-                                if (dot == disc.value) {
-                                    if (disc.value > 1) onDisciplineUpdate(disc.id, disc.value - 1)
-                                } else {
-                                    onDisciplineUpdate(disc.id, dot)
-                                }
-                            },
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CreationDotRow(
+                        label = disc.id.nameEn,
+                        value = disc.value,
+                        max = CreationDotRules.TRAIT_MAX_DOTS,
+                        minValue = CreationDotRules.TRAIT_MIN_VALUE,
+                        onValueChange = { onDisciplineUpdate(disc.id, it) }
+                    )
                     TextButton(onClick = { onDisciplineRemove(disc.id) }) {
                         Text(stringResource(R.string.action_remove))
                     }
@@ -776,23 +879,18 @@ fun AdvantagesStep(
         character.backgrounds.forEach { bg ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = bg.id.nameEn)
-                Row {
-                    (1..5).forEach { dot ->
-                        RadioButton(
-                            selected = dot <= bg.value,
-                            onClick = {
-                                if (dot == bg.value) {
-                                    if (bg.value > 1) onBackgroundUpdate(bg.id, bg.value - 1)
-                                } else {
-                                    onBackgroundUpdate(bg.id, dot)
-                                }
-                            },
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CreationDotRow(
+                        label = bg.id.nameEn,
+                        value = bg.value,
+                        max = CreationDotRules.TRAIT_MAX_DOTS,
+                        minValue = CreationDotRules.TRAIT_MIN_VALUE,
+                        onValueChange = { onBackgroundUpdate(bg.id, it) }
+                    )
                     TextButton(onClick = { onBackgroundRemove(bg.id) }) {
                         Text(stringResource(R.string.action_remove))
                     }
@@ -842,24 +940,17 @@ fun AdvantagesStep(
         character.virtues.forEach { virtue ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = virtue.id.nameEn)
-                Row {
-                    (1..5).forEach { dot ->
-                        RadioButton(
-                            selected = dot <= virtue.value,
-                            onClick = {
-                                if (dot == virtue.value) {
-                                    if (virtue.value > 1) onVirtueChange(virtue.id, virtue.value - 1)
-                                } else {
-                                    onVirtueChange(virtue.id, dot)
-                                }
-                            },
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
+                CreationDotRow(
+                    label = virtue.id.nameEn,
+                    value = virtue.value,
+                    max = CreationDotRules.TRAIT_MAX_DOTS,
+                    minValue = CreationDotRules.TRAIT_MIN_VALUE,
+                    onValueChange = { onVirtueChange(virtue.id, it) }
+                )
             }
         }
 

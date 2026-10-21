@@ -152,6 +152,12 @@
     <string name="select_discipline">Select discipline…</string>
     <string name="select_background">Select background…</string>
     <string name="discipline_points_remaining">Discipline dots: %1$d/%2$d</string>
+    <string name="creation_attribute_points_used">Attribute points: %1$d/%2$d</string>
+    <string name="creation_ability_points_used">Ability points: %1$d/%2$d</string>
+    <string name="creation_appearance_locked">Nosferatu: Appearance stays at 0 and cannot be raised</string>
+    <string name="creation_dot_description">Dot %1$d of %2$d for %3$s, %4$s</string>
+    <string name="creation_dot_filled">filled</string>
+    <string name="creation_dot_empty">empty</string>
     <string name="background_points_remaining">Background dots: %1$d/%2$d</string>
     <string name="virtue_points_remaining">Virtue dots: %1$d/%2$d</string>
     <string name="creation_merit_points">Merit points: %1$d/%2$d</string>

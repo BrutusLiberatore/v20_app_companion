@@ -196,7 +196,8 @@ fun CreationScreen(
                 )
                 2 -> AttributesStep(
                     attributes = uiState.character.attributes,
-                    onAttributeChange = onAttributeChange
+                    onAttributeChange = onAttributeChange,
+                    clan = uiState.character.identity.clan
                 )
                 3 -> AbilitiesStep(
                     abilities = uiState.character.abilities,
