@@ -3,7 +3,7 @@
 [![CI](https://github.com/BrutusLiberatore/v20_app_companion/actions/workflows/ci.yml/badge.svg)](https://github.com/BrutusLiberatore/v20_app_companion/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/BrutusLiberatore/v20_app_companion)](https://github.com/BrutusLiberatore/v20_app_companion/releases)
 [![Android](https://img.shields.io/badge/Android-26%2B-3DDC84)](https://www.android.com)
-[![Tests](https://img.shields.io/badge/tests-350-4C8BF5)](https://github.com/BrutusLiberatore/v20_app_companion/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-368-4C8BF5)](https://github.com/BrutusLiberatore/v20_app_companion/actions/workflows/ci.yml)
 [![i18n](https://img.shields.io/badge/i18n-EN%20%7C%20IT-A970FF)](#features)
 
 A native Android companion app for *Vampire: The Masquerade 20th Anniversary Edition*, for both players and the Storyteller. It manages characters, chronicles, and live tabletop sessions with an offline-first architecture: no account, no server, no data collection. The interface is fully bilingual (Italian and English).
@@ -24,6 +24,7 @@ First launch shows a language picker and an 8-step spotlight tutorial (replayabl
 ### Characters
 
 - Five-step creation wizard (Identity, Attributes, Abilities, Advantages, Final Touches) with V20 rules validation
+- Tappable creation dots for attributes, abilities, disciplines, backgrounds and virtues: one dot is one point, tapping a filled dot lowers the value by one, with live points counters
 - Thirteen clans with starting disciplines and backgrounds
 - Sect-aware creation paths (Camarilla, Anarch, Independent, Sabbat, Caitiff/Pander)
 - Attribute presets (7/5/3) and ability presets (13/9/5), plus a full randomizer
@@ -86,7 +87,7 @@ Layered annotation over maps and images: pen, highlighter, line, arrow, circle, 
 
 - Equipment library import/export in structured JSON
 - Full backup export/restore in a single `.v20backup` archive (data + portraits/media/audio files) with a daily automatic copy to `Download/V20Companion`
-- Localisation: 1070 strings in Italian and English, switchable at runtime
+- Localisation: 1076 strings in Italian and English, switchable at runtime
 
 ---
 
@@ -120,7 +121,7 @@ The APK is written to `app/build/outputs/apk/debug/app-debug.apk` and published 
 gradlew test
 ```
 
-The suite contains 350 unit tests covering character CRUD, import/export, the backup engine, the dice engine, migrations, repositories, live room messages, scene variants, the combat timer, XP calculators, and house-rule engines.
+The suite contains 368 unit tests covering character CRUD, import/export, the backup engine, the dice engine, migrations, repositories, live room messages, scene variants, the combat timer, XP calculators, creation dot rules and house-rule engines.
 
 ---
 
@@ -177,20 +178,18 @@ app/src/main/java/com/v20charactermanager/
     navigation/NavGraph.kt          -- Single navigation graph
     settings/                       -- App settings
     sheet/                          -- Character sheet sections
+    tutorial/                       -- Spotlight tutorial engine (home, chronicle, table)
     components/                     -- Shared UI components
   util/                             -- Helpers (locale, and others)
 
-app/src/test/                       -- JVM unit tests (350)
+app/src/test/                       -- JVM unit tests (368)
 ```
 
 ---
 
 ## Documentation
 
-- `FUNZIONI_APPLICAZIONE.md` — function-by-function guide to the application (Italian)
-- `V20_AGENT_MASTER_SPEC_v2.1.md` — master specification
-- `V20_Agent_Addendum_Session_Manager_Adaptive_UX_VisualBoard_v1.0.md` — session manager and visual board addendum
-- `V20_Clan_Data_Character_Creator_IT.md` — clan data and creation rules
+The source tree ships **code only**: detailed guides, the function-by-function manual and the internal changelog are maintained outside the public repository, so the downloadable source archives contain the app sources and nothing else. The README above describes every shipped feature.
 
 ---
 
